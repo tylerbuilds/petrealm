@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "passed": true,
+  "scope": "Public artefact sanitisation and coverage; no publication or deployment performed.",
+  "reference_rows": 121,
+  "by_classification": {
+    "implemented-local-equivalent": 8,
+    "partial": 19,
+    "missing": 94,
+    "authenticated-behaviour-unverified": 0
+  },
+  "detailed_comparison_sha256": "9544e4a357113e0bf79ea5babded3646b51f19e964cac9a2d4e97e7c80501947",
+  "public_file_hashes": {
+    "feature-comparison.json": "2c76a6d9d313c251a3821ae003d04f2c3bfe5bd008380f5a9659b241219b7b21",
+    "neopets-reference-inventory.json": "3910d9824f49da50d3f164e4c68683dd94e3ea65021e1fe14a67cd4d8e2d6b14",
+    "findings.md": "becfbb9f921af15de490bc795065394d80ab27a711e211840881061fb5d47f5f"
+  },
+  "checks": {
+    "all_121_reference_ids_preserved": true,
+    "classifications_preserved": true,
+    "official_inventory_hash_unchanged": true,
+    "source_paths_are_relative": true,
+    "no_local_private_paths_or_urls": true,
+    "no_authenticated_original_or_algorithm_equivalence_claim": true
+  }
+}

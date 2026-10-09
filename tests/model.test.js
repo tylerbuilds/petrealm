@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   SPECIES, ITEMS, createState, adopt, advanceTime, care, purchase,
-  claimDaily, claimGameReward, validateState, parseSave, serialiseSave,
+  claimDaily, claimGameReward, validateState, parseSave, serialiseSave, readActivePet,
 } from '../src/model.js';
 
 const START = Date.parse('2026-10-09T12:00:00.000Z');
@@ -15,8 +15,8 @@ test('fresh saves offer three original species, starter coins and independent in
   const second = createState(START);
   assert.deepEqual(Object.keys(SPECIES), ['mossling', 'emberkit', 'moonfin']);
   assert.equal(first.wallet, 120);
-  assert.equal(first.pet, null);
-  assert.deepEqual(first.inventory, { berry: 3, acorn: 2, ribbon: 1 });
+  assert.equal(readActivePet(first), null);
+  assert.deepEqual(first.inventory, { berry: 3, acorn: 2, ribbon: 1, leafcap: 0, moonscarf: 0, potion: 0, 'lodge-deed': 0 });
   assert.equal(validateState(first), true);
   first.inventory.berry = 0;
   assert.equal(second.inventory.berry, 3);
@@ -27,11 +27,11 @@ test('adoption normalises names, records an achievement and never mutates the in
   const original = createState(START);
   const before = serialiseSave(original);
   const result = adopt(original, '  Fe\u0301rn  ', 'emberkit', START);
-  assert.equal(result.pet.name, 'Férn');
-  assert.equal(result.pet.species, 'emberkit');
+  assert.equal(result.pets[0].name, 'Férn');
+  assert.equal(result.pets[0].species, 'emberkit');
   assert.deepEqual(result.achievements, ['first-friend']);
   assert.equal(serialiseSave(original), before);
-  assert.throws(() => adopt(result, 'Other', 'moonfin', START), /already has/);
+  assert.equal(adopt(result, 'Other', 'moonfin', START).pets.length, 2);
   assert.throws(() => adopt(original, '', 'mossling', START), /Pet name/);
   assert.throws(() => adopt(original, 'Bad\nName', 'mossling', START), /Pet name/);
   assert.throws(() => adopt(original, 'Fern', '__proto__', START), /species/);
@@ -40,10 +40,10 @@ test('adoption normalises names, records an achievement and never mutates the in
 test('offline decay is deterministic, bounded at 72 hours, and applied only once', () => {
   const original = pet();
   const next = advanceTime(original, START + 2 * HOUR);
-  assert.deepEqual(next.pet.stats, { satiety: 79, happiness: 76, energy: 83 });
-  assert.deepEqual(original.pet.stats, { satiety: 85, happiness: 80, energy: 85 });
+  assert.deepEqual(next.pets[0].stats, { satiety: 79, happiness: 76, energy: 83 });
+  assert.deepEqual(original.pets[0].stats, { satiety: 85, happiness: 80, energy: 85 });
   const farFuture = advanceTime(original, START + 365 * DAY);
-  assert.deepEqual(farFuture.pet.stats, { satiety: 0, happiness: 0, energy: 13 });
+  assert.deepEqual(farFuture.pets[0].stats, { satiety: 0, happiness: 0, energy: 13 });
   assert.deepEqual(advanceTime(farFuture, START + 365 * DAY), farFuture);
   assert.deepEqual(advanceTime(next, START - DAY), next);
   assert.equal(advanceTime(createState(START), START + HOUR).lastUpdated, START + HOUR);
@@ -52,12 +52,12 @@ test('offline decay is deterministic, bounded at 72 hours, and applied only once
 test('food is consumed, stats are capped, and care achievements reflect actual actions', () => {
   let state = advanceTime(pet(), START + 10 * HOUR);
   state = care(state, 'feed', 'berry', state.lastUpdated);
-  assert.deepEqual(state.pet.stats, { satiety: 77, happiness: 66, energy: 75 });
+  assert.deepEqual(state.pets[0].stats, { satiety: 77, happiness: 66, energy: 75 });
   assert.equal(state.inventory.berry, 2);
   state = care(state, 'feed', 'acorn', state.lastUpdated);
-  assert.deepEqual(state.pet.stats, { satiety: 89, happiness: 69, energy: 87 });
+  assert.deepEqual(state.pets[0].stats, { satiety: 89, happiness: 69, energy: 87 });
   state = care(state, 'feed', 'berry', state.lastUpdated);
-  assert.equal(state.pet.stats.satiety, 100);
+  assert.equal(state.pets[0].stats.satiety, 100);
   assert.equal(state.counts.feeds, 3);
   assert.ok(state.achievements.includes('well-fed'));
   const before = serialiseSave(state);
@@ -73,11 +73,11 @@ test('ribbon play is reusable but requires enough energy; rest restores energy',
   const ribbonCount = state.inventory.ribbon;
   for (let round = 0; round < 7; round += 1) state = care(state, 'play', 'ribbon', START);
   assert.equal(state.inventory.ribbon, ribbonCount);
-  assert.equal(state.pet.stats.energy, 1);
-  assert.equal(state.pet.stats.happiness, 100);
+  assert.equal(state.pets[0].stats.energy, 1);
+  assert.equal(state.pets[0].stats.happiness, 100);
   assert.throws(() => care(state, 'play', 'ribbon', START), /needs a rest/);
   state = care(state, 'rest', undefined, START);
-  assert.equal(state.pet.stats.energy, 31);
+  assert.equal(state.pets[0].stats.energy, 31);
   assert.ok(state.achievements.includes('playmate'));
   assert.ok(state.achievements.includes('sweet-dreams'));
   assert.throws(() => care(state, 'rest', 'berry', START), /does not use/);
@@ -130,7 +130,7 @@ test('game payouts enforce score, per-round and daily caps, with a new UTC day r
   assert.equal(state.wallet, cappedWallet);
   assert.equal(state.game.earned, 120);
   assert.equal(state.counts.games, cappedGames + 1);
-  assert.equal(state.pet.stats.happiness, 95);
+  assert.equal(state.pets[0].stats.happiness, 95);
   state = claimGameReward(state, 100, START - DAY);
   assert.equal(state.wallet, cappedWallet);
   assert.equal(state.game.earned, 120);
@@ -143,10 +143,10 @@ test('game payouts enforce score, per-round and daily caps, with a new UTC day r
   const zero = claimGameReward(pet(), 0, START);
   assert.equal(zero.game.earned, 0);
   assert.equal(zero.counts.games, 1);
-  assert.equal(zero.pet.stats.happiness, 83);
+  assert.equal(zero.pets[0].stats.happiness, 83);
   assert.ok(zero.achievements.includes('game-on'));
   for (let round = 0; round < 20; round += 1) state = claimGameReward(state, 0, START + DAY);
-  assert.equal(state.pet.stats.happiness, 100);
+  assert.equal(state.pets[0].stats.happiness, 100);
   assert.equal(state.wallet, 280);
 });
 
@@ -163,28 +163,28 @@ test('save round trips preserve all state and return independent objects', () =>
   const loaded = parseSave(serialiseSave(original));
   assert.deepEqual(loaded, original);
   loaded.inventory.berry = 0;
-  loaded.pet.stats.satiety = 0;
+  loaded.pets[0].stats.satiety = 0;
   assert.equal(original.inventory.berry, 3);
-  assert.equal(original.pet.stats.satiety, 81);
+  assert.equal(original.pets[0].stats.satiety, 81);
 });
 
 test('strict imports reject unknown fields, versions, invalid stats and inventory without changing a save', () => {
   const original = pet();
   const before = serialiseSave(original);
   const cases = [
-    [(state) => { state.version = 2; }, /Unsupported save version/],
+    [(state) => { state.version = 3; }, /Unsupported save version/],
     [(state) => { state.surprise = true; }, /unknown fields/],
     [(state) => { delete state.wallet; }, /missing/],
     [(state) => { state.inventory.berry = -1; }, /quantity/],
     [(state) => { state.inventory.unknown = 1; }, /unknown fields/],
-    [(state) => { state.pet.stats.satiety = 101; }, /satiety/],
-    [(state) => { state.pet.stats.energy = null; }, /energy/],
-    [(state) => { state.pet.species = 'neopet'; }, /species/],
+    [(state) => { state.pets[0].stats.satiety = 101; }, /satiety/],
+    [(state) => { state.pets[0].stats.energy = null; }, /energy/],
+    [(state) => { state.pets[0].species = 'neopet'; }, /species/],
     [(state) => { state.achievements.push('first-friend'); }, /duplicates/],
     [(state) => { state.counts.adoptions = 2; }, /Adoption count/],
     [(state) => { state.daily.lastClaimDay = '2026-02-30'; }, /valid UTC date/],
     [(state) => { state.game.earned = 121; }, /Daily game rewards/],
-    [(state) => { state.pet.adoptedAt = START + 1; }, /after the saved time/],
+    [(state) => { state.pets[0].adoptedAt = START + 1; }, /after the saved time/],
   ];
   for (const [change, pattern] of cases) {
     const invalid = structuredClone(original);

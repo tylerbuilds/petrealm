@@ -1,6 +1,6 @@
 # Public-surface feature map
 
-Research date: 2026-10-09. This document separates observations of official public pages from implementation decisions. No authenticated account access, private API access, source recovery or original asset copying was performed.
+Research date: 2026-10-09. This file records the initial v1 investigation. Current free and Premium feature delivery is tracked in [the version 2 parity ledger](../parity-ledger.md). This document separates observations of official public pages from implementation decisions. No authenticated account access, private API access, source recovery or original asset copying was performed.
 
 ## Sources and observations
 

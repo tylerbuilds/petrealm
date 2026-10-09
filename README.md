@@ -4,9 +4,9 @@
 
 [Try the live demo](https://tylerbuilds.github.io/petrealm/) · [Linux/macOS checks](https://github.com/tylerbuilds/petrealm/actions/workflows/verify.yml)
 
-A little world of your own. Adopt an original companion, care for them in a quiet garden, shop for treats and catch fireflies beneath the stars.
+A little world of your own. Raise a family of original companions, dress them, complete quests, save your pebbles and take on friendly arena challenges. Two interactive games reward timing and memory.
 
-Petrealm is a dependency-free, local-first browser game. Its initial release explores the pet-care, collecting, shop and mini-game loop described by Neopets' public pages, using independently written rules, an original interface and original vector artwork. It is not affiliated with Neopets and does not include its code, species, artwork, names or fictional currency.
+Petrealm is a dependency-free, local-first browser game. Its expanded release implements original local equivalents of pet care, collecting, shops, quests, customisation, banking and battles described by Neopets' public pages, using independently written rules, an original interface and original vector artwork. It is not affiliated with Neopets and does not include its code, species, artwork, names or fictional currency.
 
 ## Run on Linux or macOS
 
@@ -30,31 +30,37 @@ The coordinating workflow records actual platform and browser checks in the rese
 
 ## Play
 
-1. Choose a **Mossling**, **Emberkit** or **Moonfin**, then name your friend.
-2. Keep their fullness, happiness and energy healthy with snacks, play and rest.
-3. Spend **pebbles** at Market lane. Food is consumed; the rainbow ribbon is reusable.
-4. Collect a 40-pebble gift once per UTC day.
-5. Visit Starlight glen. Click **Catch** or press **Space** as the moving firefly crosses the golden centre. Ten catches or thirty seconds finish the round. Timing determines your score and reward.
-6. Collect little milestones and use the save button to export a backup or move your world between devices.
+1. Choose a **Mossling**, **Emberkit** or **Moonfin**, then name your friend. Adopt more companions and switch the active friend in the garden.
+2. Keep each friend's fullness, happiness and energy healthy with snacks, play and rest. Care builds experience; every 100 XP raises a level, up to level 20.
+3. Buy food, reusable toys, visible head/neck accessories, battle potions and expansion deeds at Market lane. Deposit spare pebbles in the Pebble Keep and withdraw them when needed.
+4. Open **World & quests** for the illustrated map and journal. Complete a daily three-feed objective or lasting family, game and battle objectives, then claim their rewards once.
+5. Collect the 40-pebble daily gift. Explorer Lodge mode is also free: it adds seven companion spaces and a daily parcel. Up to twelve earned expansion deeds can bring the roster to 26.
+6. Play **Firefly flight** by catching the moving light in the golden centre, or **Memory meadow** by matching six shuffled pairs. Scores determine payments; both games share a daily reward cap.
+7. Visit the **Training grove**. Attack, guard or use a potion in saved turn-based matches. Win earlier challenges and grow your level to unlock later rivals. A first victory pays once; replay still earns experience.
+8. Dress the active companion in the garden. One purchased accessory copy cannot be worn by two friends at once, and equipment affects newly started arena matches.
+9. Use the save button to export your world, restore a backup or download the exact original version 1 save after migration.
 
 Your game is saved in this browser, with no account, backend, network calls, telemetry or paid services. Clearing browser storage can remove your game; export a save first. Invalid stored saves open a recovery screen which keeps the original. Imports are strictly validated before replacing the current world; the previous save is retained as a local recovery backup. Storage failures produce a persistent unsaved indicator. Import is refused when a recovery backup cannot be written.
 
 This is a single-player local game. Same-origin tabs serialise world mutations with Web Locks, or an IndexedDB transaction fallback, and read the latest saved state before each action. Importing or restoring a replacement world abandons an older unfinished game. Failed saves keep your in-memory progress available for export; a newer conflicting saved world blocks further mutations until you export or reload. It has no anti-cheat, server economy or clock authority; editing a local save or advancing the device clock is within the player's control.
 
-## Initial scope
+## Delivered scope and parity gaps
 
-The three areas are **Sunmeadow garden** (pet care), **Market lane** (fixed-price supplies) and **Starlight glen** (a timing mini-game). All illustrations are original inline SVG in [`src/art.js`](src/art.js); all game rules are in [`src/model.js`](src/model.js), consumed by the browser application and tested directly.
+A five-location illustrated map connects **Sunmeadow garden**, **Market lane**, **Pebble Keep**, **Starlight glen** and **Training grove**. The release includes multiple independent companions, seven original supplies, visible wardrobes, bank transfers, daily and lasting quests, experience, three progressive arena rivals, two interactive games and a free Explorer Lodge mode. Original inline SVG illustrations are in [`src/art.js`](src/art.js); immutable game rules are in [`src/model.js`](src/model.js).
 
-The release supports one companion per save, three supplies, eight model achievements (five displayed as the main milestone collection), bounded offline stat decay and validated version 1 save files. There is no multiplayer, trading, combat, wardrobe, player-owned shop, quests, mobile app or remote synchronisation. Those are roadmap candidates, not implemented features.
+Version 2 saves strictly migrate accepted version 1 worlds, retaining the original text before any overwrite. Existing pets, stats, money, supplies, counts, achievements and daily/game histories survive migration. New systems start empty; no progress is invented. All write paths retain the multi-tab mutex and recovery safeguards.
 
-Research observations, inferences and gaps are recorded in [`docs/research/feature-map.md`](docs/research/feature-map.md). Game balance and save behaviour are documented in [`docs/game-rules.md`](docs/game-rules.md). The investigation uses the [REA](https://github.com/morluto/rea) toolkit starred by tylerbuilds. Sanitised capture provenance and access limits are in [`docs/research/rea-provenance.md`](docs/research/rea-provenance.md) and [`rea-findings.json`](docs/research/rea-findings.json).
+The [free and Premium parity ledger](docs/parity-ledger.md) and [all-tier source comparison](docs/research/feature-comparison.md) record delivered behaviour, sources and remaining or unknown features. This is a playable local reconstruction of selected feature categories. It does not provide full Neopets service parity: online accounts, player shops, trading, auctions, PvP, forums, remote sync, the large item/species/game catalogue and many specific Premium perks remain absent. The daily Lodge parcel and earned expansion prices are original choices; no subscription or paid entitlement service is claimed.
+
+Game balance, quest/battle rules, migration and storage behaviour are documented in [`docs/game-rules.md`](docs/game-rules.md). The initial public-surface investigation is retained in [`docs/research/feature-map.md`](docs/research/feature-map.md). Research uses the [REA](https://github.com/morluto/rea) toolkit starred by tylerbuilds; sanitised capture provenance and denied-access limits are in [`rea-provenance.md`](docs/research/rea-provenance.md) and [`rea-findings.json`](docs/research/rea-findings.json).
 
 ## Development
 
 - `src/model.js`: immutable rules, validation and JSON import/export. Every action returns a new state or throws a helpful error.
-- `src/app.js`: local persistence, accessible dialogs, navigation and the interactive mini-game.
+- `src/app.js`: coordinated local persistence, migration, accessible dialogs, navigation and two interactive games.
+- `src/views.js`: connected care, shop, bank, quest, Lodge and arena interfaces.
 - `src/art.js`: original creature, landscape and shop vectors.
-- `tests/model.test.js`: meaningful invariants using Node's built-in test runner.
+- `tests/model.test.js`, `tests/parity-model.test.js`: meaningful migration, economy, resource, time and reward invariants using Node's built-in test runner.
 - `scripts/serve.mjs`, `scripts/build.mjs`: dependency-free development and static build utilities.
 
 Changes should preserve saved worlds, keep all assets original, and disclose any new network or account behaviour before introducing it. Contributions and forks are welcome under the [MIT licence](LICENSE).

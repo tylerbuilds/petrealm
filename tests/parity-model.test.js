@@ -219,7 +219,8 @@ test('permanent quests enforce thresholds and preserve their claim ledger throug
   for (const id of state.quests.claimed) assert.throws(() => claimQuest(state, id, NOW + DAY), /already claimed/);
   assert.equal(state.counts.questsClaimed, 3);
   assert.throws(() => questProgress(state, 'invented', NOW), /available quest/);
-  assert.equal(Object.keys(QUESTS).length, 4);
+  assert.equal(Object.values(QUESTS).filter((quest) => quest.type === 'permanent').length, 3);
+  assert.equal(Object.values(QUESTS).filter((quest) => quest.type === 'daily').length, 6);
 });
 
 test('both mini-games share a single payout cap while maintaining separate completion counts', () => {

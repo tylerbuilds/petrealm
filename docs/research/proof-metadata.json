@@ -1,0 +1,168 @@
+{
+  "schema_version": "1.0",
+  "comparison_status": "final-current-local-snapshot",
+  "checked_at_utc": "2026-10-09T23:50:07.428530+00:00",
+  "source_file_hashes": {
+    "AGENTS.md": "280f2c34f2cb79c086fce0bbeed0d7c8ebf19408e37b8220dfce1eb96ccc1d25",
+    "README.md": "34a85425845ff16f262426c98cda0b98e5050f328e0b1e64cde4ca5d685dc765",
+    "docs/game-rules.md": "23f090bbea59e3594f35416639961f425facdf32df32bb15630e70506f323bfd",
+    "docs/parity-ledger.md": "9472131cb231098455f1a7cea54f0dd03ee0a0370bbe983e0e279a9a8bd84500",
+    "docs/research/bank-quests-analogue.md": "d30fe1cbc1a07377c2f7105abee802e7bb7e83fd755b824928460804beb676d6",
+    "docs/research/neopets-reference-inventory.json": "3910d9824f49da50d3f164e4c68683dd94e3ea65021e1fe14a67cd4d8e2d6b14",
+    "index.html": "be2fb2a27b766e1b14c4889b82a1a269d526965bb18c8bed241f594101221e16",
+    "package-lock.json": "dab6488c4a1dc9441e2da5bdec41631fc8fa1dc52cbff48992590f357afe1233",
+    "package.json": "3bba77f40cb93f38ac787bbc1a637c664a60159b24281d5e6ba547b76e43a2d7",
+    "scripts/serve.mjs": "0f459be61e4f93f8462a2eb0f4513dcb98e07fd269378fb6207e0cfcd2e83c46",
+    "src/app.js": "bb9ad04055f4bbb949f0c6b246715b086fe493d4b5c15768b18e5599256ca02e",
+    "src/art.js": "3c64e469b3feda3e43130269d06dbdd7a8e630fff0503a2f85695d3cb4fe5167",
+    "src/model.js": "b767f87496e6ab5d541ba768a8f2419ae50d63d2c5396c695e58bad5c05cc922",
+    "src/persistence.js": "8a24e3601a35ddfd9f436d318385e464dfb47a500c6ffc94b49234d268ecdf1e",
+    "src/views.js": "fd45a81ea285a747429fd79356dc681d647082dde150044810981c900c3f9af4",
+    "styles.css": "c017bf3976b26889d5babb2959ea2f62a7b2dcb7b4ba71148e6108264a8674e3",
+    "tests/bank-quest-log.test.js": "306c91edae3b0bd7287d527562279e6eb4aa0fa6ecc6509a731e482855124b96",
+    "tests/model.test.js": "f50962f19cc368b8a4b44587d682b54a9f5034d725737bfa558e4ee2ba6b56d1",
+    "tests/parity-model.test.js": "108502f797f0409ddf39b188434ddb4442dd265439df25e32dabdfb783280891",
+    "tests/static-server.test.mjs": "8dce6e23c8ea50b9cb0ab0a8ff3a3f2fd2de049f20e56c1fd2c7eeb3959e665c"
+  },
+  "evidence_summary": {
+    "unit": {
+      "sha256": "808247fcd585529bea2470bdbcdd855f1ee00cbfa74fd0d0528dfdb6c86d82bf",
+      "passed": 44,
+      "failed": 0,
+      "recorded_source_hash_matches": {
+        "src/model.js": true,
+        "src/app.js": true,
+        "src/views.js": true,
+        "src/art.js": true,
+        "src/persistence.js": true,
+        "styles.css": true,
+        "index.html": true,
+        "tests/model.test.js": true,
+        "tests/parity-model.test.js": true,
+        "tests/bank-quest-log.test.js": true,
+        "tests/static-server.test.mjs": true,
+        "README.md": true,
+        "docs/game-rules.md": true,
+        "docs/parity-ledger.md": true,
+        "docs/research/bank-quests-analogue.md": true,
+        "package.json": true,
+        "package-lock.json": true
+      },
+      "all_recorded_source_hashes_match": true,
+      "runtime_source_hashes_match": true,
+      "all_test_source_hashes_match": true,
+      "metadata_drift": [],
+      "log_sha256": "94133300c375338e509d0a3d6370aaa1f51df5ed3021966083e6c1b6a860eb60",
+      "proof_id": "next-wave-unit"
+    },
+    "domain": {
+      "sha256": "18c85a14da8aae396f2e833781b2d009936cbf96a83d95cc2278d3153219dacf",
+      "checks": 10,
+      "model_hash_matches": true,
+      "created_at": "2026-10-09T23:16:23.825Z",
+      "qualification": "Current matching Node model component assertions; not browser/macOS/original qualification.",
+      "proof_id": "next-wave-domain"
+    },
+    "concurrency": {
+      "sha256": "b88e591d177a46604a80786b8853e2ad0fae9e89619eaec0ac8d30eb3fd10ce4",
+      "checks": 21,
+      "passed": true,
+      "all_five_module_hashes_match": true,
+      "created_at": "2026-10-09T23:20:48.367Z",
+      "qualification": "Node vm contexts with shared queued WebLocks and localStorage stubs; no browser qualification claim",
+      "proof_id": "next-wave-concurrency"
+    },
+    "browser": {
+      "core": {
+        "sha256": "8469100b2d25dc4ec5637b08228e6bad0f8b7a377e211cb6d3081044c3dcb23c",
+        "passed": true,
+        "checks": 18,
+        "finished": "2026-10-09T23:47:39.678Z",
+        "source_hashes_match": true,
+        "qualification_scope": "current-source-matching",
+        "proof_id": "next-wave-linux-core"
+      },
+      "bank_quests": {
+        "sha256": "75058904eaa0c1b86c7204bcf438ef3eb286672854163647fbda17ebe5764f88",
+        "passed": true,
+        "checks": 12,
+        "finished": "2026-10-09T23:48:30.411Z",
+        "source_hashes_match": true,
+        "qualification_scope": "current-source-matching",
+        "proof_id": "next-wave-linux-bank_quests"
+      },
+      "ui": {
+        "sha256": "841ba0e893ef8adba38be8984ed4213baa7cdfc6e90f4433afc9e9379eb814ec",
+        "passed": true,
+        "checks": 10,
+        "finished": "2026-10-09T23:46:56.810Z",
+        "source_hashes_match": true,
+        "qualification_scope": "current-source-matching",
+        "proof_id": "next-wave-linux-ui"
+      },
+      "panels": {
+        "sha256": "edb2bd9bac3c4ec36654fa811e41603b1cf1f363149f97c61af79c364fc7f434",
+        "passed": true,
+        "checks": 8,
+        "finished": "2026-10-09T23:47:05.696Z",
+        "source_hashes_match": true,
+        "qualification_scope": "current-source-matching",
+        "proof_id": "next-wave-linux-panels"
+      },
+      "map_geometry": {
+        "sha256": "5dc873b2675d3733d04db71e40b062f6a4c629ccb7ba0f68c3b7b5bd68b73247",
+        "passed": true,
+        "checks": 5,
+        "finished": "2026-10-09T23:47:08.512Z",
+        "source_hashes_match": true,
+        "qualification_scope": "current-source-matching",
+        "proof_id": "next-wave-linux-map_geometry"
+      },
+      "legacy_file": {
+        "sha256": "56605ae07132feae6c1676b2940e941cf1048ce3b18fae2f290ffac928f2712c",
+        "passed": true,
+        "checks": 5,
+        "finished": "2026-10-09T23:47:11.298Z",
+        "source_hashes_match": true,
+        "qualification_scope": "current-source-matching",
+        "proof_id": "next-wave-linux-legacy_file"
+      },
+      "unadopted_migration": {
+        "sha256": "d3014787682e7b9fff46d8d9b9b56e4c2194bcf57ff28f6f24176fc8bb65f3c7",
+        "passed": true,
+        "checks": 5,
+        "finished": "2026-10-09T23:47:13.664Z",
+        "source_hashes_match": true,
+        "qualification_scope": "current-source-matching",
+        "proof_id": "next-wave-linux-unadopted_migration"
+      },
+      "migration_quota": {
+        "sha256": "df7ddcdab55eec26fbf0050d969f9ee875dbf191255cad83980b5d46452cc06e",
+        "passed": true,
+        "checks": 5,
+        "finished": "2026-10-09T23:47:15.691Z",
+        "source_hashes_match": true,
+        "qualification_scope": "current-source-matching",
+        "proof_id": "next-wave-linux-migration_quota"
+      },
+      "built_smoke": {
+        "sha256": "6e3791eed686c7c4ed5a662110153118a478a736ac5931c67c94b6608fead288",
+        "passed": true,
+        "checks": 3,
+        "finished": "2026-10-09T23:47:19.617Z",
+        "source_hashes_match": true,
+        "qualification_scope": "current-source-matching",
+        "proof_id": "next-wave-linux-built_smoke"
+      }
+    },
+    "macos": {
+      "status": "Pending current next-wave receipt; portable source and sealed 0.2 checks are not current macOS proof."
+    },
+    "comparison_execution": {
+      "app_tests_browser_services_providers_launched": false
+    }
+  },
+  "original_authenticated_behaviour": "not-exercised",
+  "algorithm_equivalence": "not-established",
+  "historical_input_sha256": "2c76a6d9d313c251a3821ae003d04f2c3bfe5bd008380f5a9659b241219b7b21"
+}

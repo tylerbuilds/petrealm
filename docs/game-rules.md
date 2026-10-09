@@ -27,7 +27,20 @@ Every stat stays between 0 and 100. Prices are fixed in the model.
 
 Ribbon play requires at least 12 energy. Clothing stays in inventory when equipped, but purchased copies limit how many companions can wear it at once. Taking it off makes that copy available to another friend. Equipping cannot alter a live arena match.
 
-Purchases reject insufficient funds, unknown items or inventory at 999 copies before changing anything. Bank deposit/withdraw accepts positive whole amounts only and conserves wallet plus bank total. Neither balance may be negative or exceed one billion. There are no fees, interest, resale, scarcity or player trades.
+Purchases reject insufficient funds, unknown items or inventory at 999 copies before changing anything. Bank deposit/withdraw accepts positive whole amounts only and conserves wallet plus bank total. Neither balance may be negative or exceed one billion. There are no fees, resale, scarcity or player trades. Interest follows the original local rules below.
+
+## Original savings tiers and daily interest
+
+| Savings account | Bank balance required to upgrade | Annual game rate |
+| --- | ---: | ---: |
+| Seedling saver | 0 | 5% |
+| Sapling keeper | 1,000 | 7.5% |
+| Canopy keeper | 10,000 | 10% |
+| Old grove trust | 100,000 | 12.5% |
+
+An upgrade is explicit, requires the current deposited balance and can only move to a higher tier. The selected tier stays after withdrawals. These account names, thresholds and rates are original Petrealm game rules, with no real-money service.
+
+Click Collect interest to credit `ceil(bank balance × annual basis points / 3,650,000)` pebbles to the bank once per UTC date. A zero balance cannot claim. The current balance and tier determine the offer; depositing or withdrawing before an eligible claim is allowed. Transfers, upgrades, reloads and clock rollback cannot reopen a collected date. Missed days do not accrue interest. A claim that would take combined wallet and bank money above one billion is rejected without changing money or claim history; spending creates room for a retry. Interest amounts and lifetime claim/earned counters remain bounded whole numbers.
 
 ## Time and experience
 
@@ -39,14 +52,26 @@ Companions cannot die or disappear from low stats. Rest remains available outsid
 
 The standard gift is 40 pebbles once per UTC date. An Explorer Lodge parcel adds 20 pebbles and one sunberry once per UTC date. Its claim date survives leaving/rejoining, preventing a same-day second parcel.
 
-| Quest | Requirement | Reward |
+| Daily quest | Requirement on the current UTC day | Reward |
 | --- | --- | --- |
-| Three square meals | Feed any companions three times on the current UTC day | 25 pebbles + 10 XP; once per day |
-| A growing family | Adopt two companions | 30 pebbles + 10 XP; once per world |
-| Arena debut | Win one arena battle | 40 pebbles + 10 XP; once per world |
-| Game explorer | Complete three mini-game rounds | 30 pebbles + 10 XP; once per world |
+| Three square meals | Feed companions three times | 25 pebbles + 10 XP |
+| A ribbon and a wiggle | Play with a companion | 10 pebbles + 5 XP |
+| Something for the satchel | Buy a supply | 10 pebbles + 5 XP |
+| A little spark of play | Finish either mini-game, at any score | 15 pebbles + 5 XP |
+| A moment under the leaves | Rest a companion | 10 pebbles + 5 XP |
+| A note from the Lodge | Collect the Explorer parcel; available in free local Lodge mode | 10 pebbles + 5 XP |
 
-Rewards require an explicit claim after the actual objective. Permanent claim IDs and current-day progress/claim flags are persisted. Daily rollover resets that day's objective only; it does not reset lasting achievements or rewards. Quest XP goes to the active companion. Active matches must finish before quest claims change companion experience.
+Each objective has its own explicit once-only reward claim. Actual successful actions build its progress; completing an objective without claiming it does not qualify for the day gift. Any five distinct claimed tasks unlock an explicit 40-pebble daily completion gift. Explorer's sixth task can replace any of the others among those five. Claiming all six does not pay another completion gift, and changing membership does not erase or replay a paid task.
+
+Seven consecutive UTC dates with a successful daily-completion claim add a 150-pebble weekly gift. It pays atomically with the seventh day's 40 pebbles; the next day begins a fresh seven-day cycle. This is a rolling streak, independent of calendar weeks. Daily claims reset at midnight UTC. Unclaimed objectives and gifts expire, and missing the day-completion claim breaks the streak even if the objectives were performed. Lifetime completion and weekly-reward history remain. There is no catch-up or streak-save ticket. The saved world clock never moves backwards, so rollback cannot reopen an expired or paid date. Money-limit failures preserve the current claims and progress for an eligible retry.
+
+| Lasting quest | Requirement | Reward, once per world |
+| --- | --- | --- |
+| A growing family | Adopt two companions | 30 pebbles + 10 XP |
+| Arena debut | Win one arena battle | 40 pebbles + 10 XP |
+| Game explorer | Complete three mini-game rounds | 30 pebbles + 10 XP |
+
+Quest XP goes to the active companion. An active arena match must finish before a quest or day-completion claim. Bank interest, ordinary gifts and Lodge parcels remain economy-only actions. The day/week rewards above are Petrealm choices; the target's reward catalogue and NST timing are not reproduced.
 
 ## Two interactive games
 
@@ -77,6 +102,8 @@ An active match prevents changing companions, adoption, care, games, clothing, m
 The existing keys `petrealm.save.v1` and `petrealm.backup.v1` remain in use so installed worlds are found. Their JSON version is now 2. `petrealm.world-generation.v1` marks explicit replacements, not normal actions.
 
 Version 1 imports are first validated against their original complete schema, then migrated. The existing companion becomes `pet-1`; stats, wallet, original supplies, reward history, counts and achievements are retained. New systems start empty, without invented XP or battle history. An automatic first load retains the original v1 text separately at `petrealm.migration-original.v1` before persisting v2; the save manager can download it. This original survives later ordinary backup swaps. A failed original-retention write blocks every later save overwrite until retention succeeds, keeping the original durable world and the in-memory migration available for export.
+
+Older version 2 saves may omit the complete new bank metadata and quest-log record. Validation accepts that older schema, then initialises Seedling saver and empty interest/streak history. An already paid same-day daily feast stays paid and its feed progress stays intact; the other new task counters start at zero. Money, companions, original progress and lasting claims are unchanged. Partial new metadata, unknown tiers, unearned/duplicate daily claims, future reward dates, inconsistent streaks and invalid counters are rejected.
 
 Files are limited to 32 KiB. Validation rejects unknown/missing fields, unsupported versions, duplicate keys, excessive nesting, invalid finite numbers/dates, mismatched pet IDs/levels, excess worn copies, bank bounds, inconsistent quest claims, impossible battle health/status/progression and duplicate reward markers. A failed import leaves the current world unchanged. Explicit replacement first retains the freshest world (or dirty in-memory world when appropriate) as a backup; failed replacement writes roll back backup/generation changes. Recovery keeps the original invalid text available for download, valid import or explicit Start fresh. The save manager can download invalid prior backup text without trying to apply it.
 

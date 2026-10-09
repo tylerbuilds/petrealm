@@ -17,10 +17,27 @@ export const ITEMS = Object.freeze({
 
 export const QUESTS = Object.freeze({
   'daily-feast': Object.freeze({ id: 'daily-feast', name: 'Three square meals', description: 'Feed any companions three times today (UTC).', target: 3, reward: 25, xp: 10, type: 'daily' }),
+  'daily-play': Object.freeze({ id: 'daily-play', name: 'A ribbon and a wiggle', description: 'Play with a companion today.', target: 1, reward: 10, xp: 5, type: 'daily' }),
+  'daily-market': Object.freeze({ id: 'daily-market', name: 'Something for the satchel', description: 'Buy one supply at Market lane today.', target: 1, reward: 10, xp: 5, type: 'daily' }),
+  'daily-game': Object.freeze({ id: 'daily-game', name: 'A little spark of play', description: 'Finish either mini-game today, at any score.', target: 1, reward: 15, xp: 5, type: 'daily' }),
+  'daily-rest': Object.freeze({ id: 'daily-rest', name: 'A moment under the leaves', description: 'Give a companion a cosy nap today.', target: 1, reward: 10, xp: 5, type: 'daily' }),
+  'daily-parcel': Object.freeze({ id: 'daily-parcel', name: 'A note from the Lodge', description: 'Collect today’s Explorer Lodge parcel.', target: 1, reward: 10, xp: 5, type: 'daily', explorer: true }),
   'growing-family': Object.freeze({ id: 'growing-family', name: 'A growing family', description: 'Adopt two companions.', target: 2, reward: 30, xp: 10, type: 'permanent' }),
   'arena-debut': Object.freeze({ id: 'arena-debut', name: 'Arena debut', description: 'Win an arena battle.', target: 1, reward: 40, xp: 10, type: 'permanent' }),
   'game-explorer': Object.freeze({ id: 'game-explorer', name: 'Game explorer', description: 'Complete three mini-game rounds.', target: 3, reward: 30, xp: 10, type: 'permanent' }),
 });
+
+/** Original game savings rules, not the source service's rates or account names. */
+export const BANK_TIERS = Object.freeze({
+  seedling: Object.freeze({ id: 'seedling', name: 'Seedling saver', minimum: 0, basisPoints: 500 }),
+  sapling: Object.freeze({ id: 'sapling', name: 'Sapling keeper', minimum: 1000, basisPoints: 750 }),
+  canopy: Object.freeze({ id: 'canopy', name: 'Canopy keeper', minimum: 10000, basisPoints: 1000 }),
+  grove: Object.freeze({ id: 'grove', name: 'Old grove trust', minimum: 100000, basisPoints: 1250 }),
+});
+export const QUEST_DAY_REWARD = 40;
+export const QUEST_WEEK_REWARD = 150;
+const DAILY_QUEST_IDS = Object.keys(QUESTS).filter((id) => QUESTS[id].type === 'daily');
+const DAILY_PROGRESS = { 'daily-play': 'plays', 'daily-market': 'purchases', 'daily-game': 'games', 'daily-rest': 'rests', 'daily-parcel': 'parcels' };
 
 export const OPPONENTS = Object.freeze({
   ashgrub: Object.freeze({ id: 'ashgrub', name: 'Ashgrub', level: 1, hp: 30, attack: 7, reward: 25, xp: 20 }),
@@ -29,6 +46,7 @@ export const OPPONENTS = Object.freeze({
 });
 
 const HOUR = 3_600_000;
+const DAY = 86_400_000;
 const MAX_TIMESTAMP = 253_402_300_799_999;
 const MAX_COUNTER = 1_000_000_000;
 const MAX_SAVE_BYTES = 32_768;
@@ -53,13 +71,13 @@ function fail(message) {
   throw new Error(message);
 }
 
-function record(value, keys, label) {
+function record(value, keys, label, optional = []) {
   if (!value || typeof value !== 'object' || Array.isArray(value)
       || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) {
     fail(`${label} must be an object.`);
   }
   const actual = Object.keys(value);
-  if (actual.length !== keys.length || actual.some((key) => !keys.includes(key))) {
+  if (keys.some((key) => !actual.includes(key)) || actual.some((key) => !keys.includes(key) && !optional.includes(key))) {
     fail(`${label} has missing or unknown fields. Expected: ${keys.join(', ')}.`);
   }
   if (Reflect.ownKeys(value).length !== actual.length) fail(`${label} contains unsupported fields.`);
@@ -77,6 +95,20 @@ function timestamp(value, label = 'Time') {
 
 function dayFor(time) {
   return new Date(time).toISOString().slice(0, 10);
+}
+
+function previousDay(day) {
+  return dayFor(Date.parse(`${day}T00:00:00.000Z`) - DAY);
+}
+
+function freshQuestLog(daily) {
+  return { day: daily.day, progress: { plays: 0, purchases: 0, games: 0, rests: 0, parcels: 0 },
+    claimed: daily.claimed ? ['daily-feast'] : [], lastCompletionDay: null, streak: 0,
+    completedDays: 0, weeklyRewards: 0, lastWeeklyDay: null };
+}
+
+function freshBank(balance = 0) {
+  return { balance, tier: 'seedling', lastInterestDay: null, interestClaims: 0, interestEarned: 0 };
 }
 
 function checkDay(value, label) {
@@ -168,16 +200,28 @@ function permanentProgress(state, id) {
   if (id === 'growing-family') return state.counts.adoptions;
   if (id === 'arena-debut') return state.counts.battleWins;
   if (id === 'game-explorer') return state.counts.games;
-  return state.quests.daily.feeds;
+  return id === 'daily-feast' ? state.quests.daily.feeds : state.questLog.progress[DAILY_PROGRESS[id]];
 }
 
 function validateV2State(state) {
-  record(state, STATE_KEYS, 'Save');
+  record(state, STATE_KEYS, 'Save', ['questLog']);
   timestamp(state.lastUpdated, 'Saved time');
   integer(state.wallet, 0, MAX_COUNTER, 'Pebble balance');
-  record(state.bank, ['balance'], 'Bank');
+  const bankFields = ['tier', 'lastInterestDay', 'interestClaims', 'interestEarned'];
+  record(state.bank, ['balance'], 'Bank', bankFields);
   integer(state.bank.balance, 0, MAX_COUNTER, 'Bank balance');
   if (state.wallet + state.bank.balance > MAX_COUNTER) fail('Combined wallet and bank balance is too large.');
+  if (bankFields.some((key) => Object.hasOwn(state.bank, key))) {
+    record(state.bank, ['balance', ...bankFields], 'Bank');
+    if (typeof state.bank.tier !== 'string' || !Object.hasOwn(BANK_TIERS, state.bank.tier)) fail('Choose an available bank tier.');
+    checkDay(state.bank.lastInterestDay, 'Interest date');
+    integer(state.bank.interestClaims, 0, MAX_COUNTER, 'Interest claims');
+    integer(state.bank.interestEarned, 0, MAX_COUNTER, 'Interest earned');
+    if ((state.bank.lastInterestDay === null) !== (state.bank.interestClaims === 0)
+        || state.bank.interestEarned < state.bank.interestClaims
+        || (state.bank.interestClaims === 0 && state.bank.interestEarned !== 0)) fail('Bank interest history is inconsistent.');
+    if (state.bank.lastInterestDay && state.bank.lastInterestDay > dayFor(state.lastUpdated)) fail('Interest date cannot be after the saved time.');
+  }
   record(state.inventory, Object.keys(ITEMS), 'Inventory');
   for (const id of Object.keys(ITEMS)) integer(state.inventory[id], 0, 999, `${ITEMS[id].name} quantity`);
   record(state.counts, COUNT_KEYS, 'Activity counts');
@@ -252,6 +296,38 @@ function validateV2State(state) {
     if (typeof id !== 'string' || !Object.hasOwn(QUESTS, id) || QUESTS[id].type !== 'permanent' || permanentProgress(state, id) < QUESTS[id].target) fail('Quest claim does not match a completed quest.');
   }
   if (state.counts.questsClaimed < state.quests.claimed.length + Number(state.quests.daily.claimed)) fail('Quest claim count is inconsistent.');
+  if (Object.hasOwn(state, 'questLog')) {
+    const log = state.questLog;
+    record(log, ['day', 'progress', 'claimed', 'lastCompletionDay', 'streak', 'completedDays', 'weeklyRewards', 'lastWeeklyDay'], 'Quest log');
+    checkDay(log.day, 'Quest log date');
+    if (log.day !== savedDay) fail('Quest log date must match the saved UTC day.');
+    record(log.progress, ['plays', 'purchases', 'games', 'rests', 'parcels'], 'Quest progress');
+    for (const [key, value] of Object.entries(log.progress)) {
+      integer(value, 0, MAX_COUNTER, `Daily ${key}`);
+      if (value > state.counts[key === 'parcels' ? 'lodgeParcels' : key]) fail(`Daily ${key} exceed the lifetime count.`);
+    }
+    if (!Array.isArray(log.claimed) || log.claimed.length > 6 || new Set(log.claimed).size !== log.claimed.length) fail('Daily quest claims must be a list without duplicates.');
+    for (const id of log.claimed) {
+      if (typeof id !== 'string' || !DAILY_QUEST_IDS.includes(id) || permanentProgress(state, id) < QUESTS[id].target) fail('Daily quest claim does not match its completed objective.');
+    }
+    if (log.claimed.includes('daily-feast') !== state.quests.daily.claimed) fail('Daily feast claim history is inconsistent.');
+    if (state.counts.questsClaimed < state.quests.claimed.length + log.claimed.length) fail('Quest claim count is inconsistent.');
+    checkDay(log.lastCompletionDay, 'Quest completion date');
+    checkDay(log.lastWeeklyDay, 'Weekly quest date');
+    integer(log.streak, 0, 7, 'Quest streak');
+    integer(log.completedDays, 0, MAX_COUNTER, 'Completed quest days');
+    integer(log.weeklyRewards, 0, MAX_COUNTER, 'Weekly quest rewards');
+    if ((log.lastCompletionDay === null) !== (log.completedDays === 0)
+        || (log.lastWeeklyDay === null) !== (log.weeklyRewards === 0)
+        || log.weeklyRewards > Math.floor(log.completedDays / 7)
+        || log.completedDays * 5 > state.counts.questsClaimed) fail('Quest completion history is inconsistent.');
+    if ((log.lastCompletionDay && log.lastCompletionDay > savedDay)
+        || (log.lastWeeklyDay && (!log.lastCompletionDay || log.lastWeeklyDay > log.lastCompletionDay))) fail('Quest reward dates cannot be after the saved history.');
+    if (log.streak > 0 && (!log.lastCompletionDay || log.lastCompletionDay < previousDay(savedDay)
+        || log.streak > log.completedDays)) fail('Quest streak does not match its completion history.');
+    if (log.lastCompletionDay === savedDay && (log.claimed.length < 5 || log.streak === 0)) fail('Today’s quest completion needs five claimed objectives.');
+    if (log.streak === 7 && log.lastWeeklyDay !== log.lastCompletionDay) fail('A seventh quest day needs its weekly reward history.');
+  }
   record(state.battleWins, Object.keys(OPPONENTS), 'Arena victories');
   for (const won of Object.values(state.battleWins)) if (typeof won !== 'boolean') fail('Arena victory markers must be true or false.');
   if ((state.battleWins.stonebeak && !state.battleWins.ashgrub) || (state.battleWins.frostwisp && !state.battleWins.stonebeak)) fail('Arena victories must follow opponent progression.');
@@ -333,7 +409,7 @@ export function createState(now = Date.now()) {
     pets: [],
     activePetId: null,
     wallet: 120,
-    bank: { balance: 0 },
+    bank: freshBank(),
     inventory: { berry: 3, acorn: 2, ribbon: 1, leafcap: 0, moonscarf: 0, potion: 0, 'lodge-deed': 0 },
     lastUpdated: now,
     daily: { lastClaimDay: null },
@@ -341,6 +417,7 @@ export function createState(now = Date.now()) {
     counts: Object.fromEntries(COUNT_KEYS.map((id) => [id, 0])),
     achievements: [],
     quests: { daily: { day: dayFor(now), feeds: 0, claimed: false }, claimed: [] },
+    questLog: freshQuestLog({ day: dayFor(now), claimed: false }),
     battle: null,
     battleWins: { ashgrub: false, stonebeak: false, frostwisp: false },
     membership: { tier: 'free', lastParcelDay: null },
@@ -351,7 +428,13 @@ export function createState(now = Date.now()) {
 /** Validate and migrate v1 without changing its economy, clock or companion stats. */
 export function migrateState(state) {
   validateState(state);
-  if (state.version === 2) return clone(state);
+  if (state.version === 2) {
+    const next = clone(state);
+    if (!Object.hasOwn(next.bank, 'tier')) next.bank = freshBank(next.bank.balance);
+    if (!Object.hasOwn(next, 'questLog')) next.questLog = freshQuestLog(next.quests.daily);
+    validateState(next);
+    return next;
+  }
   const next = createState(state.lastUpdated);
   next.wallet = state.wallet;
   next.inventory = { ...next.inventory, ...state.inventory };
@@ -376,6 +459,12 @@ export function advanceTime(state, now = Date.now()) {
   for (const pet of next.pets) changeStats(pet, { satiety: -3 * elapsedHours, happiness: -2 * elapsedHours, energy: -elapsedHours });
   next.lastUpdated = effectiveTime;
   if (next.quests.daily.day !== dayFor(effectiveTime)) next.quests.daily = { day: dayFor(effectiveTime), feeds: 0, claimed: false };
+  if (next.questLog.day !== dayFor(effectiveTime)) {
+    const old = next.questLog;
+    next.questLog = { ...freshQuestLog(next.quests.daily), lastCompletionDay: old.lastCompletionDay,
+      streak: old.lastCompletionDay === previousDay(dayFor(effectiveTime)) && old.streak < 7 ? old.streak : 0,
+      completedDays: old.completedDays, weeklyRewards: old.weeklyRewards, lastWeeklyDay: old.lastWeeklyDay };
+  }
   return next;
 }
 
@@ -420,6 +509,7 @@ export function claimLodgeParcel(state, now = Date.now()) {
   next.wallet += 20;
   next.inventory.berry += 1;
   next.counts.lodgeParcels += 1;
+  next.questLog.progress.parcels += 1;
   return finish(next);
 }
 
@@ -452,11 +542,13 @@ export function care(state, action, itemId, now = Date.now()) {
     if (pet.stats.energy < 12) fail('Your companion needs a rest before playing.');
     changeStats(pet, { happiness: 20, energy: -12, satiety: -4 });
     next.counts.plays += 1;
+    next.questLog.progress.plays += 1;
     gainXp(pet, 6);
   } else if (action === 'rest') {
     if (itemId !== undefined && itemId !== null) fail('Rest does not use an item.');
     changeStats(pet, { energy: 30, satiety: -5, happiness: 3 });
     next.counts.rests += 1;
+    next.questLog.progress.rests += 1;
     gainXp(pet, 2);
   } else fail('Unknown care action. Choose feed, play or rest.');
   return finish(next);
@@ -470,6 +562,7 @@ export function purchase(state, itemId, now = Date.now()) {
   next.wallet -= ITEMS[itemId].price;
   next.inventory[itemId] += 1;
   next.counts.purchases += 1;
+  next.questLog.progress.purchases += 1;
   return finish(next);
 }
 
@@ -496,6 +589,7 @@ export function claimGameReward(state, score, now = Date.now(), type = 'firefly'
   next.game.earned += reward;
   next.wallet += reward;
   next.counts.games += 1;
+  next.questLog.progress.games += 1;
   next.game.rounds[type] += 1;
   changeStats(pet, { happiness: 3 });
   gainXp(pet, 5);
@@ -522,6 +616,39 @@ export function withdraw(state, amount, now = Date.now()) {
   return finish(next);
 }
 
+export function bankInterest(state, now = Date.now()) {
+  const next = advanceTime(state, now);
+  const tier = BANK_TIERS[next.bank.tier];
+  const amount = Math.ceil(next.bank.balance * tier.basisPoints / 3_650_000);
+  const day = dayFor(next.lastUpdated);
+  const claimed = next.bank.lastInterestDay === day;
+  return { day, tier, amount, claimed, ready: amount > 0 && !claimed
+    && next.wallet + next.bank.balance + amount <= MAX_COUNTER };
+}
+
+export function upgradeBankTier(state, tierId, now = Date.now()) {
+  const next = advanceTime(state, now);
+  const ids = Object.keys(BANK_TIERS);
+  if (typeof tierId !== 'string' || !Object.hasOwn(BANK_TIERS, tierId)) fail('Choose an available bank tier.');
+  if (ids.indexOf(tierId) <= ids.indexOf(next.bank.tier)) fail('Choose a higher savings tier.');
+  if (next.bank.balance < BANK_TIERS[tierId].minimum) fail(`Save ${BANK_TIERS[tierId].minimum} pebbles in the bank to unlock this tier.`);
+  next.bank.tier = tierId;
+  return finish(next);
+}
+
+export function claimBankInterest(state, now = Date.now()) {
+  const next = advanceTime(state, now);
+  const offer = bankInterest(next, next.lastUpdated);
+  if (offer.claimed) fail('You have already collected today’s interest. Return tomorrow (UTC).');
+  if (offer.amount === 0) fail('Deposit at least one pebble before collecting interest.');
+  if (!offer.ready) fail('Collecting interest would exceed the combined wallet and bank limit. Spend some pebbles first.');
+  next.bank.balance += offer.amount;
+  next.bank.lastInterestDay = offer.day;
+  next.bank.interestClaims += 1;
+  next.bank.interestEarned += offer.amount;
+  return finish(next);
+}
+
 export function equipAccessory(state, itemId, slot, now = Date.now()) {
   const next = advanceTime(state, now);
   requireNoBattle(next);
@@ -544,18 +671,59 @@ export function questProgress(state, questId, now = Date.now()) {
   if (typeof questId !== 'string' || !Object.hasOwn(QUESTS, questId)) fail('Choose an available quest.');
   const quest = QUESTS[questId];
   const progress = permanentProgress(next, questId);
-  const claimed = quest.type === 'daily' ? next.quests.daily.claimed : next.quests.claimed.includes(questId);
-  return { id: questId, progress, target: quest.target, ready: progress >= quest.target && !claimed, claimed, reward: quest.reward, xp: quest.xp };
+  const claimed = quest.type === 'daily' ? next.questLog.claimed.includes(questId) : next.quests.claimed.includes(questId);
+  const available = !quest.explorer || next.membership.tier === 'explorer';
+  return { id: questId, progress, target: quest.target, ready: available && progress >= quest.target && !claimed, claimed, reward: quest.reward, xp: quest.xp };
+}
+
+export function dailyQuestIds(state) {
+  return DAILY_QUEST_IDS.filter((id) => !QUESTS[id].explorer || state.membership.tier === 'explorer');
+}
+
+export function questDayProgress(state, now = Date.now()) {
+  const next = advanceTime(state, now);
+  const log = next.questLog;
+  const day = dayFor(next.lastUpdated);
+  const claimed = log.lastCompletionDay === day;
+  const nextStreak = log.lastCompletionDay === previousDay(day) && log.streak > 0 && log.streak < 7 ? log.streak + 1 : 1;
+  const weeklyReward = nextStreak === 7 ? QUEST_WEEK_REWARD : 0;
+  return { day, claimedQuests: log.claimed.length, required: 5, claimed, streak: log.streak,
+    nextStreak, reward: QUEST_DAY_REWARD, weeklyReward, completedDays: log.completedDays,
+    weeklyRewards: log.weeklyRewards, ready: !claimed && log.claimed.length >= 5
+      && next.wallet + next.bank.balance + QUEST_DAY_REWARD + weeklyReward <= MAX_COUNTER };
+}
+
+export function claimQuestDay(state, now = Date.now()) {
+  const next = advanceTime(state, now);
+  requireNoBattle(next);
+  requirePet(next);
+  const offer = questDayProgress(next, next.lastUpdated);
+  if (offer.claimed) fail('You have already collected today’s quest completion gift. Return tomorrow (UTC).');
+  if (offer.claimedQuests < 5) fail('Claim five distinct daily quest rewards before completing the day.');
+  if (!offer.ready) fail('The quest completion gift would exceed the combined wallet and bank limit. Spend some pebbles first.');
+  next.wallet += offer.reward + offer.weeklyReward;
+  next.questLog.lastCompletionDay = offer.day;
+  next.questLog.streak = offer.nextStreak;
+  next.questLog.completedDays += 1;
+  if (offer.weeklyReward) {
+    next.questLog.lastWeeklyDay = offer.day;
+    next.questLog.weeklyRewards += 1;
+  }
+  return finish(next);
 }
 
 export function claimQuest(state, questId, now = Date.now()) {
   const next = advanceTime(state, now);
   requireNoBattle(next);
   const pet = requirePet(next);
+  if (QUESTS[questId]?.explorer && next.membership.tier !== 'explorer') fail('Join the Explorer Lodge to claim this extra daily quest.');
   const progress = questProgress(next, questId, next.lastUpdated);
   if (progress.claimed) fail('You have already claimed this quest reward.');
   if (!progress.ready) fail('Complete the quest objective before claiming its reward.');
-  if (QUESTS[questId].type === 'daily') next.quests.daily.claimed = true;
+  if (QUESTS[questId].type === 'daily') {
+    next.questLog.claimed.push(questId);
+    if (questId === 'daily-feast') next.quests.daily.claimed = true;
+  }
   else next.quests.claimed.push(questId);
   next.wallet += progress.reward;
   next.counts.questsClaimed += 1;

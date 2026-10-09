@@ -1,4 +1,4 @@
-import { SPECIES, ITEMS, createState, adopt, advanceTime, care, purchase, claimDaily, claimGameReward, parseSave, serialiseSave, readActivePet, selectPet, deposit, withdraw, equipAccessory, claimQuest, startBattle, battleAction, petCapacity, setMembership, claimLodgeParcel, useExpansion } from './model.js';
+import { SPECIES, ITEMS, createState, adopt, advanceTime, care, purchase, claimDaily, claimGameReward, parseSave, serialiseSave, readActivePet, selectPet, deposit, withdraw, equipAccessory, claimQuest, startBattle, battleAction, petCapacity, setMembership, claimLodgeParcel, useExpansion, claimBankInterest, upgradeBankTier, claimQuestDay } from './model.js';
 import { creature } from './art.js';
 import { withSaveLock } from './persistence.js';
 import { renderGarden, renderMarket, renderRealm, renderArena, renderGlen, itemSymbols, battleActive } from './views.js';
@@ -202,6 +202,7 @@ function positionCompanion() {
 compactWorld?.addEventListener('change', positionCompanion);
 function render() {
   const bankDraft = $('#bank-amount')?.value;
+  const bankTierDraft = $('#bank-tier')?.value;
   const focused = document.activeElement;
   const focusedId = focused?.id;
   const focusedInArea = Boolean(focused?.closest('#area-content'));
@@ -219,6 +220,8 @@ function render() {
   $('#area-content').innerHTML = { garden, market, glen, realm, arena }[currentArea]();
   positionCompanion();
   if (bankDraft !== undefined && $('#bank-amount')) $('#bank-amount').value = bankDraft;
+  const bankTier = $('#bank-tier');
+  if (bankTierDraft && bankTier && Array.from(bankTier.options).some((option) => option.value === bankTierDraft && !option.disabled)) bankTier.value = bankTierDraft;
   const restoredFocus = focusedInArea ? focusedId ? document.getElementById(focusedId)
     : focusedAction ? document.querySelector(`#area-content button${focusedAction}`) : null : null;
   if (restoredFocus && !restoredFocus.disabled) restoredFocus.focus({preventScroll:true});
@@ -497,7 +500,13 @@ document.addEventListener('click', (event) => {
     const operation = target.id === 'bank-deposit' ? deposit : withdraw;
     update((s) => operation(s,amount,Date.now()), target.id === 'bank-deposit' ? `${amount} pebbles tucked safely away.` : `${amount} pebbles returned to your pocket.`);
   }
+  if (target.id === 'bank-interest') update((s) => claimBankInterest(s,Date.now()), 'A little growth. Today’s interest is saved in the Pebble Keep.');
+  if (target.id === 'bank-upgrade') {
+    const tier = $('#bank-tier').value;
+    update((s) => upgradeBankTier(s,tier,Date.now()), 'Your savings have a new home. This tier stays yours after withdrawals.');
+  }
   if (target.dataset.claimQuest) update((s) => claimQuest(s,target.dataset.claimQuest,Date.now()), 'A little quest, completed. Gift and experience collected!');
+  if (target.id === 'quest-day-complete') update((s) => claimQuestDay(s,Date.now()), 'Today’s quest gift is collected. Seven days in a row earn an extra weekly gift.');
   if (target.dataset.battleStart) update((s) => startBattle(s,target.dataset.battleStart,Date.now()), 'A friendly challenge begins. Choose your first move.');
   if (target.dataset.battleAction) update((s) => battleAction(s,target.dataset.battleAction,Date.now()));
   if (target.dataset.gameMode) { stopGame(); gameMode = target.dataset.gameMode; render(); }

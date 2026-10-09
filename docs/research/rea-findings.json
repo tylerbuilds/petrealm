@@ -1,0 +1,88 @@
+{
+  "method": "Independent reconstruction from anonymous publicly observable behaviour. REA evidence separates observed page content, static inferences and unknown internals.",
+  "tool": {
+    "name": "rea-agents",
+    "version": "6.2.0",
+    "upstream": "https://github.com/morluto/rea",
+    "upstream_revision": "6ce3288f3bd65a886e47905455ed5c9b661015e6",
+    "license": "MIT"
+  },
+  "publication_scope": "Summaries, provenance and receipt digests only. Raw site DOM, screenshots, third-party scripts, network logs and browser profiles are not included.",
+  "captured_at_utc": "2026-10-09T21:08:31.540795+00:00",
+  "project": "Petrealm",
+  "reference_product": "Neopets",
+  "receipts": [
+    {
+      "source_url": "https://www.neopets.com/",
+      "page_type": "Public game homepage",
+      "status": "access-denied",
+      "evidence_id": "ev_ac53ec753d799d1efe66e2969bda9e668812fa03fae8a06a6854274ba30d81db",
+      "receipt_sha256": "8f1d43131d8d953297a06e3ca44185924617676fb1e24c2f8ec84b99f0bbdfc1",
+      "final_url": "https://www.neopets.com/",
+      "artifacts": {
+        "screenshot": {
+          "state": "captured",
+          "sha256": "d81174ccb375fb346b30b4d01bb30e8c4b61c98da1c541ce75557cce6c974a19"
+        },
+        "dom": {
+          "state": "captured",
+          "sha256": "e6644c7755f86f3e4d2a25118e084459dfe0170fa50e8368fe5c3ba9f7d015a0"
+        },
+        "accessibility": {
+          "state": "captured",
+          "sha256": "4496d542e1eb8e15412b06b03b0fa87f4c4be2091d1bea1469b27307690596a7"
+        }
+      },
+      "observed_events": 5,
+      "dropped_events": 0,
+      "capture_completeness": {
+        "status": "complete",
+        "equality_eligible": true,
+        "missing_sections": [],
+        "truncated_sections": []
+      },
+      "browser_cleanup": "terminated-owned-process"
+    },
+    {
+      "source_url": "https://portal.neopets.com/",
+      "page_type": "Public portal redirect",
+      "status": "access-denied",
+      "evidence_id": "ev_525ed36a988fd8a6f9f26adc2382f6f0ad03011f765ba0ecd70f676b2a097527",
+      "receipt_sha256": "96563942ed57dde863c2782068aa847cf504c8eacda269c7d9351f437a32e6a4",
+      "final_url": "http://www.neopets.com/",
+      "artifacts": {
+        "screenshot": {
+          "state": "captured",
+          "sha256": "cfec8b92373c723e960fd5c692858aad958a9206f912d354965311b0d261fda7"
+        },
+        "dom": {
+          "state": "captured",
+          "sha256": "e4b4dcec4e2d80524121ca910c0f708562ebb36ed8fb62a2a224b99988372ae3"
+        },
+        "accessibility": {
+          "state": "captured",
+          "sha256": "432126c33c065ac51266d45055c72a4df92256d5112b837a17df00cae42dc7a2"
+        }
+      },
+      "observed_events": 11,
+      "dropped_events": 0,
+      "capture_completeness": {
+        "status": "complete",
+        "equality_eligible": true,
+        "missing_sections": [],
+        "truncated_sections": []
+      },
+      "browser_cleanup": "terminated-owned-process"
+    }
+  ],
+  "observations": [
+    "Anonymous requests to both the main site and portal reached an access-denied response. The portal redirected to the main site."
+  ],
+  "implementation_choices": [
+    "Build an original virtual-pet game with independently designed pets, care actions, inventory, simple games and a local economy. Treat these mechanics as product design choices until original game behaviour is observed."
+  ],
+  "unknowns": [
+    "No playable Neopets account, pet-care interaction, game, shop, economy or authenticated runtime was inspected.",
+    "Access restrictions were preserved; no challenge bypass, account login or private data retrieval was attempted."
+  ]
+}

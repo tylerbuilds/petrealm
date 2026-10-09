@@ -1,0 +1,22 @@
+{
+  "name": "petrealm",
+  "version": "0.1.0",
+  "private": true,
+  "description": "An original, local-first virtual pet world for your browser.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": "^22.19.0 || >=24.11.0"
+  },
+  "scripts": {
+    "dev": "node scripts/serve.mjs --port 4203",
+    "start": "node scripts/serve.mjs --port 4203",
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/serve.mjs --dir dist --port 4203",
+    "test": "node --test",
+    "test:browser": "node scripts/browser-smoke.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0"
+  }
+}

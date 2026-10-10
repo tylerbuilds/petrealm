@@ -4,7 +4,7 @@ These are Petrealm’s own rules. The [feature comparison](parity-ledger.md) exp
 
 ## Companions and space
 
-A new world starts with 120 pebbles, three sunberries, two honey acorns and one rainbow ribbon. Adoption is free. Each friend keeps their own name, species, care, outfit, XP and bond. Your chosen friend receives care, game Happiness and quest XP. All friends lose some stats while you’re away.
+A new world starts with 120 pebbles, three sunberries, two honey acorns and one rainbow ribbon. Adoption is free. Each friend keeps their own name, species, care, outfit, XP and bond. Your chosen friend receives care, game Happiness and quest XP. Time away does not reduce care, bond, traits or earned progress.
 
 Your meadow starts with seven spaces. Joining the free Explorer Lodge adds seven more. Buy a 250-pebble expansion deed, then use it to add one permanent space. Each deed is used up. You can use up to twelve, for a maximum of 26 friends. You can’t leave the Lodge if the remaining spaces would be too few. Friends aren’t removed to make room. There’s no release, transfer, account or subscription service.
 
@@ -48,7 +48,7 @@ Collect interest once each UTC day. The amount is `ceil(bank balance × annual b
 
 ## Time and experience
 
-For each hour away, Fullness drops by 3, Happiness by 2 and Energy by 1. Parts of an hour count too. Each update counts up to 72 hours and stops stats at zero. The saved time then moves forward, so reloading won’t count those hours again. Turning the clock back won’t add stats or move the saved time backwards.
+Elapsed time advances the saved clock and daily reward dates, but never reduces Fullness, Happiness or Energy. Activities can still spend energy or fullness at their stated costs. Turning the clock back cannot reopen claimed days or advance an expedition before its saved return time.
 
 Low stats won’t make your friends die or disappear. They can nap outside a match. Every 100 XP raises a level, up to level 20 and 1,999 XP. Care, games, quests and wins give XP. Each friend keeps their own progress. The clock and save files belong to the player; these are local game rules, not a server-run economy.
 
@@ -71,7 +71,7 @@ Mallow sends 40 pebbles once each UTC day. Explorer Lodge members can also colle
 
 After doing a daily quest, collect its gift. Collect any five different daily quest gifts to unlock a 40-pebble bonus. The Lodge’s sixth quest can replace one of the other five. Collecting all six won’t give another bonus. Joining or leaving the Lodge won’t erase a collected gift or let you collect it again.
 
-Collect the daily quest bonus seven UTC days in a row for an extra 150 pebbles. On day seven, the 40-pebble gift and 150-pebble bonus arrive together. The count starts again the next day; it doesn’t follow calendar weeks. At midnight UTC, unfinished daily progress and uncollected gifts expire. Skipping the daily bonus breaks the count, even if you did the quests. Lifetime counts stay saved. There’s no catch-up or streak-save ticket. Turning the clock back won’t reopen a finished day. If there’s no room for a reward, it stays unclaimed and nothing is partly paid.
+Every seven completed quest days earn an extra 150 pebbles alongside the seventh 40-pebble gift. Days need not be consecutive: time away keeps the accumulated completion count. Older worlds retain completed-day totals and rewards already paid; the new cycle follows that lifetime total. At midnight UTC, unfinished daily tasks and uncollected daily gifts reset. Turning the clock back won’t reopen a finished day. If there’s no room for a reward, it stays unclaimed and nothing is partly paid.
 
 | Lasting quest | Requirement | Reward, once per world |
 | --- | --- | --- |
@@ -85,7 +85,7 @@ Quest XP goes to your chosen friend. Finish a match before collecting a quest or
 
 **Firefly flight:** catch the moving light by pressing **Catch the light** or Space. Points depend on how close it is to the centre of the track. The scoring range is 12% of the track on either side of the centre, at 50%. Each catch scores `max(0, round(10 × (1 − distance / 0.12)))`. Ten catches or thirty seconds end the round. Catches must be at least 350 ms apart, and the light speeds up a little each time.
 
-**Memory meadow:** turn over twelve shuffled cards to find six pairs. A mismatch stays visible for 650 ms before hiding. Finding all six scores `max(0, 100 − 2 × (turns − 6))`. The round lasts up to 75 seconds. If time runs out, each matched pair gives ten points, up to 50 on an unfinished board.
+**Memory meadow:** turn over twelve shuffled cards to find six pairs. A mismatch stays visible for 1.5 seconds before hiding; each revealed card is also named in the status text. Finding all six scores `max(0, 100 − 2 × (turns − 6))`. There is no timer by default. The optional timed challenge lasts up to 75 seconds. If its timer runs out, each matched pair gives ten points, up to 50 on an unfinished board.
 
 Each finished round gives 3 Happiness, 5 XP and `floor(score × 0.4)` pebbles. Scores are whole numbers from 0 to 100. You can earn up to 40 pebbles per round and 120 across both games each UTC day. After that, finished rounds still count and give Happiness and XP.
 
@@ -113,9 +113,19 @@ Whisperwood opens at zero bond, Glowpool at 2 and Windridge at 4 for each friend
 
 An unfinished outing saves its friend, route, story, run ID, expected step and choices. Each answer must match that run and step, so duplicate clicks can’t skip a scene or pay twice. Heading home early keeps the starting cost and earns nothing. Finish or leave before switching friends, adopting or starting a match. Care, shopping, practice, blooming, games and gifts stay available. A queued choice is refused if its friend, world or trail view changed, or a dialog opened. A display change is refused if another tab moved the treasures. Resource or counter limits are checked before a cost is taken.
 
+## Companion stories and expeditions
+
+Care and exploration teach three bounded tendencies: curiosity (ribbon play), kindness (feeding and resting), and courage (practice). Completed guided trails add two to the final choice’s tendency; expedition intentions add three. Each tendency stops at 100 and never decays. Existing individual care records initialise the corresponding tendencies when an older world opens. The original chosen personality, species, art and growth remain intact.
+
+A world can have one asynchronous expedition underway. Start with a recognised route and one of `notice`, `help` or `brave`. Finish a current guided trail or arena match before departing. Departure is free and does not lock care, other friends or play. All three routes are open. The first expedition in the world takes 30 seconds; subsequent Whisperwood, Glowpool and Windridge expeditions take 2, 5 and 10 minutes respectively.
+
+Returns have no expiry. Claiming checks the saved return time and run ID, awards the departing friend once, adds three to the chosen tendency, and records a deterministic story and a route keepsake. Stories combine destination, intention, one of three variations, species and shared care (or original personality). Expeditions award no currency, XP or competitive advantage. Repeated keepsakes remain a single collection entry. Both expedition and guided-trail finds can be shown in the three meadow display spots.
+
+Each friend retains the latest three structured expedition memories plus lifetime completed trips and learned tendencies. Earlier narrative pages roll off as new ones arrive; collected treasures and earned traits remain. Keep a favourite biography as an offline HTML keepsake, or download their current SVG portrait. Neither replaces the JSON world backup.
+
 ## Save migration, coordination and recovery
 
-The browser still uses `petrealm.save.v1` and `petrealm.backup.v1` to find installed worlds. Their JSON save version is 3. Accepted version 1 and 2 files are upgraded before play. `petrealm.world-generation.v1` changes when a world is replaced, not after ordinary actions.
+The browser still uses `petrealm.save.v1` and `petrealm.backup.v1` to find installed worlds. Their JSON save version is 3, with a strictly validated optional `companionship.version: 1` extension. Older v3 files receive that extension on opening; earlier app releases cannot read the expanded saves. Keep a save copy before downgrading the app. Accepted version 1 and 2 files are upgraded before play. `petrealm.world-generation.v1` changes when a world is replaced, not after ordinary actions.
 
 Version 1 files are checked against their original schema before upgrading. Their companion becomes `pet-1`, keeping stats, pebbles, supplies, gifts, care counts and achievements. New systems start empty. Before an automatic overwrite, the current v1 text is kept at `petrealm.migration-original.v1` and can be downloaded from Save. Ordinary backup swaps leave it there, though a different v1 upgrade can replace that v1 original. If the original can’t be kept, the saved world stays unchanged and the unsaved upgrade can be downloaded.
 
@@ -127,6 +137,6 @@ Version 3 needs complete trail records. Older files gain zero trips and bond and
 
 If an earlier v2 original is already kept, a different v2 world won’t overwrite it or the current save. The new progress stays in memory and can be downloaded. Save offers this world’s original and the earlier one separately. After downloading and checking the file, **I’ve kept the original · finish upgrade** checks the same saved text and world before saving the new v3 progress. The earlier original and backup stay intact. If the world changed, the action is refused. If saving fails, the pending original and saved bytes stay intact. This doesn’t create an ever-growing archive.
 
-Save files can be up to 32 KiB. Checks refuse missing or extra fields, unsupported versions, duplicate keys, too much nesting, invalid numbers or dates, mismatched IDs or levels, too many worn copies, invalid balances or gifts, impossible match results and repeated reward records. Failed imports leave the world unchanged. Restoring first keeps the newest world as a backup, including unsaved progress when appropriate. If a write fails, backup and world-marker changes are rolled back. A broken original remains available to download, replace with another save or leave for a fresh world. Broken backup text can also be downloaded without restoring it.
+Save files can be up to 32 KiB. Larger populated worlds use compact JSON when indentation would exceed the limit. Checks refuse missing or extra fields, unsupported versions, duplicate keys, too much nesting, invalid numbers or dates, mismatched IDs or levels, too many worn copies, invalid balances or gifts, impossible match results and repeated reward records. Failed imports leave the world unchanged. Restoring first keeps the newest world as a backup, including unsaved progress when appropriate. If a write fails, backup and world-marker changes are rolled back. A broken original remains available to download, replace with another save or leave for a fresh world. Broken backup text can also be downloaded without restoring it.
 
 Every save action uses the same browser lock, or an IndexedDB transaction when Web Locks aren’t available, and reads the latest stored world before writing. This includes care, games, quests, matches, upgrades, timers and replacements. Storage events also read current data rather than applying an old event. If saving fails, changes stay in memory while the saved world is unchanged. If another tab then saves a different world, further changes are blocked until you download or reload; the unsaved world remains downloadable. There’s no cloud sync or server clock.

@@ -89,7 +89,7 @@ test('the roster follows free/explorer capacities, has stable IDs and independen
   assert.throws(() => setMembership(state, 'free', NOW), /needs enough room/);
   const decayed = advanceTime(state, NOW + 3_600_000);
   for (let index = 0; index < state.pets.length; index += 1) {
-    assert.equal(decayed.pets[index].stats.energy, state.pets[index].stats.energy - 1);
+    assert.equal(decayed.pets[index].stats.energy, state.pets[index].stats.energy);
   }
   assert.deepEqual(parseSave(serialiseSave(state)), state);
 });

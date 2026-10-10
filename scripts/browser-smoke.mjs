@@ -4,6 +4,7 @@ import { readFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { smokeWorldArt } from './world-art-smoke.mjs';
 import { smokeAppBoundary } from './app-boundary-smoke.mjs';
+import { smokeCompanionExperience } from './companion-smoke.mjs';
 const {name} = JSON.parse(await readFile('package.json', 'utf8'));
 const port = 4322;
 const server = spawn(process.execPath, ['scripts/serve.mjs', '--dir', 'dist', '--port', String(port)], {stdio:['ignore','pipe','pipe']});
@@ -181,12 +182,11 @@ try {
     const practised=await world();
     expect(practised.wallet).toBe(beforePractice.wallet-20);
     expect(chosen(practised).xp).toBe(chosen(beforePractice).xp+18);
-    const elapsedHours=(practised.lastUpdated-beforePractice.lastUpdated)/3600000;
-    expect(chosen(practised).stats.energy).toBeCloseTo(chosen(beforePractice).stats.energy-12-elapsedHours,9);
+    expect(chosen(practised).stats.energy).toBe(chosen(beforePractice).stats.energy-12);
     for(let i=0;i<2;i++){
       const previous=beforePractice.pets[i],current=practised.pets[i];
       expect({...current,stats:previous.stats}).toEqual(previous);
-      for(const[stat,rate]of[['satiety',3],['happiness',2],['energy',1]])expect(current.stats[stat]).toBeCloseTo(Math.max(0,previous.stats[stat]-rate*elapsedHours),9);
+      expect(current.stats).toEqual(previous.stats);
     }
     await page.reload();
     expect(chosen(await world()).journey).toEqual(chosen(practised).journey);
@@ -231,6 +231,7 @@ try {
     const boundary = await smokeAppBoundary({ browser, expect, output: resolve(output, 'app-boundaries'), url: `http://127.0.0.1:${port}/` });
     expect(boundary.allFixed).toBe(true);
     expect(boundary.results).toHaveLength(10);
+    await smokeCompanionExperience({browser, expect, output:resolve(output,'companion-experience'), url:`http://127.0.0.1:${port}/`});
   } else throw new Error(`Unknown app: ${name}`);
   await page.screenshot({path:resolve(output,'desktop.png'),fullPage:true,animations:'disabled'});
   expect(errors, 'browser errors').toEqual([]);

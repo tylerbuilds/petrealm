@@ -1,5 +1,16 @@
 # Checks by release
 
+## 0.8 companion experience — Fedora verification, 10 October 2026
+
+`npm test` passed **150 tests**, followed by a successful static build and the full `npm run test:browser` suite on Fedora, Node.js 25.6.1 and Playwright Chromium 156.0.8078.4. The original gameplay, scenery and ten application-boundary checks remain included.
+
+The new built-app checks adopted a friend, chose an expedition, reloaded while away, advanced a controlled clock beyond the return time and queued simultaneous claims from two tabs. Only one story and keepsake were granted. A later outing returned to its original friend while a different companion was selected; both ownership and the visible return survived reload. HTML biography and SVG portrait downloads succeeded. Expedition choice and radio focus survived the one-minute autosave. Memory meadow completed after more than 90 seconds in untimed mode; keyboard card play and Space navigation were exercised.
+
+Desktop and 390px/320px mobile captures were reviewed. Page overflow and clipped destination names were checked separately. The run recorded no browser errors. A maximum populated model fixture with 26 Unicode-named companions, 78 memories, long timestamps, large counters and existing match/trail records round-tripped within **30,605 of 32,768 bytes**.
+
+The [machine-readable receipt](research/companion-verification.json) records checks and source hashes. Generated screenshots and downloads are in `test-results/browser-smoke/companion-experience/`. These are synthetic local test worlds. No physical device test, new macOS CI run, public deployment or retention study is claimed.
+
+
 For remote results, check the [Linux/macOS workflow](https://github.com/tylerbuilds/petrealm/actions/workflows/verify.yml) for the exact release commit. It runs Node tests, builds, Chromium smoke and static-server checks on Ubuntu and macOS. Both platform jobs must pass before Pages publication. Local results alone do not prove a macOS run or a working hosted site. Petrealm runs in a browser, has no native installer and does not claim to reproduce the full Neopets service.
 
 ## 0.6.1 wording update

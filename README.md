@@ -8,15 +8,18 @@
 
 Petrealm is a browser game about looking after animal and monster friends. Choose a companion, share snacks, play games and explore together. Bring treasures home from the little trails and find somewhere for them in your meadow.
 
+Your friend remembers shared care and brings home stories from gentle expeditions. Their curiosity, kindness and courage grow through what you do together. Time away never lowers their care or takes away earned progress.
+
 There are nine original companions to meet. Each keeps their own personality, outfit, experience and bond with you. Care, games and practice help them bloom into a new look. Exploring together builds bond and opens more paths.
 
 ## Start exploring
 
 1. Choose a friend and personality, give them a name, then press **Let’s go!**.
 2. In the meadow, share a treat, play with the ribbon or have a cosy nap. **Fullness**, **Happiness** and **Energy** show how your friend feels.
-3. Follow a **Trails** sign. Make three choices, find a treasure, then choose **Show in meadow** to bring it home. You can visit another place and return to your unfinished outing later.
-4. Visit **Games** to catch fireflies or find matching flowers. Earn pebbles for snacks, outfits and practice.
-5. Open **Map & quests** for more places and things to try, or **Training** to practise and play a friendly match.
+3. Open **Our journal** to choose a place and an idea for a free outing. The first takes 30 seconds; later ones take 2, 5 or 10 minutes. Close the tab if you like—the return never expires. Welcome your friend home to read their story and display the keepsake.
+4. Follow a **Trails** sign. Make three choices, find a treasure, then choose **Show in meadow** to bring it home. You can visit another place and return to your unfinished outing later.
+5. Visit **Games** to catch fireflies or find matching flowers. Earn pebbles for snacks, outfits and practice.
+6. Open **Map & quests** for more places and things to try, or **Training** to practise and play a friendly match.
 
 **Satchel** holds your supplies and Mallow’s daily gift. **Friends** lets you choose who comes along. **Save** downloads a copy of your world or restores one from another device.
 
@@ -29,13 +32,14 @@ There are nine original companions to meet. Each keeps their own personality, ou
 | Place | Things to do |
 | --- | --- |
 | Sunmeadow | Care for friends, try on outfits, bloom and show three trail treasures. |
+| Our journal | Send a friend exploring, read their latest three stories, and download an illustrated biography or SVG portrait. |
 | Market lane | Buy seven kinds of supplies and put pebbles away in the Pebble Keep. |
 | Starlight glen | Play Firefly flight and Memory meadow. |
 | Map & quests | Visit each place, try daily and lasting quests, or join the free Explorer Lodge for more friend spaces. |
 | Training grove | Practise and play saved turn-by-turn matches against three rivals. |
 | The little trails | Explore three routes with changing stories, find nine treasures and unlock each friend’s special knack. |
 
-Games still give Happiness and XP after you’ve earned the day’s game pebbles. Bank interest, mail and daily quest gifts reset at midnight UTC. The [game rules](docs/game-rules.md) give every price, reward and limit.
+Memory meadow has no timer by default, with an optional 75-second challenge. Games still give Happiness and XP after you’ve earned the day’s game pebbles. Every seven completed quest days earn a bonus, however far apart they are. Bank interest, mail and daily quest gifts reset at midnight UTC. The [game rules](docs/game-rules.md) give every price, reward and limit.
 
 [A discovery on a phone](docs/screenshots/discovery-mobile-0.6.1.png) · [The field journal](docs/screenshots/journal-0.6.png) · [A treasure in the meadow](docs/screenshots/meadow-0.6.png)
 
@@ -77,6 +81,8 @@ npm run test:browser
 Linux may need `npx playwright install --with-deps chromium`. To use an installed Chrome, set `BROWSER_EXECUTABLE=/path/to/chrome` when running `npm run test:browser`.
 
 The [Linux/macOS workflow](https://github.com/tylerbuilds/petrealm/actions/workflows/verify.yml) runs tests, builds and browser checks before publishing the demo. [Recorded checks](docs/verification.md) explain what was tested for each release. See [contributing](CONTRIBUTING.md) for working on the game.
+
+The [research-led experience notes](docs/research/companion-experience.md) explain the retained strengths, design changes and questions still to test with players.
 
 ## About the project
 

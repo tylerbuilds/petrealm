@@ -1,5 +1,16 @@
 # Changes
 
+## 0.8: A friend with stories of their own
+
+- A personal field journal, free asynchronous expeditions to three places, authored return stories and meadow keepsakes that never expire.
+- Curiosity, kindness and courage grow through care and exploration, changing greetings and biography while preserving each friend’s original identity.
+- Time away no longer reduces care. Seven completed quest days earn a bonus without consecutive-day pressure.
+- A calmer home invitation, clear outing choices, a welcome after longer breaks, and mobile journal layouts down to 320px.
+- Offline illustrated biography and SVG portrait downloads. Each journal keeps its latest three stories and lifetime outing count; finds remain collected.
+- Memory meadow is untimed by default, with a timed challenge available. Keyboard focus and card announcements are improved.
+- Validated older-save upgrades, atomic expedition claims, cross-tab protection and compact saves for fully populated worlds.
+
+
 ## 0.6: The little trails
 
 - Three paths, each with three changing sets of encounters. Make three choices with your friend to finish an outing. Your approach changes their reaction and the final find.

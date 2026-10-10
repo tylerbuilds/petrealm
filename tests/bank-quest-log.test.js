@@ -165,7 +165,7 @@ test('the free local Lodge sixth objective may replace any other daily task amon
   assert.throws(() => claimQuest(standard, 'daily-parcel', NOW), /Join the Explorer/);
 });
 
-test('seven consecutive claimed days pay one weekly bonus and a new cycle starts next day', () => {
+test('seven completed days pay one milestone bonus and the next completion starts a new cycle', () => {
   let state = companion();
   for (let index = 0; index < 7; index += 1) {
     const now = NOW + index * DAY;
@@ -184,7 +184,7 @@ test('seven consecutive claimed days pay one weekly bonus and a new cycle starts
   assert.equal(state.questLog.lastWeeklyDay, '2026-10-16');
   assert.throws(() => claimQuestDay(state, NOW), /already collected/);
   state = advanceTime(state, NOW + 7 * DAY);
-  assert.equal(state.questLog.streak, 0);
+  assert.equal(state.questLog.streak, 7);
   assert.equal(state.questLog.weeklyRewards, 1);
   state = completedDay(state, NOW + 7 * DAY);
   assert.equal(state.questLog.streak, 1);
@@ -208,19 +208,36 @@ test('every five-of-six Lodge selection qualifies, and the sixth reward cannot r
   }
 });
 
-test('a missed daily-completion claim breaks the rolling streak without erasing lifetime history', () => {
+test('a missed daily-completion claim preserves progress towards the seven-day milestone', () => {
   let state = completedDay(companion(), NOW);
   state = objectives(state, NOW + DAY);
   for (const id of dailyIds) state = claimQuest(state, id, NOW + DAY);
   state = advanceTime(state, NOW + 2 * DAY);
-  assert.equal(state.questLog.streak, 0);
+  assert.equal(state.questLog.streak, 1);
   assert.equal(state.questLog.claimed.length, 0);
   assert.equal(state.questLog.completedDays, 1);
   assert.throws(() => claimQuestDay(state, NOW + DAY), /five different/);
   state = completedDay(state, NOW + 2 * DAY);
-  assert.equal(state.questLog.streak, 1);
+  assert.equal(state.questLog.streak, 2);
   assert.equal(state.questLog.completedDays, 2);
   assert.equal(state.questLog.weeklyRewards, 0);
+});
+
+test('seven completed days separated by long breaks still award exactly one milestone', () => {
+  let state = companion();
+  for (let index = 0; index < 7; index += 1) {
+    const now = NOW + index * 21 * DAY;
+    state = completedDay(state, now);
+    assert.equal(questDayProgress(state, now).streak, index + 1);
+    assert.equal(state.questLog.weeklyRewards, index === 6 ? 1 : 0);
+    assert.throws(() => claimQuestDay(state, now), /already collected/);
+    state = parseSave(serialiseSave(state));
+  }
+  assert.equal(state.questLog.completedDays, 7);
+  assert.equal(state.questLog.weeklyRewards, 1);
+  state = completedDay(state, NOW + 200 * DAY);
+  assert.equal(state.questLog.weeklyRewards, 1);
+  assert.equal(questDayProgress(state, state.lastUpdated).streak, 1);
 });
 
 test('midnight discards unfinished objectives without paying or moving time backwards', () => {
@@ -244,7 +261,7 @@ test('old v2 saves preserve paid feast, balances and all history without inventi
   state = deposit(state, 20, NOW);
   const old = structuredClone(state);
   old.version = 2;
-  delete old.trails;
+  delete old.trails; delete old.companionship;
   for (const pet of old.pets) delete pet.trail;
   old.bank = { balance: old.bank.balance };
   delete old.questLog;

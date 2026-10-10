@@ -119,7 +119,7 @@ test('older v2 worlds retain every original field and active arena snapshot with
   original = equipAccessory(original, 'leafcap', 'head', NOW);
   original = startBattle(original, 'ashgrub', NOW);
   original.version = 2;
-  delete original.trails;
+  delete original.trails; delete original.companionship;
   for (const pet of original.pets) { delete pet.personality; delete pet.journey; delete pet.trail; }
   const raw = JSON.stringify(original); const migrated = parseSave(raw);
   assert.equal(JSON.stringify(original), raw);

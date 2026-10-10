@@ -201,7 +201,7 @@ test('v2 migration keeps every old value and adds zero outing history without mu
   let current = claimGameReward(care(friend('curious', 'cloudmoth'), 'feed', 'acorn', NOW), 100, NOW, 'memory');
   current = startBattle(current, 'ashgrub', NOW);
   const old = structuredClone(current);
-  old.version = 2; delete old.trails;
+  old.version = 2; delete old.trails; delete old.companionship;
   for (const pet of old.pets) delete pet.trail;
   const raw = `${JSON.stringify(old, null, 4)}\n`;
   assert.equal(validateState(old), true);

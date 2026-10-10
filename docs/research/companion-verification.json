@@ -1,0 +1,91 @@
+{
+  "verified_at_utc": "2026-10-10T18:26:51.183998+00:00",
+  "version": "0.8.0",
+  "base_commit": "59dc6b4",
+  "environment": {
+    "os": "Fedora Linux",
+    "node": "25.6.1",
+    "browser": "Playwright Chromium headless 156.0.8078.4"
+  },
+  "commands": {
+    "npm test": {
+      "passed": true,
+      "tests": 150
+    },
+    "npm run build": {
+      "passed": true
+    },
+    "npm run test:browser": {
+      "passed": true,
+      "includes": "Existing gameplay, scenery, ten application boundary checks and companion experience"
+    }
+  },
+  "companion_browser": {
+    "passed": true,
+    "firstOutingMs": 30000,
+    "route": "glowpool",
+    "intent": "help",
+    "tripsAfterTwoTabClaim": 1,
+    "collection": [
+      "glass-pebble"
+    ],
+    "untimedMemoryCompletedAfterMs": 90000,
+    "radioSelectionAndFocusSurvivedPoll": true,
+    "storyOwnershipAfterFriendChange": [
+      {
+        "petId": "pet-1",
+        "trips": 2
+      },
+      {
+        "petId": "pet-2",
+        "trips": 0
+      }
+    ],
+    "exports": [
+      "petrealm-companion-pet-1.html",
+      "petrealm-companion-pet-1.svg"
+    ],
+    "mobile": [
+      {
+        "area": "garden",
+        "width": 390,
+        "documentWidth": 390
+      },
+      {
+        "area": "journal",
+        "width": 390,
+        "documentWidth": 390
+      },
+      {
+        "area": "garden",
+        "width": 320,
+        "documentWidth": 320
+      },
+      {
+        "area": "journal",
+        "width": 320,
+        "documentWidth": 320
+      }
+    ],
+    "errors": []
+  },
+  "maximum_populated_save_bytes": 30605,
+  "save_limit_bytes": 32768,
+  "sha256": {
+    "src/app.js": "9224d587d45b9354d8368070c9fbbd692b8b35b20779290ec97c19107bd666ad",
+    "src/model.js": "64fab6eaddadac2a1b56acae0e6fe1883eda96148c2daca5690d75806a98891f",
+    "src/companionship.js": "b63e4f385cd923bce8870693a82f6206424219917e0c3755cf33e0d800668f1b",
+    "src/companion-views.js": "5834bd63f6cae033e3130992d30d0854a6a5bd1c2a170e959292c19614dcc159",
+    "src/companion-export.js": "fdd38875cde2e4c434a3daf3390c3f292ca2c61a1a0d9ea7f48b150f7ba4b039",
+    "src/trail-views.js": "534154621006841c3624439058604ed517b9a282bcff52b46b3403c6a578a941",
+    "src/views.js": "af62aba1176abcdee16931e92ac76c3d8284eab3ad1ffc30b41b5f4089949704",
+    "index.html": "f96b20031ffab1f55fee64b797c91ae2765751b455bcb565f8e7018e9c0d7657",
+    "styles.css": "a2fb3a998d2934410967dcc3b5effa6b46f8f6d3088a5a51458914cb7d3b8350"
+  },
+  "scope_limits": [
+    "Fedora Chromium only in this run; macOS CI not run",
+    "No physical phone or external-client check",
+    "No new public deployment",
+    "No retention or attachment study"
+  ]
+}

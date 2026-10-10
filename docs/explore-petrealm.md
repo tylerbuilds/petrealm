@@ -16,6 +16,7 @@ Mallow the owl has a few ideas when you need one. You choose what to do next. Th
 | Place | What you can do |
 | --- | --- |
 | **Meadow** | Share treats, play, nap, choose another friend, try an outfit and mark a first bloom. |
+| **Our journal** | Plan a free outing, read your friend’s latest stories, and keep a portrait or illustrated biography. |
 | **Market** | Meet Juniper, spend earned pebbles on snacks, outfits and supplies, or put pebbles in the Pebble Keep. |
 | **Games** | Catch the firefly in the golden patch, or turn over flower cards and find six matching pairs. |
 | **Map & quests** | Choose a path, try today’s quests, collect the gifts you earned and visit the Explorer Lodge. |
@@ -32,13 +33,21 @@ Open **Satchel**, or the meadow’s **Mail & gifts** button, for snacks, outfits
 
 **Friends** opens your family. Choose who to play with, or adopt another friend. Each keeps their own care, outfit, XP, bond and bloom. Finish a match before changing friends or outfits. Finish or leave your trail before switching friends.
 
+## Stories of their own
+
+Open **Our journal**, choose a destination and give your friend an idea: notice something small, lend a paw or try something new. All three places are open from the start. The first outing in your world takes 30 seconds. After that, Whisperwood takes two minutes, Glowpool five and Windridge ten. No pebbles, energy or supplies are needed.
+
+You can keep playing or close the tab. A returned story never expires. **Welcome them home** adds a personal story and a keepsake; **Show in the meadow** lets you choose a display spot. You can switch friends during an expedition; the returning friend keeps their own story.
+
+The journal keeps each friend’s latest three expedition stories, lifetime outing count and every discovered keepsake. **Keep their story** downloads a printable, illustrated HTML keepsake; **Save portrait** downloads an SVG picture. These open offline and are separate from your world save.
+
 ## Growing together
 
 Care, finished games, quest gifts and matches earn XP. Every 100 XP raises a level, up to level 20. Practice costs 20 pebbles, 12 Energy and 4 Fullness, and gives up to 18 XP.
 
 A friend’s first bloom needs level 3, a meal, ribbon play and a nap shared with that same friend. Open **Their first bloom** in the meadow to see what’s ready. Blooming costs 60 pebbles once, gives a new look, up to 40 XP, 10 Happiness and 10 Energy, and makes future practice give up to 24 XP. Stats stop at 100.
 
-Each companion has a personality. Some new species also have a favourite snack. The adoption preview and care hint explain their small bonuses. [Meet every companion and see the exact bonuses](companions.md).
+Each companion learns curiosity through ribbon play, kindness through food and rest, and courage through practice. Expedition intentions and trail choices also shape these tendencies. Their greeting and biography reflect what you encourage; none of it fades while you’re away. Each companion also keeps their original personality. Some new species also have a favourite snack. The adoption preview and care hint explain their small bonuses. [Meet every companion and see the exact bonuses](companions.md).
 
 ## Play again another day
 
@@ -46,8 +55,10 @@ Your world saves automatically in this browser. Come back to the same browser to
 
 If the screen says your world is unsaved, download a save before closing it. Petrealm has no online account or shared economy. Linux and Mac can both open the same save file.
 
-Quests, mail gifts and game pebble limits reset at midnight UTC. Finished games still earn Happiness and XP after the 120-pebble daily limit. Collect the daily quest bonus seven days in a row for an extra gift. Skipping a day starts the count again. You can explore and play whenever you like.
+Quests, mail gifts and game pebble limits reset at midnight UTC. Finished games still earn Happiness and XP after the 120-pebble daily limit. Collect the daily quest bonus on any seven days for an extra gift. Breaks do not reset that progress. Your friends’ care stays as you left it while you’re away. You can explore and play whenever you like.
 
 ## Keyboard and smaller screens
+
+Memory meadow starts without a timer. Toggle **Take your time** to **75-second challenge** before a round if you want the timed version. Card names are announced as you reveal them.
 
 Use Tab to move between controls and Enter or Space to choose one. Press Space or **Catch the light** in the firefly game. Escape closes the satchel and save menus. On a phone, the map’s signposts sit below the picture. If your device is set to reduce motion, Petrealm uses quieter animations.

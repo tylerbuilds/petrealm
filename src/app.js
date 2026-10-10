@@ -1,10 +1,12 @@
-import { SPECIES, PERSONALITIES, ITEMS, createState, adopt, advanceTime, care, purchase, claimDaily, claimGameReward, parseSave, serialiseSave, readActivePet, selectPet, deposit, withdraw, equipAccessory, claimQuest, startBattle, battleAction, petCapacity, setMembership, claimLodgeParcel, useExpansion, claimBankInterest, upgradeBankTier, claimQuestDay, trainPet, growPet, startTrail, chooseTrail, leaveTrail, displayTreasure } from './model.js';
+import { SPECIES, PERSONALITIES, ITEMS, createState, adopt, advanceTime, care, purchase, claimDaily, claimGameReward, parseSave, serialiseSave, readActivePet, selectPet, deposit, withdraw, equipAccessory, claimQuest, startBattle, battleAction, petCapacity, setMembership, claimLodgeParcel, useExpansion, claimBankInterest, upgradeBankTier, claimQuestDay, trainPet, growPet, startTrail, chooseTrail, leaveTrail, displayTreasure, startExpedition, claimExpedition, getExpeditionStatus } from './model.js';
 import { creature, gardenArt } from './art.js';
 import { guideArt, hudIcon, meadowDetails, placeArt } from './world-art.js';
 import { WORLD_ART_KEY, createWorldArtController } from './world-theme.js';
 import { withSaveLock } from './persistence.js';
 import { renderGarden, renderMarket, renderRealm, renderArena, renderGlen, itemSymbols, battleActive } from './views.js';
 import { renderTrails } from './trail-views.js';
+import { renderCompanionJournal } from './companion-views.js';
+import { companionKeepsake, companionPortrait } from './companion-export.js';
 
 const SAVE_KEY = 'petrealm.save.v1';
 const BACKUP_KEY = 'petrealm.backup.v1';
@@ -27,6 +29,9 @@ let adoptionStartedCount = 0;
 let adoptionGeneration = 0;
 let marketFilter = 'all';
 let gameMode = 'firefly';
+let relaxedMemory = true;
+let journalViewGeneration = 0;
+let returnVisit = null;
 let memoryTimer;
 let memoryFlipTimer;
 let recoveryRaw = null;
@@ -243,8 +248,8 @@ function persist() {
     return false;
   }
 }
-function download(text, filename) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+function download(text, filename, type = 'application/json') {
+  const url = URL.createObjectURL(new Blob([text], { type }));
   const anchor = document.createElement('a');
   anchor.href = url; anchor.download = filename; anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -379,6 +384,7 @@ function replaceWorld(next, previousRaw) {
     const reason = !backupWritten ? 'We couldn’t keep a backup, so your saved world hasn’t changed.' : error.message;
     throw new Error(`${reason} Download your world, or free some browser storage and try again.`);
   }
+  returnVisit = null;
   stopGame(); render();
 }
 function mood() {
@@ -408,7 +414,7 @@ function renderProfile() {
 }
 function garden() { return renderGarden(state); }
 function market() { return renderMarket(state,marketFilter); }
-function glen() { return renderGlen(state,gameMode); }
+function glen() { return renderGlen(state,gameMode,relaxedMemory); }
 function realm() { return renderRealm(state); }
 function arena() { return renderArena(state); }
 function positionCompanion() {
@@ -423,15 +429,19 @@ function positionCompanion() {
 }
 compactWorld?.addEventListener('change', positionCompanion);
 function render() {
+  const journalDetails = [...document.querySelectorAll('#area-content details[id]:not(#trail-journal)')].map(node => [node.id, node.open]);
+  const selectedRoute = document.querySelector('[name="expedition-route"]:checked')?.value;
+  const selectedIntent = document.querySelector('[name="expedition-intent"]:checked')?.value;
   const growthOpen = $('#growth-disclosure')?.open;
   const friendOpen = $('#friends')?.open;
   const wardrobeOpen = $('#wardrobe')?.open;
   if ($('#trail-journal')) trailJournalOpen = $('#trail-journal').open;
-  if (selectedTreasure && !state.trails?.collection.includes(selectedTreasure)) selectedTreasure = null;
+  if (selectedTreasure && !state.trails?.collection.includes(selectedTreasure) && !state.companionship?.collection.includes(selectedTreasure)) selectedTreasure = null;
   const bankDraft = $('#bank-amount')?.value;
   const bankTierDraft = $('#bank-tier')?.value;
   const focused = document.activeElement;
   const focusedId = focused?.id;
+  const focusedRadio = focused?.matches('input[type=radio][name]') ? { name:focused.name, value:focused.value } : null;
   const focusedInArea = Boolean(focused?.closest('#area-content'));
   const focusedAction = focusedInArea && !focusedId ? Array.from(focused.attributes || [])
     .filter((attribute) => attribute.name.startsWith('data-') && !(attribute.name === 'data-equip' && focused.dataset.slot))
@@ -442,12 +452,24 @@ function render() {
   renderProfile();
   document.querySelectorAll('.nav-button').forEach((button) => { button.classList.toggle('active', button.dataset.area === currentArea); button.setAttribute('aria-current', button.dataset.area === currentArea ? 'page' : 'false'); });
   document.body.dataset.place = currentArea;
-  const headings = { garden:['Sunmeadow','Share a snack, play together or follow a trail.'], market:['Market lane','Choose a snack or an outfit for your friend.'], glen:['Starlight glen','Catch a firefly or find the matching flowers.'], realm:['Explore Petrealm','Choose somewhere to go or something to try.'], arena:['Training grove','Practise with your friend or try a match.'], trails:['The little trails','Explore with your friend and bring a treasure home.'] };
+  const headings = { garden:['Sunmeadow','Share a snack, play together or follow a trail.'], market:['Market lane','Choose a snack or an outfit for your friend.'], glen:['Starlight glen','Catch a firefly or find the matching flowers.'], realm:['Explore Petrealm','Choose somewhere to go or something to try.'], arena:['Training grove','Practise with your friend or try a match.'], trails:['The little trails','Explore with your friend and bring a treasure home.'], journal:['Our field journal','Little adventures. A friend with stories of their own.'] };
   $('#page-title').textContent = headings[currentArea][0];
   $('#page-subtitle').textContent = headings[currentArea][1];
-  $('#area-content').innerHTML = currentArea === 'trails' ? renderTrails(state, selectedTreasure, trailJournalOpen) : { garden, market, glen, realm, arena }[currentArea]();
+  $('#area-content').innerHTML = currentArea === 'journal' ? renderCompanionJournal(state, Date.now()) : currentArea === 'trails' ? renderTrails(state, selectedTreasure, trailJournalOpen) : { garden, market, glen, realm, arena }[currentArea]();
   applyWorldArt();
   positionCompanion();
+  for (const [id, open] of journalDetails) { const detail = document.getElementById(id); if (detail?.tagName === 'DETAILS') detail.open = open; }
+  for (const [name, value] of [['expedition-route', selectedRoute], ['expedition-intent', selectedIntent]]) {
+    if (value) { const input = document.querySelector(`[name="${name}"][value="${CSS.escape(value)}"]`); if (input) input.checked = true; }
+  }
+  if (returnVisit && currentArea === 'garden') {
+    const greeting = document.createElement('section');
+    greeting.className = 'return-visit'; greeting.setAttribute('aria-label', 'Welcome back');
+    const title = document.createElement('h2'); title.textContent = 'Your meadow kept your place.';
+    const story = document.createElement('p'); story.textContent = returnVisit;
+    const dismiss = document.createElement('button'); dismiss.id = 'dismiss-return'; dismiss.className = 'text-button'; dismiss.textContent = 'Hello again →';
+    greeting.append(title, story, dismiss); $('#area-content').prepend(greeting);
+  }
   if (growthOpen !== undefined && $('#growth-disclosure')) $('#growth-disclosure').open = growthOpen;
   if (friendOpen !== undefined && $('#friends')) $('#friends').open = friendOpen;
   if (wardrobeOpen !== undefined && $('#wardrobe')) $('#wardrobe').open = wardrobeOpen;
@@ -455,17 +477,19 @@ function render() {
   const bankTier = $('#bank-tier');
   if (bankTierDraft && bankTier && Array.from(bankTier.options).some((option) => option.value === bankTierDraft && !option.disabled)) bankTier.value = bankTierDraft;
   const restoredFocus = focusedInArea ? focusedId ? document.getElementById(focusedId)
+    : focusedRadio ? document.querySelector(`input[name="${CSS.escape(focusedRadio.name)}"][value="${CSS.escape(focusedRadio.value)}"]`)
     : focusedAction ? document.querySelector(`#area-content button${focusedAction}`) : null : null;
   if (restoredFocus && !restoredFocus.disabled) restoredFocus.focus({preventScroll:true});
   else if (focusedInArea && focusedId === 'pet-grow') $('#growth-disclosure summary')?.focus({preventScroll:true});
+  else if (focusedInArea) $('#area-content').focus({preventScroll:true});
 }
 function changeArea(area) {
-  if (!['garden','market','glen','realm','arena','trails'].includes(area)) return;
+  if (!['garden','market','glen','realm','arena','trails','journal'].includes(area)) return;
   cancelWorldArtChoice();
   if ($('#world-art-dialog').open) $('#world-art-dialog').close();
   const movedFromWorld = Boolean(document.activeElement?.closest('#area-content'));
-  stopGame(); trailViewGeneration += 1; currentArea = area; render();
-  if (movedFromWorld) $('#area-content').focus({preventScroll:true});
+  stopGame(); trailViewGeneration += 1; journalViewGeneration += 1; currentArea = area; render();
+  if (movedFromWorld) { $('#area-content').focus({preventScroll:true}); $('#page-title').scrollIntoView({block:'start', behavior:'instant'}); }
   history.replaceState(null, '', `#${area}`);
 }
 function selectSpecies() {
@@ -557,6 +581,7 @@ async function endGame() {
     if (currentArea === 'glen' && gameMode === 'memory' && completed.kind === 'memory') {
       $('#memory-feedback').textContent = `${completed.matches} pairs in ${completed.moves} turns · score ${completed.score} / 100 · ${earned} pebbles earned.`;
     }
+    if (currentArea === 'glen') document.getElementById(completed.kind === 'memory' ? 'memory-start' : 'game-start')?.focus({preventScroll:true});
     toast(`Round finished! ${earned} pebbles earned.`);
   } catch (error) { render(); toast(error.message); }
 }
@@ -577,11 +602,12 @@ async function beginMemory() {
         [cards[index],cards[other]] = [cards[other],cards[index]];
       }
       game = {kind:'memory',started:performance.now(),cards,flipped:[],matched:[],matches:0,moves:0,score:0,
-        generation:readLocal(WORLD_KEY),pet:petIdentity(readActivePet(state))};
+        generation:readLocal(WORLD_KEY),pet:petIdentity(readActivePet(state)),relaxed:relaxedMemory};
       $('#memory-start').disabled = true;
       updateMemoryBoard();
       $('#memory-feedback').textContent = 'Find the matching flowers.';
-      memoryTimer = setInterval(() => {
+      document.querySelector('[data-memory-index="0"]')?.focus();
+      if (!game.relaxed) memoryTimer = setInterval(() => {
         if (!game || game.kind !== 'memory') return;
         const remaining = Math.max(0,75-Math.floor((performance.now()-game.started)/1000));
         $('#memory-timer').textContent = `${remaining} seconds`;
@@ -596,7 +622,8 @@ function updateMemoryBoard() {
     const index = Number(tile.dataset.memoryIndex);
     const matched = game.matched.includes(index);
     const visible = matched || game.flipped.includes(index);
-    tile.disabled = matched || game.flipped.includes(index) || game.flipped.length >= 2;
+    tile.disabled = false;
+    tile.setAttribute('aria-disabled', String(matched || game.flipped.includes(index) || game.flipped.length >= 2));
     tile.classList.toggle('face-up',visible);
     tile.classList.toggle('matched',matched);
     tile.textContent = visible ? memorySymbols[game.cards[index]] : '❀';
@@ -604,25 +631,27 @@ function updateMemoryBoard() {
   });
   $('#memory-moves').textContent = `${game.moves} ${game.moves === 1 ? 'turn' : 'turns'}`;
   $('#memory-matches').textContent = `${game.matches} / 6 pairs`;
+
 }
 function flipMemory(index) {
   if (!game || game.kind !== 'memory' || !Number.isInteger(index) || index < 0 || index > 11
       || game.flipped.length >= 2 || game.flipped.includes(index) || game.matched.includes(index)) return;
-  if (performance.now()-game.started >= 75000) { game.score = game.matches*10; endGame(); return; }
+  if (!game.relaxed && performance.now()-game.started >= 75000) { game.score = game.matches*10; endGame(); return; }
   game.flipped.push(index);
+  $('#memory-feedback').textContent = `Card ${index + 1}: ${memoryLabels[game.cards[index]]}. Choose another card.`;
   if (game.flipped.length === 2) {
     game.moves += 1;
     const [first,second] = game.flipped;
     if (game.cards[first] === game.cards[second]) {
       game.matched.push(first,second); game.flipped = []; game.matches += 1;
-      $('#memory-feedback').textContent = 'A match! Can you find the next pair?';
+      $('#memory-feedback').textContent = `Two ${memoryLabels[game.cards[index]]} cards. A match! Find the next pair.`;
       if (game.matches === 6) { game.score = Math.max(0,100-2*(game.moves-6)); endGame(); return; }
     } else {
-      $('#memory-feedback').textContent = 'Not a match. Remember where they are and try again.';
+      $('#memory-feedback').textContent = `${memoryLabels[game.cards[first]]} and ${memoryLabels[game.cards[second]]}. Different flowers; try another pair.`;
       memoryFlipTimer = setTimeout(() => {
         if (!game || game.kind !== 'memory') return;
         game.flipped = []; updateMemoryBoard();
-      },650);
+      },1500);
     }
   }
   updateMemoryBoard();
@@ -803,9 +832,44 @@ $('#start-fresh').addEventListener('click', async () => {
     });
   } catch (error) { $('#recovery-error').textContent = error.message; }
 });
+async function updateJournal(action, message, focusId = 'expedition-status-title') {
+  const view = journalViewGeneration;
+  let applied = false;
+  await updateObservedPet((fresh) => {
+    if (view !== journalViewGeneration || currentArea !== 'journal' || document.querySelector('dialog[open]')) {
+      throw new Error('Your journal changed. Open it and choose again.');
+    }
+    const next = action(fresh); applied = true; return next;
+  }, message);
+  if (applied && currentArea === 'journal') {
+    const feedback = document.getElementById(focusId) ?? $('#expedition-status-title');
+    feedback?.focus({preventScroll:true});
+    feedback?.scrollIntoView({block:'nearest', behavior:'instant'});
+  }
+}
+document.addEventListener('submit', (event) => {
+  if (event.target.id !== 'expedition-form') return;
+  event.preventDefault();
+  const data = new FormData(event.target);
+  const route = data.get('expedition-route');
+  const intent = data.get('expedition-intent');
+  updateJournal((fresh) => startExpedition(fresh, route, intent, Date.now()), 'A little adventure has begun. The story will keep until you’re ready.');
+});
 document.addEventListener('click', (event) => {
   const target = event.target.closest('button');
   if (!target || target.disabled) return;
+  if (target.id === 'dismiss-return') { returnVisit = null; render(); $('#area-content').focus({preventScroll:true}); }
+  if (target.dataset.claimExpedition !== undefined) {
+    const expected = Number(target.dataset.claimExpedition);
+    updateJournal((fresh) => claimExpedition(fresh, Date.now(), expected), 'A new story to keep. Their find is in your trail collection.', 'latest-memory-title');
+  }
+  if (target.dataset.exportCompanion !== undefined || target.dataset.exportPortrait !== undefined) {
+    const pet = readActivePet(state);
+    if (!pet) return;
+    const portraitOnly = target.dataset.exportPortrait !== undefined;
+    download(portraitOnly ? companionPortrait(state) : companionKeepsake(state), `petrealm-companion-${pet.id}.${portraitOnly ? 'svg' : 'html'}`, portraitOnly ? 'image/svg+xml' : 'text/html');
+    toast(portraitOnly ? 'Your companion’s portrait is ready to keep.' : 'Their illustrated story is ready to keep or print.');
+  }
   if (target.dataset.openSatchel !== undefined) openSatchel();
   if (target.dataset.area) {
     if ($('#satchel-dialog').open) $('#satchel-dialog').close();
@@ -872,7 +936,7 @@ document.addEventListener('click', (event) => {
     update((s) => upgradeBankTier(s,tier,Date.now()), 'Your savings account is upgraded. You keep this rate when you take pebbles out.');
   }
   if (target.dataset.claimQuest) updateObservedPet((s) => claimQuest(s,target.dataset.claimQuest,Date.now()), 'Quest gift collected! Your pebbles and XP have been added.');
-  if (target.id === 'quest-day-complete') updateObservedPet((s) => claimQuestDay(s,Date.now()), 'You’ve collected today’s quest gift. Seven days in a row earn a bonus.');
+  if (target.id === 'quest-day-complete') updateObservedPet((s) => claimQuestDay(s,Date.now()), 'You’ve collected today’s quest gift. Every seven completed days earn a bonus; breaks are welcome.');
   if (target.dataset.battleStart) updateObservedPet((s) => startBattle(s,target.dataset.battleStart,Date.now()), 'Your match has started. Choose your first move.');
   if (target.dataset.battleAction) {
     const observedBattle = JSON.stringify(state.battle);
@@ -882,6 +946,7 @@ document.addEventListener('click', (event) => {
     });
   }
   if (target.dataset.gameMode) { stopGame(); gameMode = target.dataset.gameMode; render(); }
+  if (target.id === 'memory-pace') { stopGame(); relaxedMemory = !relaxedMemory; render(); }
   if (target.id === 'memory-start') beginMemory();
   if (target.dataset.memoryIndex !== undefined) flipMemory(Number(target.dataset.memoryIndex));
   if (target.id === 'lodge-membership') {
@@ -902,7 +967,8 @@ document.addEventListener('click', (event) => {
   if (target.id === 'game-catch') catchLight();
 });
 document.addEventListener('keydown', (event) => {
-  if (game?.kind === 'firefly' && event.code === 'Space' && !document.querySelector('dialog[open]')) { event.preventDefault(); if (!event.repeat) catchLight(); }
+  if (game?.kind === 'firefly' && event.code === 'Space' && !document.querySelector('dialog[open]')
+      && (event.target === document.body || event.target.id === 'game-catch' || event.target.closest('.game-track'))) { event.preventDefault(); if (!event.repeat) catchLight(); }
 });
 window.addEventListener('storage', async (event) => {
   if (event.key === WORLD_ART_KEY || event.key === null) {
@@ -951,11 +1017,24 @@ setInterval(async () => {
     });
   } catch (error) { toast(error.message); }
 }, 60000);
+let observedOutingStatus = '';
+setInterval(() => {
+  if (recoveryRaw !== null || game || document.visibilityState === 'hidden') return;
+  const outing = getExpeditionStatus(state, Date.now());
+  const identity = `${outing.run?.id ?? ''}:${outing.status}`;
+  if (observedOutingStatus && identity !== observedOutingStatus && ['garden','journal'].includes(currentArea)) render();
+  observedOutingStatus = identity;
+  const remaining = document.getElementById('expedition-countdown');
+  if (remaining && outing.status === 'away') {
+    const seconds = Math.max(1, Math.ceil(outing.remainingMs / 1000));
+    remaining.textContent = `A story in about ${seconds < 60 ? `${seconds} seconds` : `${Math.ceil(seconds / 60)} minutes`}`;
+  }
+}, 1000);
 window.addEventListener('hashchange', () => {
   const destination = location.hash.slice(1);
-  if (['garden','market','glen','realm','arena','trails'].includes(destination) && destination !== currentArea) changeArea(destination);
+  if (['garden','market','glen','realm','arena','trails','journal'].includes(destination) && destination !== currentArea) changeArea(destination);
 });
-currentArea = ['garden','market','glen','realm','arena','trails'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'garden';
+currentArea = ['garden','market','glen','realm','arena','trails','journal'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'garden';
 try {
   await withSaveLock(() => {
     const saved = readLocal(SAVE_KEY);
@@ -963,7 +1042,13 @@ try {
     stateGeneration = readLocal(WORLD_KEY);
     if (saved !== null) {
       try {
-        state = advanceTime(parseSave(saved), Date.now());
+        const prior = parseSave(saved);
+        state = advanceTime(prior, Date.now());
+        if (Date.now() - prior.lastUpdated >= 6 * 60 * 60 * 1000 && readActivePet(prior)) {
+          const friend = readActivePet(prior);
+          const outing = getExpeditionStatus(state, Date.now());
+          returnVisit = outing.status === 'ready' ? `${outing.pet.name} has a story waiting in your journal. There is no rush to open it. Your friends and progress are just as you left them.` : `${friend.name} saved the sunny spot for you. All your friends, finds and progress are here. Settle in whenever you’re ready.`;
+        }
         if (JSON.parse(saved).version === 1) pendingMigrationRaw = saved;
         if (JSON.parse(saved).version === 2) pendingV2MigrationRaw = saved;
       }

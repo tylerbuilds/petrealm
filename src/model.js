@@ -1,7 +1,9 @@
 /** Original, local-only pet game rules. No network, browser or clock dependencies. */
 import { TRAIL_ROUTES, TRAIL_TREASURES, PERSONALITY_APPROACHES, getTrailScene, findForApproach, knackChoice } from './trails.js';
+import { EXPEDITION_ROUTES, EXPEDITION_INTENTS, FIRST_EXPEDITION_MS, MEMORY_LIMIT, freshCompanion, freshCompanionship, learnFrom, expeditionTreasure, validateCompanionship } from './companionship.js';
 
 export { TRAIL_ROUTES, TRAIL_TREASURES } from './trails.js';
+export { EXPEDITION_ROUTES, EXPEDITION_INTENTS, getExpeditionStatus, readCompanionStory, readReturnWelcome } from './companionship.js';
 
 export const SPECIES = Object.freeze({
   mossling: Object.freeze({ id: 'mossling', name: 'Mossling', kind: 'woodland spirit', description: 'A gentle woodland friend with a leafy crest.', trait: 'Patient keeper of tiny gardens', favourite: null, personality: 'steady' }),
@@ -68,8 +70,6 @@ export const OPPONENTS = Object.freeze({
   frostwisp: Object.freeze({ id: 'frostwisp', name: 'Frostwisp', level: 5, hp: 70, attack: 13, reward: 60, xp: 45 }),
 });
 
-const HOUR = 3_600_000;
-const DAY = 86_400_000;
 const MAX_TIMESTAMP = 253_402_300_799_999;
 const MAX_COUNTER = 1_000_000_000;
 const MAX_SAVE_BYTES = 32_768;
@@ -118,10 +118,6 @@ function timestamp(value, label = 'Time') {
 
 function dayFor(time) {
   return new Date(time).toISOString().slice(0, 10);
-}
-
-function previousDay(day) {
-  return dayFor(Date.parse(`${day}T00:00:00.000Z`) - DAY);
 }
 
 function freshQuestLog(daily) {
@@ -356,8 +352,7 @@ function validateV2State(state) {
         || log.completedDays * 5 > state.counts.questsClaimed) fail('The finished quest days and reward totals in this save don’t match.');
     if ((log.lastCompletionDay && log.lastCompletionDay > savedDay)
         || (log.lastWeeklyDay && (!log.lastCompletionDay || log.lastWeeklyDay > log.lastCompletionDay))) fail('A quest reward date is later than its finished quest day in this save.');
-    if (log.streak > 0 && (!log.lastCompletionDay || log.lastCompletionDay < previousDay(savedDay)
-        || log.streak > log.completedDays)) fail('The run of quest days in this save doesn’t match the days finished.');
+    if (log.streak > 0 && (!log.lastCompletionDay || log.streak > log.completedDays)) fail('The quest day progress in this save doesn’t match the days finished.');
     if (log.lastCompletionDay === savedDay && (log.claimed.length < 5 || log.streak === 0)) fail('Finish five different daily quests and collect their rewards for today’s gift.');
     if (log.streak === 7 && log.lastWeeklyDay !== log.lastCompletionDay) fail('This save’s seventh quest day needs its weekly reward record.');
   }
@@ -407,15 +402,16 @@ function validateTrailChoices(choices, length, run, pet, label, finished = false
 }
 
 function validateV3State(state) {
-  record(state, [...STATE_KEYS, 'questLog', 'trails'], 'Save');
+  record(state, [...STATE_KEYS, 'questLog', 'trails'], 'Save', ['companionship']);
   if (!Array.isArray(state.pets)) fail('Petrealm needs a list of companions in this save.');
   // Check the absolute roster bound before visiting entries. The v2 rules below
   // then enforce the smaller capacity for this world's membership and rooms.
   if (state.pets.length > 26) fail('Your lodge has room for up to 26 companions.');
   for (const pet of state.pets) record(pet, ['id', 'name', 'species', 'adoptedAt', 'stats', 'wearing', 'xp', 'level', 'personality', 'journey', 'trail'], 'Pet');
   // Reuse the unchanged v2 rules after removing only the explicit new fields.
-  const { trails, ...previous } = state;
+  const { trails, companionship, ...previous } = state;
   validateV2State({ ...previous, version: 2, pets: state.pets.map(({ trail, ...pet }) => pet) });
+  validateCompanionship(state, { record, integer, timestamp, fail, maxCounter: MAX_COUNTER });
   record(state.bank, ['balance', 'tier', 'lastInterestDay', 'interestClaims', 'interestEarned'], 'Bank');
   let trips = 0;
   for (const pet of state.pets) {
@@ -436,7 +432,7 @@ function validateV3State(state) {
   if (trails.collection.length > trips || (trips === 0 ? trails.collection.length !== 0 || trails.last !== null : trails.collection.length === 0 || trails.last === null)) fail('The treasures in this save don’t match the finished outings.');
   if (!Array.isArray(trails.display) || trails.display.length !== 3) fail('Your meadow has exactly three treasure places.');
   const shown = trails.display.filter((id) => id !== null);
-  if (new Set(shown).size !== shown.length || shown.some((id) => !trails.collection.includes(id))) fail('Show each treasure once, and choose ones you’ve already found.');
+  if (new Set(shown).size !== shown.length || shown.some((id) => !trails.collection.includes(id) && !companionship?.collection.includes(id))) fail('Show each treasure once, and choose ones you’ve already found.');
   for (const [label, run] of [['Current outing', trails.active], ['Last outing', trails.last]]) {
     if (run === null) continue;
     const finished = label === 'Last outing';
@@ -535,6 +531,7 @@ export function createState(now = Date.now()) {
     membership: { tier: 'free', lastParcelDay: null },
     expansions: 0,
     trails: freshTrails(),
+    companionship: freshCompanionship(),
   };
 }
 
@@ -551,6 +548,7 @@ export function migrateState(state) {
       if (!Object.hasOwn(pet, 'trail')) pet.trail = freshPetTrail();
     }
     if (!Object.hasOwn(next, 'trails')) next.trails = freshTrails();
+    if (!Object.hasOwn(next, 'companionship')) next.companionship = freshCompanionship(next.pets);
     validateState(next);
     return next;
   }
@@ -564,24 +562,23 @@ export function migrateState(state) {
   if (state.pet) {
     next.pets = [{ ...clone(state.pet), id: 'pet-1', wearing: { head: null, neck: null }, xp: 0, level: 1, personality: 'steady', journey: freshJourney(), trail: freshPetTrail() }];
     next.activePetId = 'pet-1';
+    next.companionship = freshCompanionship(next.pets);
   }
   validateState(next);
   return next;
 }
 
-/** Apply at most 72 hours of decay; never move the save clock backwards. */
+/** Absence never changes companions. Advance calendar rewards without moving backwards. */
 export function advanceTime(state, now = Date.now()) {
   timestamp(now);
   const next = migrateState(state);
   const effectiveTime = Math.max(now, next.lastUpdated);
-  const elapsedHours = Math.min(72, (effectiveTime - next.lastUpdated) / HOUR);
-  for (const pet of next.pets) changeStats(pet, { satiety: -3 * elapsedHours, happiness: -2 * elapsedHours, energy: -elapsedHours });
   next.lastUpdated = effectiveTime;
   if (next.quests.daily.day !== dayFor(effectiveTime)) next.quests.daily = { day: dayFor(effectiveTime), feeds: 0, claimed: false };
   if (next.questLog.day !== dayFor(effectiveTime)) {
     const old = next.questLog;
     next.questLog = { ...freshQuestLog(next.quests.daily), lastCompletionDay: old.lastCompletionDay,
-      streak: old.lastCompletionDay === previousDay(dayFor(effectiveTime)) && old.streak < 7 ? old.streak : 0,
+      streak: old.streak,
       completedDays: old.completedDays, weeklyRewards: old.weeklyRewards, lastWeeklyDay: old.lastWeeklyDay };
   }
   return next;
@@ -602,6 +599,7 @@ export function adopt(state, name, species, now = Date.now(), personality = unde
   if (typeof nature !== 'string' || !Object.hasOwn(PERSONALITIES, nature)) fail('Choose one of the available personalities for your companion.');
   const id = `pet-${next.pets.length + 1}`;
   next.pets.push({ id, name: cleanName, species, adoptedAt: next.lastUpdated, stats: { satiety: 85, happiness: 80, energy: 85 }, wearing: { head: null, neck: null }, xp: 0, level: 1, personality: nature, journey: freshJourney(), trail: freshPetTrail() });
+  next.companionship.profiles.push(freshCompanion(next.pets.at(-1)));
   next.activePetId = id;
   next.counts.adoptions += 1;
   return finish(next);
@@ -682,6 +680,7 @@ export function care(state, action, itemId, now = Date.now()) {
     next.questLog.progress.rests += 1;
     gainXp(pet, 2);
   } else fail('Choose a meal, ribbon play or a nap.');
+  learnFrom(next, pet.id, action === 'play' ? 'curiosity' : 'kindness');
   return finish(next);
 }
 
@@ -696,6 +695,7 @@ export function trainPet(state, now = Date.now()) {
   next.wallet -= TRAINING_COST;
   changeStats(pet, { energy: -12, satiety: -4 });
   pet.journey.trainings += 1;
+  learnFrom(next, pet.id, 'courage');
   gainXp(pet, pet.journey.growth ? 24 : 18);
   return finish(next);
 }
@@ -743,7 +743,7 @@ export function trailProgress(state) {
     return { ...route, unlocked, ready: reason === '', reason };
   });
   return { pet, ...history, preferred, knack: Boolean(pet && history.bond >= 3), routes,
-    collection: [...journal.collection], display: [...journal.display], active: journal.active, last: journal.last };
+    collection: [...new Set([...journal.collection, ...(state.companionship?.collection ?? [])])], display: [...journal.display], active: journal.active, last: journal.last };
 }
 
 export function trailEncounter(state) {
@@ -810,6 +810,48 @@ export function chooseTrail(state, runId, expectedStep, choiceId, now = Date.now
   next.trails.last = { id: run.id, petId: pet.id, routeId: run.routeId, variant: run.variant,
     choices: [...run.choices], treasureId, newFind, bondGain, xpGain };
   next.trails.active = null;
+  learnFrom(next, pet.id, selected.kind === 'help' ? 'kindness' : selected.kind === 'brave' ? 'courage' : 'curiosity', 2);
+  return finish(next);
+}
+
+/** A free, asynchronous wander. Return stories never expire and belong to the departing pet. */
+export function startExpedition(state, routeId, intent, now = Date.now()) {
+  const next = advanceTime(state, now);
+  requireNoBattle(next);
+  requireNoTrail(next);
+  const pet = requirePet(next);
+  if (next.companionship.active) fail('A companion already has a story on the way. Welcome them home before another wander.');
+  if (typeof routeId !== 'string' || !Object.hasOwn(EXPEDITION_ROUTES, routeId)
+      || typeof intent !== 'string' || !Object.hasOwn(EXPEDITION_INTENTS, intent)) fail('Choose a place and a little intention for this wander.');
+  const journal = next.companionship;
+  if (journal.sequence >= MAX_COUNTER) fail('Your expedition journal is full. Download your save to keep a copy.');
+  const duration = journal.sequence === 0 ? FIRST_EXPEDITION_MS : EXPEDITION_ROUTES[routeId].durationMs;
+  if (next.lastUpdated > MAX_TIMESTAMP - duration) fail('This expedition would return beyond the supported calendar.');
+  const profile = journal.profiles.find((entry) => entry.petId === pet.id);
+  journal.sequence += 1;
+  journal.active = { id: journal.sequence, petId: pet.id, routeId, intent, variant: profile.trips % 3,
+    startedAt: next.lastUpdated, readyAt: next.lastUpdated + duration };
+  return finish(next);
+}
+
+export function claimExpedition(state, now = Date.now(), expectedId = undefined) {
+  const next = advanceTime(state, now);
+  const journal = next.companionship;
+  const run = journal.active;
+  if (!run || (expectedId !== undefined && expectedId !== run.id)) fail('That expedition has already been welcomed home, or a new one has started.');
+  if (next.lastUpdated < run.readyAt) fail('Your companion is still gathering a little story. There is no need to hurry.');
+  const pet = next.pets.find((entry) => entry.id === run.petId);
+  const profile = journal.profiles.find((entry) => entry.petId === pet.id);
+  const treasureId = expeditionTreasure(run.routeId, run.intent, run.variant);
+  const shared = ['feeds', 'plays', 'rests', 'trainings'].reduce((best, key) => pet.journey[key] > (best ? pet.journey[best] : 0) ? key : best, null);
+  const memory = { id: run.id, routeId: run.routeId, intent: run.intent, variant: run.variant, at: next.lastUpdated, care: shared };
+  profile.trips += 1;
+  profile.memories.push(memory);
+  profile.memories = profile.memories.slice(-MEMORY_LIMIT);
+  learnFrom(next, pet.id, EXPEDITION_INTENTS[run.intent].axis, 3);
+  if (!journal.collection.includes(treasureId)) journal.collection.push(treasureId);
+  journal.last = { petId: pet.id, memory: { ...memory } };
+  journal.active = null;
   return finish(next);
 }
 
@@ -824,7 +866,7 @@ export function leaveTrail(state, runId, now = Date.now()) {
 export function displayTreasure(state, treasureId, slot, now = Date.now()) {
   const next = advanceTime(state, now);
   integer(slot, 0, 2, 'Meadow treasure place');
-  if (treasureId !== null && (typeof treasureId !== 'string' || !next.trails.collection.includes(treasureId))) fail('Choose a treasure you’ve found on an outing.');
+  if (treasureId !== null && (typeof treasureId !== 'string' || (!next.trails.collection.includes(treasureId) && !next.companionship.collection.includes(treasureId)))) fail('Choose a treasure you’ve found on an outing.');
   // Moving a displayed keepsake clears its previous place instead of duplicating it.
   next.trails.display = next.trails.display.map((id, index) => index === slot ? treasureId : id === treasureId && treasureId !== null ? null : id);
   return finish(next);
@@ -961,9 +1003,10 @@ export function questDayProgress(state, now = Date.now()) {
   const log = next.questLog;
   const day = dayFor(next.lastUpdated);
   const claimed = log.lastCompletionDay === day;
-  const nextStreak = log.lastCompletionDay === previousDay(day) && log.streak > 0 && log.streak < 7 ? log.streak + 1 : 1;
+  const nextStreak = log.completedDays % 7 + 1;
   const weeklyReward = nextStreak === 7 ? QUEST_WEEK_REWARD : 0;
-  return { day, claimedQuests: log.claimed.length, required: 5, claimed, streak: log.streak,
+  const completedInCycle = log.completedDays === 0 ? 0 : (log.completedDays - 1) % 7 + 1;
+  return { day, claimedQuests: log.claimed.length, required: 5, claimed, streak: completedInCycle,
     nextStreak, reward: QUEST_DAY_REWARD, weeklyReward, completedDays: log.completedDays,
     weeklyRewards: log.weeklyRewards, ready: !claimed && log.claimed.length >= 5
       && next.wallet + next.bank.balance + QUEST_DAY_REWARD + weeklyReward <= MAX_COUNTER };
@@ -1132,7 +1175,9 @@ export function parseSave(text) {
 
 export function serialiseSave(state) {
   const next = migrateState(state);
-  const text = `${JSON.stringify(next, null, 2)}\n`;
+  let text = `${JSON.stringify(next, null, 2)}\n`;
+  // Larger families keep the same schema in compact JSON, within the original import bound.
+  if (new TextEncoder().encode(text).length > MAX_SAVE_BYTES) text = `${JSON.stringify(next)}\n`;
   if (new TextEncoder().encode(text).length > MAX_SAVE_BYTES) fail('This save is too large to download. Petrealm saves need to fit within 32 KiB.');
   return text;
 }

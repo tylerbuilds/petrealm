@@ -100,7 +100,7 @@ test('type-confused amounts, timestamps and identifiers fail atomically', () => 
   for (const id of ['__proto__', 'constructor', null, [], {}]) unchangedAfterReject(state, (current) => selectPet(current, id, NOW));
 });
 
-test('clock rollback cannot replay rewards after a forward UTC boundary or add decay twice', () => {
+test('clock rollback cannot replay rewards after a forward UTC boundary or change companion needs', () => {
   const epoch = adopt(createState(0), 'Dawn', 'moonfin', 0);
   let state = claimDaily(epoch, 0);
   state = claimDaily(state, 86_400_000);
@@ -109,7 +109,7 @@ test('clock rollback cannot replay rewards after a forward UTC boundary or add d
   assert.equal(raw(advanceTime(state, 0)), before);
   const late = advanceTime(state, 253402300799999);
   assert.equal(late.lastUpdated, 253402300799999);
-  assert.equal(readActivePet(late).stats.energy, 0);
+  assert.equal(readActivePet(late).stats.energy, readActivePet(epoch).stats.energy);
   assert.equal(raw(advanceTime(late, 253402300799999)), raw(late));
 });
 
@@ -148,7 +148,7 @@ test('overlapping trail choices settle once and retain the awarded find after ma
 test('previously valid direction-control names remain playable across v1/v2/v3 imports without renaming', () => {
   // A stricter new-adoption rule must not strand an existing world in recovery.
   const current = friend(); current.pets[0].name = 'F\u202Eern';
-  const previous = structuredClone(current); previous.version = 2; delete previous.trails;
+  const previous = structuredClone(current); previous.version = 2; delete previous.trails; delete previous.companionship;
   for (const pet of previous.pets) delete pet.trail;
   const old = { version: 1, pet: { name: current.pets[0].name, species: 'mossling', adoptedAt: NOW, stats: { ...current.pets[0].stats } },
     wallet: 120, inventory: { berry: 3, acorn: 2, ribbon: 1 }, lastUpdated: NOW,

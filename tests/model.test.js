@@ -39,13 +39,13 @@ test('adoption normalises names, records an achievement and never mutates the in
   assert.throws(() => adopt(original, 'Fern', '__proto__', START), /species/);
 });
 
-test('offline decay is deterministic, bounded at 72 hours, and applied only once', () => {
+test('absence preserves every companion stat for hours or years and time never rolls backwards', () => {
   const original = pet();
   const next = advanceTime(original, START + 2 * HOUR);
-  assert.deepEqual(next.pets[0].stats, { satiety: 79, happiness: 76, energy: 83 });
+  assert.deepEqual(next.pets[0].stats, { satiety: 85, happiness: 80, energy: 85 });
   assert.deepEqual(original.pets[0].stats, { satiety: 85, happiness: 80, energy: 85 });
   const farFuture = advanceTime(original, START + 365 * DAY);
-  assert.deepEqual(farFuture.pets[0].stats, { satiety: 0, happiness: 0, energy: 13 });
+  assert.deepEqual(farFuture.pets[0].stats, { satiety: 85, happiness: 80, energy: 85 });
   assert.deepEqual(advanceTime(farFuture, START + 365 * DAY), farFuture);
   assert.deepEqual(advanceTime(next, START - DAY), next);
   assert.equal(advanceTime(createState(START), START + HOUR).lastUpdated, START + HOUR);
@@ -54,10 +54,10 @@ test('offline decay is deterministic, bounded at 72 hours, and applied only once
 test('food is consumed, stats are capped, and care achievements reflect actual actions', () => {
   let state = advanceTime(pet(), START + 10 * HOUR);
   state = care(state, 'feed', 'berry', state.lastUpdated);
-  assert.deepEqual(state.pets[0].stats, { satiety: 77, happiness: 66, energy: 75 });
+  assert.deepEqual(state.pets[0].stats, { satiety: 100, happiness: 86, energy: 85 });
   assert.equal(state.inventory.berry, 2);
   state = care(state, 'feed', 'acorn', state.lastUpdated);
-  assert.deepEqual(state.pets[0].stats, { satiety: 89, happiness: 69, energy: 87 });
+  assert.deepEqual(state.pets[0].stats, { satiety: 100, happiness: 89, energy: 97 });
   state = care(state, 'feed', 'berry', state.lastUpdated);
   assert.equal(state.pets[0].stats.satiety, 100);
   assert.equal(state.counts.feeds, 3);

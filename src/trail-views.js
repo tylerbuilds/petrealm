@@ -5,6 +5,7 @@ import { guideArt } from './world-art.js';
 import { treasureArt, trailScenery } from './trail-art.js';
 
 const escape = (value) => String(value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const collectedFinds = (state) => [...new Set([...state.trails.collection, ...(state.companionship?.collection ?? [])])];
 const approachVerbs = {observe:'notice small things',help:'lend a paw',explore:'follow their curiosity',brave:'try something bold'};
 const slots = ['By the pond', 'At the treehouse', 'Beside the path'];
 const portrait = (pet) => creature(pet?.species || 'mossling', pet ? `${SPECIES[pet.species].name}, ${pet.journey?.growth ? 'first bloom' : 'young companion'}` : 'A Petrealm companion', pet?.wearing || {}, Boolean(pet?.journey?.growth));
@@ -16,15 +17,15 @@ export function meadowTreasures(state) {
 }
 
 function displayChoices(state, selected) {
-  if (!selected || !state.trails.collection.includes(selected)) return '';
+  if (!selected || !collectedFinds(state).includes(selected)) return '';
   const find = TRAIL_TREASURES[selected];
   return `<section class="treasure-placement" id="treasure-placement" aria-label="Display your treasure"><div class="placement-find">${treasureArt(selected, find.name)}<div><h3>Where shall ${escape(find.name.toLowerCase())} go?</h3><p>Choose a meadow spot. If you swap treasures, you keep both in your journal.</p></div></div><div class="treasure-spots">${slots.map((name, index) => `<button id="treasure-slot-${index}" data-display-treasure="${selected}" data-display-slot="${index}" class="button secondary-button" aria-pressed="${state.trails.display[index] === selected}">${name}<small>${state.trails.display[index] ? escape(TRAIL_TREASURES[state.trails.display[index]].name) : 'An empty spot'}</small></button>`).join('')}</div><button data-area="garden" class="text-button">Go see your meadow →</button></section>`;
 }
 
 function journal(state, selected, open) {
-  return `<details id="trail-journal" class="trail-journal" ${open || selected ? 'open' : ''}><summary id="trail-journal-summary">Your field journal <span>${state.trails.collection.length} / 9 finds</span></summary><div class="journal-pages"><p>Try different paths and choices to find every treasure. At 3 bond, your friend offers a special choice called their knack.</p>${displayChoices(state, selected)}${Object.values(TRAIL_ROUTES).map((route) => `<section class="journal-route"><h3>${escape(route.name)}</h3><div class="journal-finds">${route.treasures.map((id) => {
+  return `<details id="trail-journal" class="trail-journal" ${open || selected ? 'open' : ''}><summary id="trail-journal-summary">Your field journal <span>${collectedFinds(state).length} / 9 finds</span></summary><div class="journal-pages"><p>Try different paths and choices to find every treasure. At 3 bond, your friend offers a special choice called their knack.</p>${displayChoices(state, selected)}${Object.values(TRAIL_ROUTES).map((route) => `<section class="journal-route"><h3>${escape(route.name)}</h3><div class="journal-finds">${route.treasures.map((id) => {
     const find = TRAIL_TREASURES[id];
-    const found = state.trails.collection.includes(id);
+    const found = collectedFinds(state).includes(id);
     const displayed = state.trails.display.indexOf(id);
     return `<article class="journal-find ${found ? 'found' : 'unfound'}">${treasureArt(found ? id : '', found ? find.name : 'An undiscovered treasure')}<div><h4>${found ? escape(find.name) : 'Something to discover'}</h4><p>${escape(found ? find.description : find.hint)}</p>${found ? `<button data-treasure-select="${id}" class="text-button">${displayed >= 0 ? `Shown ${slots[displayed].toLowerCase()} · move it` : 'Show in your meadow'} →</button>` : ''}</div></article>`;
   }).join('')}</div></section>`).join('')}<div class="journal-display"><h3>Your meadow spots</h3>${state.trails.display.map((id, index) => `<div><span>${slots[index]}: ${id ? escape(TRAIL_TREASURES[id].name) : 'ready for a find'}</span>${id ? `<button data-display-slot="${index}" data-clear-treasure class="text-button" aria-label="Put ${escape(TRAIL_TREASURES[id].name)} back in your journal">Put away</button>` : ''}</div>`).join('')}</div></div></details>`;

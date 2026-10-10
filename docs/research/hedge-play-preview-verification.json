@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "date": "2026-10-10",
+  "url": "Private Fedora Tailnet HTTP origin",
+  "platform": {
+    "secure": false,
+    "nativeLocks": false,
+    "indexedDB": true
+  },
+  "version1MigratedOnSave": true,
+  "companionHomeJournalPreserved": true,
+  "realKeyboardMovement": true,
+  "reloadPersisted": true,
+  "sourceHashes": {
+    "index.html": "e4b4bfb041117fc98f7ab198e583081b8f4e955c6e5edd182cc9e77fb43cb673",
+    "hedge-play.css": "2f068346d3a4dd4aaf91216859eac80af3963fafaf02ad2c8f9e9c5d90311d93",
+    "hedge-adventure.css": "9f47a24f6d0df64de7f2fb1993dc1b2838579e48369410ff9dbd888998af038e",
+    "src/hedge-app.js": "21714798eed3e00a7c78d41106ce39e90cf90a7c02470e8295e37d02439f011e",
+    "src/hedge-model.js": "9ef4bdc9b5b8ee9d33800dc5fbac5fe1b4a29a024dbcae661fbdf92aad56c0d9",
+    "src/hedge-play.js": "34db9a940ac801315ca7a99fe8fd0b3286830b1005306d318597b673d6828ca0",
+    "src/hedge-play-engine.js": "850454eb9ab1f8965d330dc177838069d1f4a4f82236ec820109563cbfea6277"
+  },
+  "errors": [],
+  "physicalDeviceTest": false,
+  "codeCommit": "f79f67c"
+}

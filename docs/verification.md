@@ -10,6 +10,8 @@ Movement, dashing, touch contact/release, explicit pause, the focus-loss handler
 
 [The machine-readable receipt](research/hedge-play-verification.json) records course results, saved progress, mobile measurements and source hashes. [Desktop](screenshots/hedge-play.png) and [phone](screenshots/hedge-play-mobile.png) are actual browser captures. Full evidence remains in `test-results/browser-smoke/hedge-play/`.
 
+The canonical private Tailnet preview also passed real keyboard movement, version 1 save migration and reload checks. Existing companion, home and journal data were preserved. Seven served application files matched canonical source hashes. This HTTP origin used IndexedDB because native Web Locks were unavailable. [Preview receipt](research/hedge-play-preview-verification.json).
+
 These are synthetic browser journeys on Fedora, Node.js 25.6.1 and Chromium 156.0.8078.4. They verify functioning play, not enjoyment, age suitability or retention. No child playtest, physical phone test, new macOS CI run or public deployment is claimed. The three courses are fixed layouts; [the play guide](playable-adventures.md) describes their scope and save behaviour.
 
 ## 0.9 Under the Hedge — Fedora verification, 10 October 2026

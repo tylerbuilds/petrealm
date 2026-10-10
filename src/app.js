@@ -1,6 +1,7 @@
 import { SPECIES, PERSONALITIES, ITEMS, createState, adopt, advanceTime, care, purchase, claimDaily, claimGameReward, parseSave, serialiseSave, readActivePet, selectPet, deposit, withdraw, equipAccessory, claimQuest, startBattle, battleAction, petCapacity, setMembership, claimLodgeParcel, useExpansion, claimBankInterest, upgradeBankTier, claimQuestDay, trainPet, growPet, startTrail, chooseTrail, leaveTrail, displayTreasure } from './model.js';
-import { creature } from './art.js';
-import { guideArt, hudIcon } from './world-art.js';
+import { creature, gardenArt } from './art.js';
+import { guideArt, hudIcon, meadowDetails, placeArt } from './world-art.js';
+import { WORLD_ART_KEY, createWorldArtController } from './world-theme.js';
 import { withSaveLock } from './persistence.js';
 import { renderGarden, renderMarket, renderRealm, renderArena, renderGlen, itemSymbols, battleActive } from './views.js';
 import { renderTrails } from './trail-views.js';
@@ -41,6 +42,15 @@ let trailViewGeneration = 0;
 let toastTimer;
 let game = null;
 let animationFrame;
+let worldArtUiGeneration = 0;
+let worldArtBusy = false;
+let worldArtWarning = null;
+const failedWorldArtSources = { meadow:null, place:null };
+const worldArt = createWorldArtController({ onChange: (pictures) => {
+  applyWorldArt(pictures);
+  renderWorldArtSettings(pictures);
+} });
+worldArtWarning = worldArt.restore().warning;
 const milestones = [
   ['first-friend', 'A new friend', '♡', 'Meet your first friend'],
   ['well-fed', 'Kind heart', '❦', 'Share a snack with your friend'],
@@ -55,6 +65,142 @@ function toast(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 3500);
 }
+function applyWorldArt(pictures = worldArt.getState()) {
+  for (const [slot, selector] of [['meadow','.scene-card'],['place','.place-arrival']]) {
+    const scene = $(selector);
+    if (!scene) continue;
+    scene.querySelector(':scope > .personal-scenery')?.remove();
+    if (failedWorldArtSources[slot] !== pictures[slot]?.src) failedWorldArtSources[slot] = null;
+    const picture = pictures[slot]?.src === failedWorldArtSources[slot] ? null : pictures[slot];
+    scene.classList.toggle('has-world-art', Boolean(picture));
+    if (!picture) continue;
+    const backdrop = document.createElement('div');
+    backdrop.className = 'personal-scenery';
+    backdrop.setAttribute('aria-hidden', 'true');
+    const image = document.createElement('img');
+    image.alt = '';
+    image.onerror = () => {
+      if (backdrop.isConnected) reportWorldArtFailure(slot, picture.src);
+    };
+    image.src = picture.src;
+    image.style.objectFit = picture.fit;
+    backdrop.append(image);
+    scene.prepend(backdrop);
+  }
+}
+function reportWorldArtFailure(slot, src) {
+  if (worldArt.getState()[slot]?.src !== src || failedWorldArtSources[slot] === src) return;
+  failedWorldArtSources[slot] = src;
+  worldArtWarning = 'Your picture could not be opened. Petrealm scenery is back. Choose another picture or use Petrealm scenery.';
+  applyWorldArt();
+  renderWorldArtSettings();
+  if ($('#world-art-dialog').open) {
+    $('#world-art-error').textContent = worldArtWarning;
+    $('#world-art-status').textContent = '';
+  } else toast('Your scenery picture could not be opened. Petrealm scenery is back. Open Scenery to choose another.');
+}
+function renderWorldArtSettings(pictures = worldArt.getState()) {
+  for (const slot of ['meadow','place']) {
+    const picture = pictures[slot];
+    if (failedWorldArtSources[slot] !== picture?.src) failedWorldArtSources[slot] = null;
+    const usable = picture && picture.src !== failedWorldArtSources[slot];
+    let preview = $(`#world-art-preview-${slot}`);
+    preview.hidden = !usable;
+    $(`#world-art-original-${slot}`).hidden = Boolean(usable);
+    if (usable) {
+      if (preview.getAttribute('src') !== picture.src) {
+        const fresh = document.createElement('img');
+        fresh.id = preview.id;
+        fresh.alt = preview.alt;
+        fresh.onerror = () => { if (fresh.isConnected) reportWorldArtFailure(slot, picture.src); };
+        fresh.src = picture.src;
+        preview.replaceWith(fresh);
+        preview = fresh;
+      }
+      preview.style.objectFit = picture.fit;
+    } else { preview.onerror = null; preview.removeAttribute('src'); }
+    const fit = $(`#world-art-fit-${slot}`);
+    fit.value = picture?.fit || 'cover';
+    fit.disabled = !usable || worldArtBusy;
+    $(`#world-art-clear-${slot}`).disabled = !picture;
+    $(`#choose-world-art-${slot}`).disabled = worldArtBusy;
+  }
+  $('#world-art-dialog').setAttribute('aria-busy', String(worldArtBusy));
+}
+function cancelWorldArtChoice() {
+  worldArt.cancel();
+  worldArtUiGeneration += 1;
+  worldArtBusy = false;
+  for (const slot of ['meadow','place']) $(`#world-art-${slot}`).value = '';
+  renderWorldArtSettings();
+  $('#world-art-status').textContent = '';
+}
+function openWorldArt() {
+  trailViewGeneration += 1;
+  if (game) { stopGame(); render(); toast('This round ended before you finished, so it earned no reward.'); }
+  cancelWorldArtChoice();
+  const result = worldArt.reload();
+  worldArtWarning = result.warning || (Object.values(failedWorldArtSources).some(Boolean) ? worldArtWarning : null);
+  $('#world-art-error').textContent = worldArtWarning || '';
+  $('#world-art-original-meadow').innerHTML = gardenArt() + meadowDetails();
+  $('#world-art-original-place').innerHTML = placeArt('market');
+  renderWorldArtSettings();
+  if (!$('#world-art-dialog').open) $('#world-art-dialog').showModal();
+}
+async function chooseWorldArt(slot, file) {
+  if (!file || !$('#world-art-dialog').open) return;
+  const generation = ++worldArtUiGeneration;
+  worldArtBusy = true;
+  $('#world-art-error').textContent = '';
+  $('#world-art-status').textContent = 'Making room for your picture…';
+  renderWorldArtSettings();
+  try {
+    const result = await worldArt.choose(slot, file);
+    if (generation !== worldArtUiGeneration || !$('#world-art-dialog').open) return;
+    if (result.status === 'saved') {
+      worldArtWarning = null;
+      $('#world-art-status').textContent = 'Saved on this device. Your new scenery is ready.';
+    } else $('#world-art-status').textContent = '';
+  } catch (error) {
+    if (generation !== worldArtUiGeneration || !$('#world-art-dialog').open) return;
+    $('#world-art-error').textContent = error.message;
+    $('#world-art-status').textContent = '';
+  } finally {
+    if (generation === worldArtUiGeneration) {
+      worldArtBusy = false;
+      renderWorldArtSettings();
+    }
+  }
+}
+$('#world-art-button').addEventListener('click', openWorldArt);
+$('#close-world-art').addEventListener('click', () => $('#world-art-dialog').close());
+$('#world-art-dialog').addEventListener('close', cancelWorldArtChoice);
+$('#world-art-dialog').addEventListener('cancel', cancelWorldArtChoice);
+for (const slot of ['meadow','place']) {
+  $(`#choose-world-art-${slot}`).addEventListener('click', () => $(`#world-art-${slot}`).click());
+  $(`#world-art-${slot}`).addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    event.target.value = '';
+    chooseWorldArt(slot, file);
+  });
+  $(`#world-art-clear-${slot}`).addEventListener('click', () => {
+    cancelWorldArtChoice();
+    $('#world-art-error').textContent = '';
+    try { worldArt.clear(slot); $('#world-art-status').textContent = 'Petrealm scenery is back.'; }
+    catch (error) { $('#world-art-error').textContent = error.message; }
+  });
+  $(`#world-art-fit-${slot}`).addEventListener('change', (event) => {
+    const fit = event.target.value;
+    cancelWorldArtChoice();
+    $('#world-art-error').textContent = '';
+    try { worldArt.setFit(slot, fit); $('#world-art-status').textContent = 'Picture fit saved on this device.'; }
+    catch (error) { renderWorldArtSettings(); $('#world-art-error').textContent = error.message; }
+  });
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') cancelWorldArtChoice();
+});
+window.addEventListener('pagehide', cancelWorldArtChoice);
 function retainMigrationOriginal() {
   if (pendingMigrationRaw === null && pendingV2MigrationRaw === null) return;
   // Keep legacy text separately: a later import or backup swap must not destroy
@@ -283,6 +429,7 @@ function render() {
   $('#page-title').textContent = headings[currentArea][0];
   $('#page-subtitle').textContent = headings[currentArea][1];
   $('#area-content').innerHTML = currentArea === 'trails' ? renderTrails(state, selectedTreasure, trailJournalOpen) : { garden, market, glen, realm, arena }[currentArea]();
+  applyWorldArt();
   positionCompanion();
   if (growthOpen !== undefined && $('#growth-disclosure')) $('#growth-disclosure').open = growthOpen;
   if (friendOpen !== undefined && $('#friends')) $('#friends').open = friendOpen;
@@ -297,6 +444,8 @@ function render() {
 }
 function changeArea(area) {
   if (!['garden','market','glen','realm','arena','trails'].includes(area)) return;
+  cancelWorldArtChoice();
+  if ($('#world-art-dialog').open) $('#world-art-dialog').close();
   const movedFromWorld = Boolean(document.activeElement?.closest('#area-content'));
   stopGame(); trailViewGeneration += 1; currentArea = area; render();
   if (movedFromWorld) $('#area-content').focus({preventScroll:true});
@@ -316,6 +465,8 @@ function renderAdoptionPreview() {
 }
 function showAdoption() {
   if ($('#adoption-dialog').open) return;
+  cancelWorldArtChoice();
+  if ($('#world-art-dialog').open) $('#world-art-dialog').close();
   adoptionStartedCount = state.pets.length;
   selectedPersonality = SPECIES[selectedSpecies].personality;
   $('#pet-name').value = '';
@@ -465,6 +616,8 @@ function readLocal(key) {
 function enterRecovery(raw, message) {
   recoveryRaw = raw;
   stopGame();
+  cancelWorldArtChoice();
+  if ($('#world-art-dialog').open) $('#world-art-dialog').close();
   $('#adoption-dialog').close(); $('#save-dialog').close();
   $('#recovery-message').textContent = message;
   if (!$('#recovery-dialog').open) $('#recovery-dialog').showModal();
@@ -714,6 +867,15 @@ document.addEventListener('keydown', (event) => {
   if (game?.kind === 'firefly' && event.code === 'Space' && !document.querySelector('dialog[open]')) { event.preventDefault(); if (!event.repeat) catchLight(); }
 });
 window.addEventListener('storage', async (event) => {
+  if (event.key === WORLD_ART_KEY || event.key === null) {
+    cancelWorldArtChoice();
+    worldArtWarning = worldArt.reload().warning || (Object.values(failedWorldArtSources).some(Boolean) ? worldArtWarning : null);
+    if ($('#world-art-dialog').open) {
+      $('#world-art-error').textContent = worldArtWarning || '';
+      $('#world-art-status').textContent = worldArtWarning ? '' : 'Scenery updated from another tab.';
+    }
+    if (event.key === WORLD_ART_KEY) return;
+  }
   if (![SAVE_KEY, WORLD_KEY].includes(event.key)) return;
   try {
     await withSaveLock(() => {

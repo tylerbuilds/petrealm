@@ -1,6 +1,8 @@
 # Petrealm
 
-![A companion exploring the little trails](docs/screenshots/trails-0.6.1.png)
+![A friend at home in Sunmeadow](docs/screenshots/world-art-0.7.png)
+
+[On a phone](docs/screenshots/world-art-mobile-0.7.png) · [Explore the map](docs/screenshots/world-map-0.7.png)
 
 [Play Petrealm](https://tylerbuilds.github.io/petrealm/) · [Player guide](docs/explore-petrealm.md)
 
@@ -17,6 +19,8 @@ There are nine original companions to meet. Each keeps their own personality, ou
 5. Open **Map & quests** for more places and things to try, or **Training** to practise and play a friendly match.
 
 **Satchel** holds your supplies and Mallow’s daily gift. **Friends** lets you choose who comes along. **Save** downloads a copy of your world or restores one from another device.
+
+**Scenery** lets you choose your own meadow and arrival pictures. They stay in this browser, with fit and clear controls; world save files keep your game progress separately.
 
 [The little trails](docs/little-trails.md) explains choices, costs and finds. [Meet the companions](docs/companions.md) explains personalities, favourite snacks and blooming.
 
@@ -77,5 +81,7 @@ The [Linux/macOS workflow](https://github.com/tylerbuilds/petrealm/actions/workf
 ## About the project
 
 Petrealm’s code, creatures, stories and SVG artwork are original and released under the [MIT licence](LICENSE). Public Neopets pages helped inform some feature ideas. Petrealm is independent and isn’t affiliated with Neopets.
+
+The meadow, market and trails have their own illustrated scenery, with separate compositions for phones. [Drawing Petrealm](docs/world-art.md) explains the palette and where to find the artwork.
 
 This is a local, single-player game. Online accounts, trading, player shops, auctions and social features are outside its scope. The [feature comparison](docs/parity-ledger.md) keeps the detailed differences and links to sources. [Game rules](docs/game-rules.md) also cover save formats, recovery and how multiple tabs share a world.

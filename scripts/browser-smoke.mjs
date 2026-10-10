@@ -2,6 +2,7 @@ import { chromium, expect } from '@playwright/test';
 import { spawn } from 'node:child_process';
 import { readFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { smokeWorldArt } from './world-art-smoke.mjs';
 const {name} = JSON.parse(await readFile('package.json', 'utf8'));
 const port = 4322;
 const server = spawn(process.execPath, ['scripts/serve.mjs', '--dir', 'dist', '--port', String(port)], {stdio:['ignore','pipe','pipe']});
@@ -225,6 +226,7 @@ try {
     await page.reload();
     expect((await world()).trails.display).toEqual([null,null,'seed-lantern']);
     await expect(page.locator('.meadow-treasure[data-treasure-select="seed-lantern"]')).toBeVisible();
+    await smokeWorldArt({ browser, expect, errors, output, readFile, resolve, url: `http://127.0.0.1:${port}/` });
   } else throw new Error(`Unknown app: ${name}`);
   await page.screenshot({path:resolve(output,'desktop.png'),fullPage:true,animations:'disabled'});
   expect(errors, 'browser errors').toEqual([]);

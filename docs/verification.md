@@ -1,8 +1,24 @@
 # Release verification
 
-## 0.5 illustrated consumer world
+## 0.6 little trails
 
-The current local source passed **53 Node tests**, a production build and **59 actual Chromium checks** on Fedora with Node.js 24.14.0 and system Chrome. A separate public production-build browser smoke also passed; its three receipt checks cover execution and source/script stability, not three additional user workflows. The browser total is 50 first-play checks plus nine returning-world checks. It includes viewport, focus, persistence and source-stability assertions; it is not a claim of 59 distinct games or user workflows.
+The frozen source passes **71 Node tests** on Fedora with Node.js 24.14.0: 53 established checks, 12 meaningful trail-state scenarios and six connected rendering checks. They cover completion, rotating replay, distinct finds, personality bond/knack, saved resume and stale steps, duplicate settlement, abandonment, display ownership, strict v3 migration, resource/XP bounds and the 32 KiB maximum-family contract. These are Node checks, separate from browser play.
+
+Actual fresh-profile Chrome verification passes **311 named records** across 32 local receipts: 83 ordinary first-play/returning/personality checks, 32 natural viewport checks, 19 authentic older-grown-world checks, 13 separately model-derived layout checks, 23 catalogue checks, 138 controlled recovery/race checks and three production-build smoke checkpoints. These include repeated source, viewport and persistence assertions; they are not 311 distinct games or user workflows. Narrow injected storage faults and the byte-exact older-client same-origin fixture are explicitly controlled test cases.
+
+One genuinely adopted friend completed **27 outings and 81 native choices**, exercised all **54 ordinary catalogue choices**, and earned all **nine finds** through real play, including the final-knack discoveries. All four personalities earn their actual preferred-approach bonus and unlock a usable knack. New and returning worlds complete an outing, place its find, resume after reload and preserve established care, outfits, balances and claim histories. The built browser smoke keeps the earlier game assertions and adds an earned outing, mid-run reload, route unlock and persistent meadow decoration.
+
+Desktop, tablet, 390px and 320px checks cover routes, encounters, the complete discovery card, journal and earned meadow props. The real phone completion shows the artwork, discovery label, title, reaction, reward and Show in meadow action together before any test scroll reset. In one 320px variant, the first 23px of the previous reaction begins above the viewport; one short native upward scroll reveals it without changing the outing. This is a documented short-scroll boundary, not an automatic full-response reveal claim at every width. Grown companions, a deliberately labelled 24-character name and three displayed finds retain readable, separate layouts.
+
+All twelve runtime files match the actual served response bodies and stay unchanged through these checks. Receipts report no uncaught page errors, console errors, failed requests, external calls or API calls. The tests use synthetic worlds and controlled fresh browser profiles; they do not establish physical touch-device testing, complete accessibility conformance or measured player retention.
+
+[An actual trail](screenshots/trails-0.6.png), [the immediate earned phone discovery](screenshots/discovery-mobile-0.6.png), [field journal](screenshots/journal-0.6.png) and [earned meadow decoration](screenshots/meadow-0.6.png) show unedited current native browser captures. [Play the little trails](little-trails.md) gives the actual rules and older-save recovery path.
+
+The exact release commit's [Linux/macOS workflow](https://github.com/tylerbuilds/petrealm/actions/workflows/verify.yml) is the authority for remote Node tests, production builds, browser smoke and Pages publication. Local checks do not substitute for those remote jobs or hosted verification. These are browser applications, with no native installer. Earlier 0.5 proof below is historical; it does not qualify the new trail loop. No full Neopets service parity is claimed.
+
+## Previous 0.5 illustrated consumer world
+
+The qualified 0.5 source passed **53 Node tests**, a production build and **59 actual Chromium checks** on Fedora with Node.js 24.14.0 and system Chrome. A separate public production-build browser smoke also passed; its three receipt checks cover execution and source/script stability, not three additional user workflows. The browser total is 50 first-play checks plus nine returning-world checks. It includes viewport, focus, persistence and source-stability assertions; it is not a claim of 59 distinct games or user workflows.
 
 A fresh player selects and names an original companion, enters Sunmeadow, shares treats, plays and rests. The checks open the Satchel and mailbox, collect the 40-pebble gift exactly once, buy an outfit at its fixed price, finish both mini-games, collect an earned quest gift, practise at the exact cost and download a save. A real reload retains the same friend, personality, outfit, money and progress. The HUD and illustrated signposts route to the actual meadow, market, glen, map/notebook and training systems.
 

@@ -1,10 +1,10 @@
 # Petrealm
 
-![Explore the original Petrealm meadow with your companion](docs/screenshots/world-0.5.png)
+![Explore the little trails with your original companion](docs/screenshots/trails-0.6.png)
 
 [Try the live demo](https://tylerbuilds.github.io/petrealm/) · [Linux/macOS checks](https://github.com/tylerbuilds/petrealm/actions/workflows/verify.yml)
 
-A little world of your own. Raise a family of original companions, dress them, complete quests, save your pebbles and take on friendly arena challenges. Two interactive games reward timing and memory.
+A little world of your own. Raise a family of original companions, dress them, complete quests, save your pebbles and take on friendly arena challenges. Take short choice-filled trails with each friend, discover original treasures and use them to make the meadow yours. Two interactive games reward timing and memory.
 
 Petrealm is a dependency-free, local-first browser game. Its expanded release implements original local equivalents of pet care, collecting, shops, quests, customisation, banking and battles described by Neopets' public pages, using independently written rules, an original interface and original vector artwork. It is not affiliated with Neopets and does not include its code, species, artwork, names or fictional currency.
 
@@ -30,14 +30,17 @@ The coordinating workflow records actual platform and browser checks in the rese
 
 ## Play
 
-[Start exploring: a short player guide](docs/explore-petrealm.md)
+[Start exploring: a short player guide](docs/explore-petrealm.md) · [Go on the little trails](docs/little-trails.md) · [What changed](CHANGELOG.md)
 
 1. Meet the nine original companions. Pick a species and personality, give your friend a name, then press **Let’s go!** to enter Sunmeadow.
 2. Share a **Berry treat** or **Acorn treat**, try **Ribbon play**, or take a **Cosy nap**. Your friend’s Fullness, Happiness and Energy update beside these actions.
 3. Follow an illustrated meadow sign, or use the five labelled places at the top. **Map & quests** connects the meadow, market, glen, training grove and Pebble Keep. The notebook gives daily and lasting things to try.
 4. Open **Satchel** or **Mail & gifts** for supplies, a daily 40-pebble letter and adventure keepsakes. **Friends** opens your family; **Try on an outfit** opens Dress up in the meadow.
 5. Play two games in **Games** for pebbles, happiness and XP. Visit **Training** to practise or play saved turn-by-turn matches. A level 3 friend who has shared their own meal, ribbon play and nap can mark a first bloom in the meadow: a lasting new portrait and stronger future practice.
-6. Use **Save** to download your world, move it to another device or restore a backup. Coming back to the same browser resumes your saved family.
+6. Follow the **Trails** sign for three short choices with your friend. Discover a keepsake, choose **Show in meadow**, and build bond to open the next path. Unfinished outings resume where you left them.
+7. Use **Save** to download your world, move it to another device or restore a backup. Coming back to the same browser resumes your saved family.
+
+[An earned discovery on a phone](docs/screenshots/discovery-mobile-0.6.png) · [Your field journal](docs/screenshots/journal-0.6.png) · [A keepsake in your meadow](docs/screenshots/meadow-0.6.png)
 
 Care, games, quests and matches all use the established rules. [Meet every companion and see exact personality, favourite-food, training and bloom effects](docs/companions.md). [Game rules](docs/game-rules.md) document prices, caps and rewards.
 
@@ -47,9 +50,9 @@ This is a single-player local game. Same-origin tabs serialise world mutations w
 
 ## Delivered scope and parity gaps
 
-A five-location illustrated map connects **Sunmeadow garden**, **Market lane**, **Pebble Keep**, **Starlight glen** and **Training grove**. The release includes multiple independent companions, seven original supplies, visible wardrobes, bank transfers and original savings tiers, explicit daily interest, five/six daily quests with a rolling seven-day bonus, lasting quests, experience, three progressive arena rivals, two interactive games and a free Explorer Lodge mode. Nine original species have individual personalities, food preferences and care milestones, with eighteen young/bloomed portraits. [Meet the companions](docs/companions.md). Original inline SVG illustrations are in [`src/art.js`](src/art.js), [`src/creatures.js`](src/creatures.js) and [`src/world-art.js`](src/world-art.js); immutable game rules are in [`src/model.js`](src/model.js).
+A five-location illustrated map connects **Sunmeadow garden**, **Market lane**, **Pebble Keep**, **Starlight glen** and **Training grove**. Three original trail routes add rotating encounters, individual bond and a usable personality knack, nine discovered treasures and three saved meadow display spots. Outings reward actual completed choices without adding pebble payouts or daily resets. [Trail rules and older-save recovery](docs/little-trails.md). The release includes multiple independent companions, seven original supplies, visible wardrobes, bank transfers and original savings tiers, explicit daily interest, five/six daily quests with a rolling seven-day bonus, lasting quests, experience, three progressive arena rivals, two interactive games and a free Explorer Lodge mode. Nine original species have individual personalities, food preferences and care milestones, with eighteen young/bloomed portraits. [Meet the companions](docs/companions.md). Original inline SVG illustrations are in [`src/art.js`](src/art.js), [`src/creatures.js`](src/creatures.js) and [`src/world-art.js`](src/world-art.js); immutable game rules are in [`src/model.js`](src/model.js).
 
-Version 2 saves strictly migrate accepted version 1 worlds, retaining the original text before any overwrite. Existing pets, stats, money, supplies, counts, achievements and daily/game histories survive migration. Older version 2 files are also accepted: their original bank balance and already paid daily feast remain intact. New bank, quest-log and per-companion personality/journey fields are validated optional extensions; migration does not invent historical daily completion, weekly progress or individual care milestones. Earlier companions remain Steady and keep every original field. All write paths retain the multi-tab mutex and recovery safeguards.
+Version 3 saves strictly migrate accepted version 1 and 2 worlds. Earlier world fields stay intact; each companion starts with zero trail bond, and the new discovery journal starts empty. Version-specific originals are retained before automatic overwrites. If the protected version 2 original belongs to a different world, Save provides an exact download and explicit safe upgrade path while retaining earlier backups. Existing pets, stats, money, supplies, counts, achievements and daily/game histories survive migration. Older version 2 files are also accepted: their original bank balance and already paid daily feast remain intact. Earlier version 2 bank, quest-log and per-companion personality/journey fields remain validated optional extensions of that older schema; migration does not invent historical daily completion, weekly progress or individual care milestones. Companions without a recorded personality default to Steady; existing personalities and original fields stay intact. All write paths retain the multi-tab mutex and recovery safeguards.
 
 The all-tier source comparison retains the dated 0.3 audit. The [current companion guide](docs/companions.md) describes the new animals, monsters and growth system without claiming the full online service catalogue.
 
@@ -61,9 +64,10 @@ Game balance, quest/battle rules, migration and storage behaviour are documented
 
 - `src/model.js`: immutable rules, validation and JSON import/export. Every action returns a new state or throws a helpful error.
 - `src/app.js`: coordinated local persistence, migration, accessible dialogs, navigation and two interactive games.
-- `src/views.js`: connected care, shop, bank, quest, Lodge and arena interfaces.
+- `src/views.js`, `src/trail-views.js`: connected care, shop, bank, quest, Lodge, arena, trail choices and discovery journal interfaces.
+- `src/trails.js`, `src/trail-art.js`: original encounter stories, discoveries and illustrated trail scenery.
 - `src/art.js`, `src/creatures.js`, `src/world-art.js`: original companions, growth forms, wardrobe, illustrated places, world guides and game controls.
-- `tests/model.test.js`, `tests/parity-model.test.js`, `tests/bank-quest-log.test.js`, `tests/companions.test.js`: meaningful migration, economy, resource, time and reward invariants using Node's built-in test runner.
+- `tests/model.test.js`, `tests/parity-model.test.js`, `tests/bank-quest-log.test.js`, `tests/companions.test.js`, `tests/trails.test.js`, `tests/trail-ui.test.js`: meaningful migration, economy, resource, time and reward invariants using Node's built-in test runner.
 - `scripts/serve.mjs`, `scripts/build.mjs`: dependency-free development and static build utilities.
 
 Changes should preserve saved worlds, keep all assets original, and disclose any new network or account behaviour before introducing it. Contributions and forks are welcome under the [MIT licence](LICENSE).

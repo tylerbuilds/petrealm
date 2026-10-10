@@ -1,5 +1,9 @@
 # Petrealm parity ledger — free and premium
 
+## Original 0.6 play additions
+
+The little trails are independently designed local gameplay, not a recovered Neopets system or catalogue. Three routes connect actual encounter choices, nine discoveries, individual companion bond/knack and three visible meadow display places. They do not imply online exploration parity, proprietary quest equivalence, a shared economy or Premium entitlements. Existing source observations below retain their original scope; [the trail guide](little-trails.md) and [current verification](verification.md) describe this added loop.
+
 Research date: 2026-10-10. Scope: the public Neopets browser-game feature catalogue, including Premium. This ledger is a functional comparison, not a claim that Petrealm has recovered the proprietary implementation or reached full service parity.
 
 Public support articles are readable. The anonymous REA captures of the main and portal entry points were denied access; no authenticated gameplay or backend internals were verified. Petrealm uses original species, vector artwork, world names, currency and numeric game rules. Source service names below identify the comparison, not product branding.

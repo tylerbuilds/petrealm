@@ -37,7 +37,7 @@ test('exact v1 saves migrate without changing their economy, activity, clock or 
   const old = legacySave();
   const before = JSON.stringify(old);
   const next = parseSave(JSON.stringify(old));
-  assert.equal(next.version, 2);
+  assert.equal(next.version, 3);
   assert.equal(next.wallet, old.wallet);
   assert.equal(next.lastUpdated, old.lastUpdated);
   assert.deepEqual(readActivePet(next).stats, old.pet.stats);
@@ -54,7 +54,7 @@ test('exact v1 saves migrate without changing their economy, activity, clock or 
   assert.deepEqual(next.membership, { tier: 'free', lastParcelDay: null });
   assert.equal(next.quests.daily.feeds, 0, 'old feeds do not invent today’s quest progress');
   assert.equal(JSON.stringify(old), before);
-  assert.equal(JSON.parse(serialiseSave(old)).version, 2);
+  assert.equal(JSON.parse(serialiseSave(old)).version, 3);
   assert.deepEqual(migrateState(next), next);
   const empty = legacySave();
   empty.pet = null;

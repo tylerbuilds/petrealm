@@ -1,4 +1,8 @@
 /** Original, local-only pet game rules. No network, browser or clock dependencies. */
+import { TRAIL_ROUTES, TRAIL_TREASURES, PERSONALITY_APPROACHES, getTrailScene, findForApproach, knackChoice } from './trails.js';
+
+export { TRAIL_ROUTES, TRAIL_TREASURES } from './trails.js';
+
 export const SPECIES = Object.freeze({
   mossling: Object.freeze({ id: 'mossling', name: 'Mossling', kind: 'woodland spirit', description: 'A gentle woodland friend with a leafy crest.', trait: 'Patient keeper of tiny gardens', favourite: null, personality: 'steady' }),
   emberkit: Object.freeze({ id: 'emberkit', name: 'Emberkit', kind: 'hearth spirit', description: 'A curious little companion with a warm glow.', trait: 'Finds wonder in the smallest sparks', favourite: null, personality: 'steady' }),
@@ -21,6 +25,8 @@ export const TRAINING_COST = 20;
 export const GROWTH_COST = 60;
 const JOURNEY_KEYS = ['feeds', 'plays', 'rests', 'trainings', 'growth'];
 const freshJourney = () => ({ feeds: 0, plays: 0, rests: 0, trainings: 0, growth: 0 });
+const freshPetTrail = () => ({ trips: 0, bond: 0 });
+const freshTrails = () => ({ sequence: 0, collection: [], display: [null, null, null], active: null, last: null });
 
 export const ITEMS = Object.freeze({
   berry: Object.freeze({ id: 'berry', name: 'Sunberry', price: 12, description: 'A sweet snack: +22 fullness, +6 happiness.' }),
@@ -385,11 +391,83 @@ function validateV2State(state) {
   return true;
 }
 
+function trailChoices(routeId, variant, step, pet) {
+  const scene = getTrailScene(routeId, variant, step);
+  if (!scene) return [];
+  return [...scene.choices, ...(pet.trail.bond >= 3 ? [knackChoice(pet.personality)] : [])];
+}
+
+function validateTrailChoices(choices, length, run, pet, label, finished = false) {
+  if (!Array.isArray(choices) || choices.length !== length) fail(`${label} must record exactly ${length} choices.`);
+  for (const [step, id] of choices.entries()) {
+    if (typeof id !== 'string' || !trailChoices(run.routeId, run.variant, step, pet).some((entry) => entry.id === id)) fail(`${label} contains an unavailable approach.`);
+    if (finished && id === 'knack' && pet.trail.bond - run.bondGain < 3) fail('A companion knack needs three bond before the outing.');
+  }
+}
+
+function validateV3State(state) {
+  record(state, [...STATE_KEYS, 'questLog', 'trails'], 'Save');
+  if (!Array.isArray(state.pets)) fail('Companions must be a list.');
+  for (const pet of state.pets) record(pet, ['id', 'name', 'species', 'adoptedAt', 'stats', 'wearing', 'xp', 'level', 'personality', 'journey', 'trail'], 'Pet');
+  // Reuse the unchanged v2 rules after removing only the explicit new fields.
+  const { trails, ...previous } = state;
+  validateV2State({ ...previous, version: 2, pets: state.pets.map(({ trail, ...pet }) => pet) });
+  record(state.bank, ['balance', 'tier', 'lastInterestDay', 'interestClaims', 'interestEarned'], 'Bank');
+  let trips = 0;
+  for (const pet of state.pets) {
+    record(pet.trail, ['trips', 'bond'], 'Companion trail');
+    integer(pet.trail.trips, 0, MAX_COUNTER, 'Completed outings');
+    integer(pet.trail.bond, pet.trail.trips, Math.min(MAX_COUNTER, pet.trail.trips * 2), 'Companion bond');
+    trips += pet.trail.trips;
+  }
+  record(trails, ['sequence', 'collection', 'display', 'active', 'last'], 'Trail journal');
+  integer(trails.sequence, 0, MAX_COUNTER, 'Outing sequence');
+  if (trips > trails.sequence) fail('Completed outings exceed the outing sequence.');
+  if (!Array.isArray(trails.collection) || trails.collection.length > 9 || new Set(trails.collection).size !== trails.collection.length) fail('Discoveries must be a list of at most nine different treasures.');
+  for (const id of trails.collection) {
+    if (typeof id !== 'string' || !Object.hasOwn(TRAIL_TREASURES, id)) fail('Unknown trail treasure.');
+    const route = TRAIL_ROUTES[TRAIL_TREASURES[id].routeId];
+    if (!state.pets.some((pet) => pet.trail.bond >= route.bond + 1)) fail('A discovery needs a completed outing on its unlocked route.');
+  }
+  if (trails.collection.length > trips || (trips === 0 ? trails.collection.length !== 0 || trails.last !== null : trails.collection.length === 0 || trails.last === null)) fail('Discoveries do not match completed outings.');
+  if (!Array.isArray(trails.display) || trails.display.length !== 3) fail('Your meadow has exactly three treasure places.');
+  const shown = trails.display.filter((id) => id !== null);
+  if (new Set(shown).size !== shown.length || shown.some((id) => !trails.collection.includes(id))) fail('Display only different treasures you have discovered.');
+  for (const [label, run] of [['Current outing', trails.active], ['Last outing', trails.last]]) {
+    if (run === null) continue;
+    const finished = label === 'Last outing';
+    record(run, ['id', 'petId', 'routeId', 'variant', ...(finished ? ['choices', 'treasureId', 'newFind', 'bondGain', 'xpGain'] : ['step', 'choices'])], label);
+    integer(run.id, 1, trails.sequence, `${label} number`);
+    if (typeof run.routeId !== 'string' || !Object.hasOwn(TRAIL_ROUTES, run.routeId)) fail('Choose an available trail.');
+    integer(run.variant, 0, 2, 'Trail variation');
+    const pet = state.pets.find((entry) => entry.id === run.petId);
+    if (!pet) fail('The outing companion is missing.');
+    if (pet.trail.bond < TRAIL_ROUTES[run.routeId].bond + Number(finished)) fail('The outing route has not been unlocked by this companion.');
+    if (finished) {
+      integer(run.bondGain, 1, 2, 'Outing bond');
+      integer(run.xpGain, 0, 12, 'Outing experience');
+      if (pet.xp < run.xpGain || (run.xpGain < 12 && pet.xp !== MAX_XP)) fail('Outing experience does not match the companion’s experience.');
+      if (run.id < trips || pet.trail.trips < 1 || run.variant !== (pet.trail.trips - 1) % 3 || pet.trail.bond < run.bondGain) fail('Last outing does not match the companion’s history.');
+      validateTrailChoices(run.choices, 3, run, pet, label, true);
+      const kinds = run.choices.map((id, step) => id === 'knack' ? PERSONALITY_APPROACHES[pet.personality] : getTrailScene(run.routeId, run.variant, step).choices.find((entry) => entry.id === id).kind);
+      if (run.bondGain !== 1 + Number(kinds.includes(PERSONALITY_APPROACHES[pet.personality]))) fail('Outing bond does not match the chosen approaches.');
+      if (run.treasureId !== findForApproach(run.routeId, run.variant, kinds[2]) || !trails.collection.includes(run.treasureId)) fail('Outing treasure does not match the final approach.');
+      if (typeof run.newFind !== 'boolean' || (run.newFind && trails.collection.at(-1) !== run.treasureId) || (!run.newFind && trips === 1)) fail('The discovery outcome does not match the journal.');
+    } else {
+      integer(run.step, 0, 2, 'Outing step');
+      if (run.id !== trails.sequence || trips >= trails.sequence || pet.trail.trips >= MAX_COUNTER || pet.trail.bond > MAX_COUNTER - 2 || run.variant !== pet.trail.trips % 3 || run.petId !== state.activePetId || state.battle?.status === 'active' || (trails.last && run.id <= trails.last.id)) fail('Current outing does not match the active companion and world.');
+      validateTrailChoices(run.choices, run.step, run, pet, label);
+    }
+  }
+  return true;
+}
+
 export function validateState(state) {
   if (!state || typeof state !== 'object' || Array.isArray(state)) fail('Save must be an object.');
   if (state.version === 1) return validateLegacyState(state);
   if (state.version === 2) return validateV2State(state);
-  fail('Unsupported save version. Petrealm supports versions 1 and 2.');
+  if (state.version === 3) return validateV3State(state);
+  fail('Unsupported save version. Petrealm supports versions 1, 2 and 3.');
 }
 
 function clone(state) {
@@ -427,11 +505,15 @@ function requireNoBattle(state) {
   if (state.battle?.status === 'active') fail('Finish the current arena battle before taking this action.');
 }
 
+function requireNoTrail(state) {
+  if (state.trails?.active) fail('Finish your current trail or head home before changing companions or entering the arena.');
+}
+
 /** Construct a new save. Callers may inject a timestamp for repeatable tests. */
 export function createState(now = Date.now()) {
   timestamp(now);
   return {
-    version: 2,
+    version: 3,
     pets: [],
     activePetId: null,
     wallet: 120,
@@ -448,19 +530,23 @@ export function createState(now = Date.now()) {
     battleWins: { ashgrub: false, stonebeak: false, frostwisp: false },
     membership: { tier: 'free', lastParcelDay: null },
     expansions: 0,
+    trails: freshTrails(),
   };
 }
 
-/** Validate and migrate v1 without changing its economy, clock or companion stats. */
+/** Migrate old saves without changing their economy, clock, care or companion history. */
 export function migrateState(state) {
   validateState(state);
-  if (state.version === 2) {
+  if (state.version === 2 || state.version === 3) {
     const next = clone(state);
+    next.version = 3;
     if (!Object.hasOwn(next.bank, 'tier')) next.bank = freshBank(next.bank.balance);
     if (!Object.hasOwn(next, 'questLog')) next.questLog = freshQuestLog(next.quests.daily);
     for (const pet of next.pets) {
       if (!Object.hasOwn(pet, 'personality')) { pet.personality = 'steady'; pet.journey = freshJourney(); }
+      if (!Object.hasOwn(pet, 'trail')) pet.trail = freshPetTrail();
     }
+    if (!Object.hasOwn(next, 'trails')) next.trails = freshTrails();
     validateState(next);
     return next;
   }
@@ -472,7 +558,7 @@ export function migrateState(state) {
   next.daily = clone(state.daily);
   next.game = { ...clone(state.game), rounds: { firefly: state.counts.games, memory: 0 } };
   if (state.pet) {
-    next.pets = [{ ...clone(state.pet), id: 'pet-1', wearing: { head: null, neck: null }, xp: 0, level: 1, personality: 'steady', journey: freshJourney() }];
+    next.pets = [{ ...clone(state.pet), id: 'pet-1', wearing: { head: null, neck: null }, xp: 0, level: 1, personality: 'steady', journey: freshJourney(), trail: freshPetTrail() }];
     next.activePetId = 'pet-1';
   }
   validateState(next);
@@ -500,6 +586,7 @@ export function advanceTime(state, now = Date.now()) {
 export function adopt(state, name, species, now = Date.now(), personality = undefined) {
   const next = advanceTime(state, now);
   requireNoBattle(next);
+  requireNoTrail(next);
   if (next.pets.length >= petCapacity(next)) fail(`Your lodge is full at ${petCapacity(next)} companions. Try explorer membership or a lodge expansion.`);
   if (typeof name !== 'string') fail('Give your companion a name.');
   const cleanName = name.trim().normalize('NFC');
@@ -508,7 +595,7 @@ export function adopt(state, name, species, now = Date.now(), personality = unde
   const nature = personality === undefined ? SPECIES[species].personality : personality;
   if (typeof nature !== 'string' || !Object.hasOwn(PERSONALITIES, nature)) fail('Choose an available companion personality.');
   const id = `pet-${next.pets.length + 1}`;
-  next.pets.push({ id, name: cleanName, species, adoptedAt: next.lastUpdated, stats: { satiety: 85, happiness: 80, energy: 85 }, wearing: { head: null, neck: null }, xp: 0, level: 1, personality: nature, journey: freshJourney() });
+  next.pets.push({ id, name: cleanName, species, adoptedAt: next.lastUpdated, stats: { satiety: 85, happiness: 80, energy: 85 }, wearing: { head: null, neck: null }, xp: 0, level: 1, personality: nature, journey: freshJourney(), trail: freshPetTrail() });
   next.activePetId = id;
   next.counts.adoptions += 1;
   return finish(next);
@@ -517,6 +604,7 @@ export function adopt(state, name, species, now = Date.now(), personality = unde
 export function selectPet(state, petId, now = Date.now()) {
   const next = advanceTime(state, now);
   requireNoBattle(next);
+  requireNoTrail(next);
   if (!next.pets.some((pet) => pet.id === petId)) fail('Choose one of your adopted companions.');
   next.activePetId = petId;
   return finish(next);
@@ -627,6 +715,112 @@ export function growPet(state, now = Date.now()) {
   pet.journey.growth = 1;
   gainXp(pet, 40);
   changeStats(pet, { happiness: 10, energy: 10 });
+  return finish(next);
+}
+
+/** Read-only helpers never advance a clock or award anything. */
+export function trailProgress(state) {
+  const pet = readActivePet(state);
+  const history = pet?.trail ?? freshPetTrail();
+  const journal = state.trails ?? freshTrails();
+  const preferred = PERSONALITY_APPROACHES[pet?.personality ?? 'steady'];
+  const routes = Object.values(TRAIL_ROUTES).map((route) => {
+    const unlocked = Boolean(pet && history.bond >= route.bond);
+    let reason = '';
+    if (!pet) reason = 'Adopt a companion to explore together.';
+    else if (!unlocked) reason = `${route.bond - history.bond} more bond with ${pet.name} opens this path.`;
+    else if (journal.active) reason = 'Finish this outing or head home first.';
+    else if (state.battle?.status === 'active') reason = 'Finish the arena battle first.';
+    else if (history.trips >= MAX_COUNTER || history.bond > MAX_COUNTER - 2 || journal.sequence >= MAX_COUNTER) reason = 'Your trail journal has reached its limit.';
+    else if (pet.stats.energy < 10) reason = 'Share a nap: outings need 10 energy to begin.';
+    else if (pet.stats.satiety < 2) reason = 'Share a snack: outings need 2 fullness to begin.';
+    return { ...route, unlocked, ready: reason === '', reason };
+  });
+  return { pet, ...history, preferred, knack: Boolean(pet && history.bond >= 3), routes,
+    collection: [...journal.collection], display: [...journal.display], active: journal.active, last: journal.last };
+}
+
+export function trailEncounter(state) {
+  const run = state.trails?.active;
+  if (!run) return null;
+  const pet = state.pets.find((entry) => entry.id === run.petId);
+  const scene = getTrailScene(run.routeId, run.variant, run.step);
+  if (!pet || !scene) return null;
+  const previousChoice = run.step > 0 ? trailChoices(run.routeId, run.variant, run.step - 1, pet).find((entry) => entry.id === run.choices[run.step - 1]) : null;
+  return { route: TRAIL_ROUTES[run.routeId], variant: run.variant, step: run.step,
+    title: scene.title, text: scene.text, choices: trailChoices(run.routeId, run.variant, run.step, pet), previousOutcome: previousChoice?.outcome ?? null };
+}
+
+/** Starting spends care resources once. No reward is earned by waiting. */
+export function startTrail(state, routeId, now = Date.now()) {
+  const next = advanceTime(state, now);
+  requireNoBattle(next);
+  requireNoTrail(next);
+  const pet = requirePet(next);
+  if (typeof routeId !== 'string' || !Object.hasOwn(TRAIL_ROUTES, routeId)) fail('Choose an available trail.');
+  const route = TRAIL_ROUTES[routeId];
+  if (pet.trail.bond < route.bond) fail(`Build ${route.bond} bond with ${pet.name} to open ${route.name}.`);
+  if (pet.stats.energy < 10) fail('Your companion needs 10 energy to begin an outing. Share a nap first.');
+  if (pet.stats.satiety < 2) fail('Your companion needs 2 fullness to begin an outing. Share a snack first.');
+  if (pet.trail.trips >= MAX_COUNTER || pet.trail.bond > MAX_COUNTER - 2 || next.trails.sequence >= MAX_COUNTER) fail('Your trail journal has reached its limit. Export your save to keep it safe.');
+  changeStats(pet, { energy: -6, satiety: -2 });
+  next.trails.sequence += 1;
+  next.trails.active = { id: next.trails.sequence, petId: pet.id, routeId, variant: pet.trail.trips % 3, step: 0, choices: [] };
+  return finish(next);
+}
+
+function requireTrailRun(state, runId) {
+  integer(runId, 1, MAX_COUNTER, 'Outing number');
+  const run = state.trails.active;
+  if (!run || run.id !== runId) fail('This outing has already ended or changed. Open the current trail again.');
+  if (run.petId !== state.activePetId) fail('This outing belongs to a different companion.');
+  return run;
+}
+
+/** Run and step are observed by the UI, then checked against the fresh locked save. */
+export function chooseTrail(state, runId, expectedStep, choiceId, now = Date.now()) {
+  const next = advanceTime(state, now);
+  const run = requireTrailRun(next, runId);
+  integer(expectedStep, 0, 2, 'Observed outing step');
+  if (run.step !== expectedStep) fail('That choice was already made in another tab. Read the next part of your outing.');
+  const pet = requirePet(next);
+  const selected = trailChoices(run.routeId, run.variant, run.step, pet).find((entry) => entry.id === choiceId);
+  if (!selected) fail('Choose an approach shown for this part of the trail.');
+  run.choices.push(choiceId);
+  if (run.step < 2) {
+    run.step += 1;
+    return finish(next);
+  }
+  const kinds = run.choices.map((id, step) => trailChoices(run.routeId, run.variant, step, pet).find((entry) => entry.id === id).kind);
+  const bondGain = 1 + Number(kinds.includes(PERSONALITY_APPROACHES[pet.personality]));
+  const treasureId = findForApproach(run.routeId, run.variant, selected.kind);
+  const newFind = !next.trails.collection.includes(treasureId);
+  if (newFind) next.trails.collection.push(treasureId);
+  pet.trail.trips += 1;
+  pet.trail.bond += bondGain;
+  const xpGain = Math.min(12, MAX_XP - pet.xp);
+  gainXp(pet, xpGain);
+  changeStats(pet, { happiness: 10 });
+  next.trails.last = { id: run.id, petId: pet.id, routeId: run.routeId, variant: run.variant,
+    choices: [...run.choices], treasureId, newFind, bondGain, xpGain };
+  next.trails.active = null;
+  return finish(next);
+}
+
+/** Heading home keeps the start cost; unfinished stories grant no rewards. */
+export function leaveTrail(state, runId, now = Date.now()) {
+  const next = advanceTime(state, now);
+  requireTrailRun(next, runId);
+  next.trails.active = null;
+  return finish(next);
+}
+
+export function displayTreasure(state, treasureId, slot, now = Date.now()) {
+  const next = advanceTime(state, now);
+  integer(slot, 0, 2, 'Meadow treasure place');
+  if (treasureId !== null && (typeof treasureId !== 'string' || !next.trails.collection.includes(treasureId))) fail('Choose a treasure you have discovered on an outing.');
+  // Moving a displayed keepsake clears its previous place instead of duplicating it.
+  next.trails.display = next.trails.display.map((id, index) => index === slot ? treasureId : id === treasureId && treasureId !== null ? null : id);
   return finish(next);
 }
 
@@ -810,6 +1004,7 @@ export function claimQuest(state, questId, now = Date.now()) {
 export function startBattle(state, opponentId, now = Date.now()) {
   const next = advanceTime(state, now);
   requireNoBattle(next);
+  requireNoTrail(next);
   const pet = requirePet(next);
   if (typeof opponentId !== 'string' || !Object.hasOwn(OPPONENTS, opponentId)) fail('Choose an available arena opponent.');
   const opponent = OPPONENTS[opponentId];

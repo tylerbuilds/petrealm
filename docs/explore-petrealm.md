@@ -6,7 +6,8 @@ Meet a friend, make a little home, then see where the paths take you. Petrealm i
 
 1. Pick a companion, choose their personality and give them a name. Press **Let’s go!** to enter Sunmeadow.
 2. Try a **Berry treat**, **Acorn treat**, **Ribbon play** or **Cosy nap**. Fullness, Happiness and Energy show how your friend feels. Snacks are used up; the ribbon can be used again.
-3. Follow a meadow sign, or choose a place at the top of the screen. **Map & quests** shows every destination and your adventure notebook.
+3. Try **Trails** for a three-choice outing, a discovery and a closer bond. **Show in meadow** brings your find home. [The little trails](little-trails.md) explains routes, choices and costs.
+4. Follow another meadow sign, or choose a place at the top of the screen. **Map & quests** shows every destination and your adventure notebook.
 
 Mallow the owl has a few ideas when you need one. You choose what to do next. There is no account to create or payment to make.
 
@@ -18,6 +19,7 @@ Mallow the owl has a few ideas when you need one. You choose what to do next. Th
 | **Market** | Meet Juniper, spend earned pebbles on snacks and treasures, or put pebbles in the Pebble Keep. |
 | **Games** | Catch the firefly in the golden patch, or turn over flower cards and find six matching pairs. |
 | **Map & quests** | Choose a path, try today’s quests, collect the gifts you earned and visit the Explorer Lodge. |
+| **Little trails** | Make three choices with your friend, find treasures, unlock their knack and decorate the meadow. |
 | **Training** | Practise with your companion, then play turn-by-turn matches against friendly rivals. |
 
 The Pebble Keep sign on the map takes you straight to the bank in Market lane. Deposit and withdraw whole pebbles. Interest is a game reward: collect it yourself once each UTC day.
@@ -28,7 +30,7 @@ Open **Satchel**, or the meadow’s **Mail & gifts** button, to see your snacks,
 
 **Try on an outfit** takes you to Dress up in the meadow. A leaf cap adds two attack in a match; a moon scarf blocks two damage. Taking an accessory off lets another friend wear it.
 
-The **Friends** button opens your family. Choose a companion to play with, or adopt another. Each friend keeps their own care, outfit, experience and bloom. Finish a match before changing friends or outfits.
+The **Friends** button opens your family. Choose a companion to play with, or adopt another. Each friend keeps their own care, outfit, experience and bloom. Finish a match before changing friends or outfits. Finish or leave a saved trail before choosing another friend.
 
 ## Growing together
 

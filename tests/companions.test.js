@@ -118,12 +118,15 @@ test('older v2 worlds retain every original field and active arena snapshot with
   original = purchase(original, 'leafcap', NOW);
   original = equipAccessory(original, 'leafcap', 'head', NOW);
   original = startBattle(original, 'ashgrub', NOW);
-  for (const pet of original.pets) { delete pet.personality; delete pet.journey; }
+  original.version = 2;
+  delete original.trails;
+  for (const pet of original.pets) { delete pet.personality; delete pet.journey; delete pet.trail; }
   const raw = JSON.stringify(original); const migrated = parseSave(raw);
   assert.equal(JSON.stringify(original), raw);
   for (const key of Object.keys(original)) {
-    if (key !== 'pets') assert.deepEqual(migrated[key], original[key], key);
+    if (!['pets', 'version'].includes(key)) assert.deepEqual(migrated[key], original[key], key);
   }
+  assert.equal(migrated.version, 3);
   for (const [key, value] of Object.entries(original.pets[0])) assert.deepEqual(migrated.pets[0][key], value, key);
   assert.equal(migrated.pets[0].personality, 'steady');
   assert.deepEqual(migrated.pets[0].journey, { feeds: 0, plays: 0, rests: 0, trainings: 0, growth: 0 });

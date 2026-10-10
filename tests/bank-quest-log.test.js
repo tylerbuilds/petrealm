@@ -243,12 +243,17 @@ test('old v2 saves preserve paid feast, balances and all history without inventi
   state = claimQuest(state, 'daily-feast', NOW);
   state = deposit(state, 20, NOW);
   const old = structuredClone(state);
+  old.version = 2;
+  delete old.trails;
+  for (const pet of old.pets) delete pet.trail;
   old.bank = { balance: old.bank.balance };
   delete old.questLog;
   const original = JSON.stringify(old, null, 4) + '\n';
   assert.equal(validateState(old), true);
   const next = parseSave(original);
-  for (const key of Object.keys(old).filter((key) => key !== 'bank')) assert.deepEqual(next[key], old[key]);
+  assert.equal(next.version, 3);
+  for (const key of Object.keys(old).filter((key) => !['bank', 'version', 'pets'].includes(key))) assert.deepEqual(next[key], old[key]);
+  for (const [index, pet] of old.pets.entries()) for (const [key, value] of Object.entries(pet)) assert.deepEqual(next.pets[index][key], value);
   assert.equal(next.bank.balance, old.bank.balance);
   assert.equal(next.bank.tier, 'seedling');
   assert.equal(next.bank.lastInterestDay, null);

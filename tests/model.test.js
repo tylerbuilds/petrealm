@@ -174,7 +174,7 @@ test('strict imports reject unknown fields, versions, invalid stats and inventor
   const original = pet();
   const before = serialiseSave(original);
   const cases = [
-    [(state) => { state.version = 3; }, /Unsupported save version/],
+    [(state) => { state.version = 4; }, /Unsupported save version/],
     [(state) => { state.surprise = true; }, /unknown fields/],
     [(state) => { delete state.wallet; }, /missing/],
     [(state) => { state.inventory.berry = -1; }, /quantity/],

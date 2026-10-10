@@ -1,6 +1,8 @@
 // Original Petrealm vector illustrations, written for this project.
 // No third-party artwork, fonts, sprites or remote resources are used.
 import { creatureBody, accessoryAnchors } from './creatures.js';
+const escapeLabel = (value) => String(value ?? 'A Petrealm companion').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+const creatureIds = new Set(['mossling', 'emberkit', 'moonfin', 'briarhare', 'pebblepup', 'cloudmoth', 'kilnback', 'gloomdrop', 'thistlehorn']);
 export function itemArt(id) {
   const illustrations = {
     berry: '<path d="M31 24Q28 12 37 7" fill="none" stroke="#637e4d" stroke-width="3" stroke-linecap="round"/><path d="M32 20Q15 21 16 9Q28 7 32 20M34 17Q39 5 49 11Q47 22 34 17" fill="#93ae70"/><circle cx="24" cy="34" r="12" fill="#ca816b"/><circle cx="42" cy="33" r="12" fill="#dc9a7b"/><circle cx="33" cy="46" r="12" fill="#d38970"/><path d="M19 30l2-2M37 28l2-2M28 42l2-2" stroke="#f9d4b3" stroke-width="3" stroke-linecap="round"/>',
@@ -11,10 +13,13 @@ export function itemArt(id) {
     potion: '<path d="M26 8H38V23Q51 28 51 43Q51 57 32 57Q13 57 13 43Q13 28 26 23Z" fill="#e2e9d9" stroke="#83957e" stroke-width="2"/><path d="M17 39Q32 35 47 39Q48 53 32 53Q17 53 17 39" fill="#9ebdab"/><path d="M25 7H39V15H25Z" fill="#bca07a" stroke="#9b825f" stroke-width="2"/><path d="M22 30Q18 34 19 39" fill="none" stroke="#fffdf0" stroke-width="3" stroke-linecap="round"/><path d="M32 32Q25 41 32 45Q39 41 32 32" fill="#e8f3dc"/>',
     'lodge-deed': '<path d="M17 10H47Q52 10 52 16V50H19Q13 50 13 44V15Q13 10 17 10" fill="#f5e7bd" stroke="#c3ad7d" stroke-width="2"/><path d="M43 10V19H54Q58 10 49 10M13 43H47Q51 43 51 49Q51 55 45 55H20Q13 55 13 49" fill="#ead7a7" stroke="#c3ad7d" stroke-width="2"/><path d="M22 22H35M22 28H39M22 34H31" stroke="#c3ad7d" stroke-width="2" stroke-linecap="round"/><circle cx="40" cy="39" r="9" fill="#789162"/><path d="M36 43Q35 35 44 34Q44 43 36 43" fill="#dce8b3"/><path d="M36 45L42 37" stroke="#789162" stroke-width="1.5"/>',
   };
-  return `<svg class="item-art" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true" focusable="false">${illustrations[id] || illustrations.berry}</svg>`;
+  const body = typeof id === 'string' && Object.hasOwn(illustrations, id) ? illustrations[id] : illustrations.berry;
+  return `<svg class="item-art" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true" focusable="false">${body}</svg>`;
 }
 
 export function creature(species = 'mossling', label = 'A Petrealm companion', wearing = {}, grown = false) {
+  if (typeof species !== 'string' || !creatureIds.has(species)) species = 'mossling';
+  if (!wearing || typeof wearing !== 'object' || Array.isArray(wearing)) wearing = {};
   const common = `<ellipse cx="120" cy="201" rx="63" ry="9" fill="#64744c" opacity=".10"/>`;
   const face = `<ellipse cx="101" cy="121" rx="5" ry="7" fill="#344935"/><ellipse cx="141" cy="121" rx="5" ry="7" fill="#344935"/><circle cx="102" cy="119" r="1.5" fill="#fff9e9"/><circle cx="142" cy="119" r="1.5" fill="#fff9e9"/><path d="M115 133Q121 140 127 133" fill="none" stroke="#344935" stroke-width="3" stroke-linecap="round"/><ellipse cx="87" cy="132" rx="9" ry="5" fill="#dbac91" opacity=".65"/><ellipse cx="155" cy="132" rx="9" ry="5" fill="#dbac91" opacity=".65"/>`;
   const shapes = {
@@ -36,7 +41,7 @@ export function creature(species = 'mossling', label = 'A Petrealm companion', w
     emberkit: '<path d="m71 96 11 5m-14 4 12 4m88-13-10 5m13 5-11 4M85 180l8 3m-5 7 7 1m47-8 7-3m-5 11 9-2M185 133q10-5 14-12" stroke="#c78b62" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M80 86q5-6 11-8m65 0 6 7" stroke="#f8d8ab" stroke-width="3" fill="none" stroke-linecap="round"/><path d="m84 127-17-3m16 10-16 4m87-13 16-3m-16 10 16 5" stroke="#af7759" stroke-width="1.5" fill="none" stroke-linecap="round"/>',
     moonfin: '<path d="m150 117 5 8-5 8m-68-30 7 3m-17 33-5 8m99-40 8 3m-35 63-7 5m80-53 6 10m-5-25 7 2" stroke="#8ba7c6" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M105 85q15-4 24 0m-22 18 5 2m23-3 6 2" stroke="#e6eef5" stroke-width="3" fill="none" stroke-linecap="round"/><g fill="#e6eef5"><circle cx="105" cy="153" r="2"/><circle cx="115" cy="159" r="2"/><circle cx="127" cy="153" r="2"/><circle cx="137" cy="159" r="2"/></g>',
   }[species] || '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220" role="img" aria-label="${label.replace(/[&<>"']/g, '')}" data-creature="${species}" data-growth="${grown ? 'bloomed' : 'young'}">${common}${creatureBody(species, {grown}) || shapes[species] || shapes.mossling}${detail}${growthArt}<g transform="${anchors.head}">${head}</g><g transform="${anchors.neck}">${neck}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220" role="img" aria-label="${escapeLabel(label)}" data-creature="${species}" data-growth="${grown ? 'bloomed' : 'young'}">${common}${creatureBody(species, {grown}) || shapes[species] || shapes.mossling}${detail}${growthArt}<g transform="${anchors.head}">${head}</g><g transform="${anchors.neck}">${neck}</g></svg>`;
 }
 
 export function gardenArt() {
@@ -64,5 +69,6 @@ export function opponentArt(id) {
     stonebeak: `<path d="M45 135L79 64L141 57L187 105L176 173L110 190L60 166Z" fill="#adb3bb" stroke="#7a8590" stroke-width="3"/><path d="M78 65L96 113L142 58M97 112L63 164M142 119L175 172" stroke="#929ba5" stroke-width="3" fill="none"/><path d="M102 126L120 112L139 128L121 141Z" fill="#d9b589"/>`,
     frostwisp: `<path d="M53 148Q58 99 92 71Q93 34 119 22Q146 47 141 74Q184 99 184 144Q191 179 149 174L120 194L97 176Q49 183 53 148" fill="#bacfe0" stroke="#8aa8bf" stroke-width="3"/><path d="M101 54L119 72L137 55" stroke="#e4eff0" stroke-width="5" fill="none"/><path d="M85 160L92 180M153 160L146 180" stroke="#8aa8bf" stroke-width="4"/><path d="M121 35L125 45L135 49L125 52L121 62L117 52L107 49L117 45Z" fill="#fbf0bd"/>`,
   };
-  return `<svg viewBox="0 0 240 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="119" cy="196" rx="70" ry="9" fill="#677344" opacity=".12"/>${bodies[id] || bodies.ashgrub}<ellipse cx="96" cy="120" rx="5" ry="7" fill="#435049"/><ellipse cx="143" cy="120" rx="5" ry="7" fill="#435049"/><path d="M109 144Q120 151 131 144" stroke="#435049" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="82" cy="133" rx="9" ry="4" fill="#dcab97" opacity=".7"/><ellipse cx="158" cy="133" rx="9" ry="4" fill="#dcab97" opacity=".7"/></svg>`;
+  const body = typeof id === 'string' && Object.hasOwn(bodies, id) ? bodies[id] : bodies.ashgrub;
+  return `<svg viewBox="0 0 240 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="119" cy="196" rx="70" ry="9" fill="#677344" opacity=".12"/>${body}<ellipse cx="96" cy="120" rx="5" ry="7" fill="#435049"/><ellipse cx="143" cy="120" rx="5" ry="7" fill="#435049"/><path d="M109 144Q120 151 131 144" stroke="#435049" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="82" cy="133" rx="9" ry="4" fill="#dcab97" opacity=".7"/><ellipse cx="158" cy="133" rx="9" ry="4" fill="#dcab97" opacity=".7"/></svg>`;
 }

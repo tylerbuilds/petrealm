@@ -3,18 +3,34 @@
 // An IndexedDB read/write transaction supplies the older-browser fallback.
 const LOCK_NAME = 'petrealm:world-save-v1';
 let databasePromise;
+const saveUnavailable = () => new Error('Your browser couldn’t save right now. Your saved world hasn’t changed.');
 
 function openMutexDatabase() {
   if (!globalThis.indexedDB) throw new Error('This browser can’t save your world safely. Use a newer browser, or download your save file.');
   if (!databasePromise) {
-    databasePromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open('petrealm-save-mutex', 1);
+    const pending = new Promise((resolve, reject) => {
+      let request;
+      try { request = indexedDB.open('petrealm-save-mutex', 1); }
+      catch { reject(saveUnavailable()); return; }
+      let settled = false;
+      const failed = (error) => { if (!settled) { settled = true; reject(error); } };
       request.onupgradeneeded = () => request.result.createObjectStore('gate');
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(new Error('Your browser couldn’t save right now. Your saved world hasn’t changed.'));
-      request.onblocked = () => reject(new Error('Another Petrealm tab is blocking the save. Close older tabs and try again.'));
+      request.onsuccess = () => {
+        const database = request.result;
+        // A blocked request can still succeed after its caller has been told
+        // to retry. Do not leave an abandoned connection blocking other tabs.
+        if (settled) { database.close(); return; }
+        settled = true;
+        const forget = () => { if (databasePromise === pending) databasePromise = undefined; };
+        database.onversionchange = () => { database.close(); forget(); };
+        database.onclose = forget;
+        resolve(database);
+      };
+      request.onerror = () => failed(saveUnavailable());
+      request.onblocked = () => failed(new Error('Another Petrealm tab is blocking the save. Close older tabs and try again.'));
     });
-    databasePromise.catch(() => { databasePromise = undefined; });
+    databasePromise = pending;
+    pending.catch(() => { if (databasePromise === pending) databasePromise = undefined; });
   }
   return databasePromise;
 }
@@ -23,11 +39,23 @@ export async function withSaveLock(operation) {
   if (globalThis.navigator?.locks?.request) {
     return navigator.locks.request(LOCK_NAME, { mode: 'exclusive' }, operation);
   }
-  const database = await openMutexDatabase();
+  const opening = openMutexDatabase();
+  const observedConnection = databasePromise;
+  const database = await opening;
   return new Promise((resolve, reject) => {
-    const transaction = database.transaction('gate', 'readwrite');
-    const store = transaction.objectStore('gate');
-    const request = store.get('sequence');
+    let transaction;
+    let request;
+    try {
+      transaction = database.transaction('gate', 'readwrite');
+      request = transaction.objectStore('gate').get('sequence');
+    } catch {
+      // A connection can close between opening it and starting a transaction.
+      // No world operation has run yet, so fail safely and allow a fresh open.
+      database.close();
+      if (databasePromise === observedConnection) databasePromise = undefined;
+      reject(saveUnavailable());
+      return;
+    }
     let result;
     let operationError;
     request.onsuccess = () => {

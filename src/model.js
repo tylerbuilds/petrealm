@@ -144,9 +144,10 @@ function checkDay(value, label) {
   }
 }
 
-function checkName(name) {
+function checkName(name, newName = false) {
   if (typeof name !== 'string' || name !== name.trim() || [...name].length < 1 || [...name].length > 24
-      || /[\u0000-\u001f\u007f-\u009f]/u.test(name)) {
+      || /[\u0000-\u001f\u007f-\u009f]/u.test(name)
+      || (newName && /[\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/u.test(name))) {
     fail('Pet name needs 1 to 24 characters. Leave out hidden characters and spaces at either end.');
   }
 }
@@ -408,6 +409,9 @@ function validateTrailChoices(choices, length, run, pet, label, finished = false
 function validateV3State(state) {
   record(state, [...STATE_KEYS, 'questLog', 'trails'], 'Save');
   if (!Array.isArray(state.pets)) fail('Petrealm needs a list of companions in this save.');
+  // Check the absolute roster bound before visiting entries. The v2 rules below
+  // then enforce the smaller capacity for this world's membership and rooms.
+  if (state.pets.length > 26) fail('Your lodge has room for up to 26 companions.');
   for (const pet of state.pets) record(pet, ['id', 'name', 'species', 'adoptedAt', 'stats', 'wearing', 'xp', 'level', 'personality', 'journey', 'trail'], 'Pet');
   // Reuse the unchanged v2 rules after removing only the explicit new fields.
   const { trails, ...previous } = state;
@@ -590,7 +594,9 @@ export function adopt(state, name, species, now = Date.now(), personality = unde
   if (next.pets.length >= petCapacity(next)) fail(`Your lodge is full at ${petCapacity(next)} companions. Add a room or choose explorer membership to make more space.`);
   if (typeof name !== 'string') fail('Give your companion a name.');
   const cleanName = name.trim().normalize('NFC');
-  checkName(cleanName);
+  // Keep previously valid saved names intact while refusing invisible direction
+  // overrides in a new name. All saved names remain escaped when rendered.
+  checkName(cleanName, true);
   if (typeof species !== 'string' || !Object.hasOwn(SPECIES, species)) fail('Choose one of the available companion species.');
   const nature = personality === undefined ? SPECIES[species].personality : personality;
   if (typeof nature !== 'string' || !Object.hasOwn(PERSONALITIES, nature)) fail('Choose one of the available personalities for your companion.');
@@ -1027,6 +1033,7 @@ export function battleAction(state, action, now = Date.now()) {
   let damage = 0;
   if (action === 'potion') {
     if (next.inventory.potion < 1) fail('You have no dew potion. Find one at Market lane.');
+    if (battle.petHp >= battle.petMaxHp) fail('Your companion already has full HP. Keep the potion for later.');
     next.inventory.potion -= 1;
     const healed = Math.min(22, battle.petMaxHp - battle.petHp);
     battle.petHp += healed;

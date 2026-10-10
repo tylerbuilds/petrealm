@@ -13,6 +13,7 @@ export const WORLD_ART_LIMITS = Object.freeze({
 const SLOTS = ['meadow', 'place'];
 const TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
+const PNG_DEPTHS = { 0: [1, 2, 4, 8, 16], 2: [8, 16], 3: [1, 2, 4, 8], 4: [8, 16], 6: [8, 16] };
 const MAX_STORED_CHARS = 2 * (Math.ceil(WORLD_ART_LIMITS.outputBytes / 3) * 4 + 80) + 100;
 const emptyState = () => ({ version: 1, meadow: null, place: null });
 const copyState = (state) => ({ version: 1, meadow: state.meadow ? { ...state.meadow } : null, place: state.place ? { ...state.place } : null });
@@ -35,6 +36,9 @@ function checkDimensions(width, height, output = false) {
 function pngDimensions(bytes) {
   if (bytes.length < 45 || !PNG_SIGNATURE.every((byte, index) => bytes[index] === byte)) throw unreadable();
   if (u32(bytes, 8) !== 13 || textAt(bytes, 12, 4) !== 'IHDR') throw unreadable();
+  // PNG's mandatory methods and sample-depth combinations are fixed by IHDR.
+  // Reject impossible headers before handing the file to an image decoder.
+  if (!PNG_DEPTHS[bytes[25]]?.includes(bytes[24]) || bytes[26] !== 0 || bytes[27] !== 0 || bytes[28] > 1) throw unreadable();
   const dimensions = checkDimensions(u32(bytes, 16), u32(bytes, 20));
   let at = 8;
   let chunks = 0;
@@ -60,15 +64,17 @@ function jpegDimensions(bytes) {
   let at = 2;
   let dimensions;
   let segments = 0;
+  const headerBytes = 256 * 1024;
   const frameMarkers = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf]);
-  while (at < bytes.length && at <= 256 * 1024 && ++segments <= 2048) {
+  while (at < bytes.length && at < headerBytes && ++segments <= 2048) {
     if (bytes[at++] !== 0xff) throw unreadable();
-    while (bytes[at] === 0xff) at++;
+    while (at < headerBytes && bytes[at] === 0xff) at++;
+    if (at >= headerBytes) throw unreadable();
     const marker = bytes[at++];
     if (marker === undefined || marker === 0 || marker === 0xd8 || marker === 0xd9 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) throw unreadable();
-    if (at + 2 > bytes.length) throw unreadable();
+    if (at + 2 > bytes.length || at + 2 > headerBytes) throw unreadable();
     const size = u16(bytes, at);
-    if (size < 2 || at + size > bytes.length || at + size > 256 * 1024) throw unreadable();
+    if (size < 2 || at + size > bytes.length || at + size > headerBytes) throw unreadable();
     if (frameMarkers.has(marker)) {
       if (dimensions || size < 11 || bytes[at + 2] !== 8) throw unreadable();
       const channels = bytes[at + 7];
@@ -183,16 +189,20 @@ function encodeRaster(picture, { width, height, quality }) {
 
 /** Decode/encode can be injected for tests; browser callers use the defaults. */
 export async function prepareWorldArtFile(file, { decode = decodeRaster, encode = encodeRaster, isCurrent = () => true } = {}) {
-  if (!file || !TYPES.has(file.type) || !Number.isInteger(file.size) || file.size < 1 || typeof file.arrayBuffer !== 'function') throw unreadable();
-  if (file.size > WORLD_ART_LIMITS.inputBytes) throw new Error('Choose a picture up to 8 MiB.');
-  if (!isCurrent()) throw cancelled();
-  const buffer = await file.arrayBuffer();
-  if (!isCurrent()) throw cancelled();
-  if (!(buffer instanceof ArrayBuffer) || buffer.byteLength !== file.size) throw unreadable();
-  const source = inspectRaster(buffer, file.type);
   let picture;
   try {
+    if (!file || !TYPES.has(file.type) || !Number.isInteger(file.size) || file.size < 1 || typeof file.arrayBuffer !== 'function') throw unreadable();
+    if (file.size > WORLD_ART_LIMITS.inputBytes) throw new Error('Choose a picture up to 8 MiB.');
     if (!isCurrent()) throw cancelled();
+    let buffer;
+    try { buffer = await file.arrayBuffer(); }
+    catch {
+      if (!isCurrent()) throw cancelled();
+      throw unreadable();
+    }
+    if (!isCurrent()) throw cancelled();
+    if (!(buffer instanceof ArrayBuffer) || buffer.byteLength !== file.size) throw unreadable();
+    const source = inspectRaster(buffer, file.type);
     picture = await decode(file, source);
     if (!isCurrent()) throw cancelled();
     const dimensions = checkDimensions(picture?.width, picture?.height);

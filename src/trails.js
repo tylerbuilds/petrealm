@@ -71,15 +71,22 @@ export const TRAIL_ROUTES = Object.freeze({
 });
 
 export function getTrailScene(routeId, variant, step) {
-  return TRAIL_ROUTES[routeId]?.variants[variant]?.[step] ?? null;
+  if (typeof routeId !== 'string' || !Object.hasOwn(TRAIL_ROUTES, routeId)
+      || !Number.isInteger(variant) || variant < 0 || variant > 2
+      || !Number.isInteger(step) || step < 0 || step > 2) return null;
+  return TRAIL_ROUTES[routeId].variants[variant][step];
 }
 
 export function findForApproach(routeId, variant, kind) {
-  const index = { observe: 0, help: 1, explore: 2, brave: 2 }[kind];
-  return index === undefined ? null : TRAIL_ROUTES[routeId]?.treasures[(index + variant) % 3] ?? null;
+  const approaches = { observe: 0, help: 1, explore: 2, brave: 2 };
+  if (typeof routeId !== 'string' || !Object.hasOwn(TRAIL_ROUTES, routeId)
+      || !Number.isInteger(variant) || variant < 0 || variant > 2
+      || typeof kind !== 'string' || !Object.hasOwn(approaches, kind)) return null;
+  return TRAIL_ROUTES[routeId].treasures[(approaches[kind] + variant) % 3];
 }
 
 export function knackChoice(personality) {
+  if (typeof personality !== 'string' || !Object.hasOwn(PERSONALITY_APPROACHES, personality)) return null;
   const kind = PERSONALITY_APPROACHES[personality];
   if (!kind) return null;
   const wording = {

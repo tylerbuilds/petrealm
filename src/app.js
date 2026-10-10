@@ -24,6 +24,7 @@ let currentArea = 'garden';
 let selectedSpecies = 'mossling';
 let selectedPersonality = 'steady';
 let adoptionStartedCount = 0;
+let adoptionGeneration = 0;
 let marketFilter = 'all';
 let gameMode = 'firefly';
 let memoryTimer;
@@ -40,6 +41,7 @@ let selectedTreasure = null;
 let trailJournalOpen = false;
 let trailViewGeneration = 0;
 let toastTimer;
+let importGeneration = 0;
 let game = null;
 let animationFrame;
 let worldArtUiGeneration = 0;
@@ -263,6 +265,16 @@ function readCurrentWorld() {
     if (raw !== durableBaseRaw) throw new Error('Another tab saved a different world. Open Save to download your unsaved changes before reloading.');
     return state;
   }
+  if (raw === null && durableBaseRaw !== null) {
+    // A deleted save is a change from another tab, not a new browser visit.
+    // Keep this tab's world available for export without silently recreating it.
+    dirtyMemory = true; persistenceAvailable = false;
+    stopGame();
+    $('#save-location').textContent = 'Not saved: download a copy';
+    $('#save-location').classList.add('unsaved');
+    renderCurrentWorld();
+    throw new Error('Another tab removed your saved world. Download a copy from Save before reloading.');
+  }
   if (raw !== null) {
     try {
       state = parseSave(raw);
@@ -281,9 +293,14 @@ function renderCurrentWorld() {
   if (game) renderProfile(); else render();
 }
 async function update(action, message) {
+  const generation = stateGeneration;
   try {
     await withSaveLock(() => {
       readCurrentWorld();
+      if (generation !== readLocal(WORLD_KEY)) {
+        renderCurrentWorld();
+        throw new Error('Another tab changed your world. Check this world and choose again.');
+      }
       state = action(state);
       persist(); renderCurrentWorld();
     });
@@ -296,7 +313,7 @@ function updateObservedPet(action, message) {
   return update((fresh) => {
     if (observed !== petIdentity(readActivePet(fresh)) || generation !== readLocal(WORLD_KEY)) {
       renderCurrentWorld();
-      throw new Error('Another tab changed your world or friend. Choose your friend again before practising or blooming.');
+      throw new Error('Another tab changed your world or friend. Check your friend and choose again.');
     }
     return action(fresh);
   }, message);
@@ -465,6 +482,7 @@ function renderAdoptionPreview() {
 }
 function showAdoption() {
   if ($('#adoption-dialog').open) return;
+  adoptionGeneration += 1;
   cancelWorldArtChoice();
   if ($('#world-art-dialog').open) $('#world-art-dialog').close();
   adoptionStartedCount = state.pets.length;
@@ -624,11 +642,18 @@ function enterRecovery(raw, message) {
 }
 async function importFile(file, errorSelector) {
   if (!file) return;
+  const intent = ++importGeneration;
+  const generation = stateGeneration;
   try {
     if (file.size > 32768) throw new Error('This save file is too big. Choose a Petrealm save of 32 KiB or less.');
-  const raw = await file.text();
+    let raw;
+    try { raw = await file.text(); }
+    catch { throw new Error('This save file could not be opened. Your current world has not changed.'); }
+    if (intent !== importGeneration) return;
     const restored = parseSave(raw);
     await withSaveLock(() => {
+      if (intent !== importGeneration) return;
+      if (generation !== readLocal(WORLD_KEY)) throw new Error('Another tab changed your world while the file opened. Choose your save file again.');
       const previous = readLocal(SAVE_KEY) ?? serialiseSave(state);
       // Back up the latest durable world after file reading, including invalid
       // recovery text, rather than a stale snapshot from before the await.
@@ -637,8 +662,9 @@ async function importFile(file, errorSelector) {
       $('#recovery-dialog').close(); $('#save-dialog').close();
       if (!readActivePet(state)) showAdoption();
     });
+    if (intent !== importGeneration) return;
     toast('Your world is back. Carry on exploring!');
-  } catch (error) { $(errorSelector).textContent = error.message; }
+  } catch (error) { if (intent === importGeneration) $(errorSelector).textContent = error.message; }
 }
 
 $('#adoption-form').addEventListener('submit', async (event) => {
@@ -646,11 +672,17 @@ $('#adoption-form').addEventListener('submit', async (event) => {
   const name = $('#pet-name').value.trim();
   const species = selectedSpecies;
   const personality = selectedPersonality;
+  const count = adoptionStartedCount;
+  const intent = adoptionGeneration;
+  const generation = stateGeneration;
   try {
     await withSaveLock(() => {
       readCurrentWorld();
+      if (!$('#adoption-dialog').open || intent !== adoptionGeneration || state.pets.length !== count || generation !== readLocal(WORLD_KEY)) {
+        throw new Error('Your family changed while you chose this friend. Open the meadow and choose again.');
+      }
       state = adopt(state, name, species, Date.now(), personality);
-      if (adoptionStartedCount === 0) currentArea = 'garden';
+      if (count === 0) currentArea = 'garden';
       persist(); render(); $('#adoption-dialog').close();
     });
     toast(`Welcome home, ${readActivePet(state).name}. Let’s explore!`);
@@ -827,7 +859,7 @@ document.addEventListener('click', (event) => {
     if (state.pets.length < petCapacity(state) && !battleActive(state)) showAdoption();
   }
   if (target.dataset.petId) update((s) => selectPet(s,target.dataset.petId,Date.now()), 'Your chosen friend is ready to play.');
-  if (target.dataset.equip) update((s) => equipAccessory(s,target.dataset.equip === 'none' ? null : target.dataset.equip,target.dataset.slot,Date.now()), target.dataset.equip === 'none' ? 'Outfit taken off. Another friend can wear it now.' : 'Your friend is wearing their new outfit.');
+  if (target.dataset.equip) updateObservedPet((s) => equipAccessory(s,target.dataset.equip === 'none' ? null : target.dataset.equip,target.dataset.slot,Date.now()), target.dataset.equip === 'none' ? 'Outfit taken off. Another friend can wear it now.' : 'Your friend is wearing their new outfit.');
   if (target.dataset.shopFilter) { marketFilter = target.dataset.shopFilter; render(); }
   if (target.id === 'bank-deposit' || target.id === 'bank-withdraw') {
     const amount = Number($('#bank-amount').value);
@@ -839,10 +871,16 @@ document.addEventListener('click', (event) => {
     const tier = $('#bank-tier').value;
     update((s) => upgradeBankTier(s,tier,Date.now()), 'Your savings account is upgraded. You keep this rate when you take pebbles out.');
   }
-  if (target.dataset.claimQuest) update((s) => claimQuest(s,target.dataset.claimQuest,Date.now()), 'Quest gift collected! Your pebbles and XP have been added.');
-  if (target.id === 'quest-day-complete') update((s) => claimQuestDay(s,Date.now()), 'You’ve collected today’s quest gift. Seven days in a row earn a bonus.');
-  if (target.dataset.battleStart) update((s) => startBattle(s,target.dataset.battleStart,Date.now()), 'Your match has started. Choose your first move.');
-  if (target.dataset.battleAction) update((s) => battleAction(s,target.dataset.battleAction,Date.now()));
+  if (target.dataset.claimQuest) updateObservedPet((s) => claimQuest(s,target.dataset.claimQuest,Date.now()), 'Quest gift collected! Your pebbles and XP have been added.');
+  if (target.id === 'quest-day-complete') updateObservedPet((s) => claimQuestDay(s,Date.now()), 'You’ve collected today’s quest gift. Seven days in a row earn a bonus.');
+  if (target.dataset.battleStart) updateObservedPet((s) => startBattle(s,target.dataset.battleStart,Date.now()), 'Your match has started. Choose your first move.');
+  if (target.dataset.battleAction) {
+    const observedBattle = JSON.stringify(state.battle);
+    updateObservedPet((s) => {
+      if (JSON.stringify(s.battle) !== observedBattle) throw new Error('Another tab took an arena turn. Read the match and choose your next move.');
+      return battleAction(s,target.dataset.battleAction,Date.now());
+    });
+  }
   if (target.dataset.gameMode) { stopGame(); gameMode = target.dataset.gameMode; render(); }
   if (target.id === 'memory-start') beginMemory();
   if (target.dataset.memoryIndex !== undefined) flipMemory(Number(target.dataset.memoryIndex));
@@ -856,10 +894,10 @@ document.addEventListener('click', (event) => {
   if (target.id === 'pet-train') updateObservedPet((s) => trainPet(s, Date.now()), 'Practice finished. Your friend earned XP.');
   if (target.id === 'pet-grow') updateObservedPet((s) => growPet(s, Date.now()), 'Your friend has bloomed! They have a new look and earn more XP from practice.');
   if (target.dataset.buy) update((s) => purchase(s, target.dataset.buy, Date.now()), `${ITEMS[target.dataset.buy].name} tucked into your satchel.`);
-  if (target.id === 'feed-berry') update((s) => care(s, 'feed', 'berry', Date.now()), 'Berry eaten! Your friend feels fuller and happier.');
-  if (target.id === 'feed-acorn') update((s) => care(s, 'feed', 'acorn', Date.now()), 'Acorn eaten! Your friend feels fuller, happier and more energetic.');
-  if (target.id === 'care-play') update((s) => care(s, 'play', 'ribbon', Date.now()), 'That was fun! Ribbon play brought Happiness and used some Energy.');
-  if (target.id === 'care-rest') update((s) => care(s, 'rest', undefined, Date.now()), 'Nap finished. Your friend has more Energy and Happiness.');
+  if (target.id === 'feed-berry') updateObservedPet((s) => care(s, 'feed', 'berry', Date.now()), 'Berry eaten! Your friend feels fuller and happier.');
+  if (target.id === 'feed-acorn') updateObservedPet((s) => care(s, 'feed', 'acorn', Date.now()), 'Acorn eaten! Your friend feels fuller, happier and more energetic.');
+  if (target.id === 'care-play') updateObservedPet((s) => care(s, 'play', 'ribbon', Date.now()), 'That was fun! Ribbon play brought Happiness and used some Energy.');
+  if (target.id === 'care-rest') updateObservedPet((s) => care(s, 'rest', undefined, Date.now()), 'Nap finished. Your friend has more Energy and Happiness.');
   if (target.id === 'game-start') beginGame();
   if (target.id === 'game-catch') catchLight();
 });
@@ -876,7 +914,7 @@ window.addEventListener('storage', async (event) => {
     }
     if (event.key === WORLD_ART_KEY) return;
   }
-  if (![SAVE_KEY, WORLD_KEY].includes(event.key)) return;
+  if (event.key !== null && ![SAVE_KEY, WORLD_KEY].includes(event.key)) return;
   try {
     await withSaveLock(() => {
       // Queued events can contain an old value. Always read the current saved
@@ -889,7 +927,7 @@ window.addEventListener('storage', async (event) => {
         }
         return;
       }
-      if (raw === null) return;
+      if (raw === null) { readCurrentWorld(); return; }
       const updated = parseSave(raw);
       durableBaseRaw = raw;
       if (game && (game.generation !== readLocal(WORLD_KEY) || game.pet !== petIdentity(readActivePet(updated)) || battleActive(updated))) stopGame();

@@ -83,7 +83,7 @@ function thistlehorn(grown) {
 
 const bodies = { briarhare, pebblepup, cloudmoth, kilnback, gloomdrop, thistlehorn };
 export function creatureBody(species, { grown = false } = {}) {
-  return bodies[species]?.(grown) ?? '';
+  return typeof species === 'string' && Object.hasOwn(bodies, species) ? bodies[species](grown) : '';
 }
 export function accessoryAnchors(species) {
   const anchors = {
@@ -94,5 +94,5 @@ export function accessoryAnchors(species) {
     gloomdrop: { head: 'translate(4 17)', neck: 'translate(5 3)' },
     thistlehorn: { head: 'translate(4 11)', neck: 'translate(3 2)' },
   };
-  return anchors[species] ?? { head: '', neck: '' };
+  return typeof species === 'string' && Object.hasOwn(anchors, species) ? anchors[species] : { head: '', neck: '' };
 }

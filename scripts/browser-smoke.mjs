@@ -4,6 +4,7 @@ import { readFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { smokeWorldArt } from './world-art-smoke.mjs';
 import { smokeAppBoundary } from './app-boundary-smoke.mjs';
+import { smokeHedge } from './hedge-smoke.mjs';
 import { smokeCompanionExperience } from './companion-smoke.mjs';
 const {name} = JSON.parse(await readFile('package.json', 'utf8'));
 const port = 4322;
@@ -27,7 +28,7 @@ try {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => {if (message.type() === 'error') errors.push(message.text())});
-  const response = await page.goto(`http://127.0.0.1:${port}/`, {waitUntil:'networkidle'});
+  const response = await page.goto(`http://127.0.0.1:${port}/previous-world.html`, {waitUntil:'networkidle'});
   expect(response.status()).toBe(200);
   const click = async selector => {
     const target = page.locator(selector);
@@ -227,11 +228,12 @@ try {
     await page.reload();
     expect((await world()).trails.display).toEqual([null,null,'seed-lantern']);
     await expect(page.locator('.meadow-treasure[data-treasure-select="seed-lantern"]')).toBeVisible();
-    await smokeWorldArt({ browser, expect, errors, output, readFile, resolve, url: `http://127.0.0.1:${port}/` });
-    const boundary = await smokeAppBoundary({ browser, expect, output: resolve(output, 'app-boundaries'), url: `http://127.0.0.1:${port}/` });
+    await smokeWorldArt({ browser, expect, errors, output, readFile, resolve, url: `http://127.0.0.1:${port}/previous-world.html` });
+    const boundary = await smokeAppBoundary({ browser, expect, output: resolve(output, 'app-boundaries'), url: `http://127.0.0.1:${port}/previous-world.html` });
     expect(boundary.allFixed).toBe(true);
     expect(boundary.results).toHaveLength(10);
-    await smokeCompanionExperience({browser, expect, output:resolve(output,'companion-experience'), url:`http://127.0.0.1:${port}/`});
+    await smokeCompanionExperience({browser, expect, output:resolve(output,'companion-experience'), url:`http://127.0.0.1:${port}/previous-world.html`});
+    await smokeHedge({browser, expect, output:resolve(output,'under-the-hedge'), url:`http://127.0.0.1:${port}/`});
   } else throw new Error(`Unknown app: ${name}`);
   await page.screenshot({path:resolve(output,'desktop.png'),fullPage:true,animations:'disabled'});
   expect(errors, 'browser errors').toEqual([]);

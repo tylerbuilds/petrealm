@@ -1,56 +1,54 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Meet an original companion, send them on little adventures and collect the stories of your friendship. A gentle virtual pet world at your pace.">
-  <meta name="theme-color" content="#faf1d9">
-  <title>Petrealm · a little world, a growing friendship</title>
-  <link rel="icon" type="image/svg+xml" href="public/art/acorn.svg">
-  <link rel="stylesheet" href="styles.css">
-  <script type="module" src="src/app.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f8f6ee">
+  <meta name="description" content="A quiet, illustrated world of root paths, small creatures and things worth remembering. Find your place under the hedge.">
+  <title>Under the Hedge · Bramble Fold</title>
+  <link rel="icon" href="public/art/acorn.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="hedge.css">
+  <script type="module" src="src/hedge-app.js"></script>
 </head>
-<body class="world-game" data-place="garden">
-  <a class="skip-link" href="#area-content">Skip to the world</a>
-  <header class="topbar">
-    <a class="brand" href="#garden" aria-label="Petrealm home"><span class="brand-leaf" aria-hidden="true"><svg viewBox="0 0 40 46" focusable="false"><path d="M19 38Q8 28 10 16Q13 6 22 5Q32 9 32 19Q32 32 19 38Z" fill="#dcb47a" stroke="#765f45" stroke-width="2"/><path d="M7 17Q11 2 23 4Q36 6 35 19Q21 25 7 17Z" fill="#729455" stroke="#4d7242" stroke-width="2"/><path d="M19 4Q18 0 23 1" fill="none" stroke="#765f45" stroke-width="2" stroke-linecap="round"/><path d="M26 8Q29 0 38 3Q38 11 28 13" fill="#b7cb80" stroke="#4d7242" stroke-width="1.5"/><path d="m12 13 4 3m1-7 4 5m3-4 3 4M15 27q2 5 6 7" fill="none" stroke="#fff0c2" stroke-width="1.5" stroke-linecap="round"/></svg></span>petrealm<span class="brand-dot">.</span></a>
-    <nav class="world-nav" aria-label="Places to explore">
-      <button data-area="garden" class="nav-button active"><span data-hud-icon="home"></span>Meadow</button>
-      <button data-area="journal" class="nav-button"><span data-hud-icon="quest"></span>Our journal</button>
-      <button data-area="market" class="nav-button"><span data-hud-icon="leaf"></span>Market</button>
-      <button data-area="glen" class="nav-button"><span data-hud-icon="moon"></span>Games</button>
-      <button data-area="realm" class="nav-button"><span data-hud-icon="map"></span>Map & quests</button>
-      <button data-area="arena" class="nav-button"><span data-hud-icon="friends"></span>Training</button>
-    </nav>
-    <div class="top-actions"><div class="wallet" aria-label="Pebbles in your pocket"><span aria-hidden="true">✦</span><strong id="wallet">120</strong><span class="wallet-label">pebbles</span></div><button id="satchel-button" class="hud-button" aria-haspopup="dialog"><span data-hud-icon="bag"></span><span>Satchel</span></button><button data-area="garden" data-scroll-target="friends" class="hud-button" id="friends-button"><span data-hud-icon="friends"></span><span>Friends</span></button><button id="save-button" class="hud-button" aria-label="Save or restore your world" aria-haspopup="dialog"><span data-hud-icon="save"></span><span>Save</span></button></div>
+<body>
+  <a class="hedge-skip-link" href="#hedge-content">Skip to the world</a>
+  <header class="hedge-header">
+    <a class="hedge-brand" href="#home">Under the Hedge</a>
+    <div class="hedge-header-actions"><span class="hedge-save-state" id="hedge-save-state">Saved in this browser</span><button id="hedge-sound" type="button" aria-pressed="false" aria-label="Turn brook sounds on">Sound off</button><button id="hedge-save-button" type="button" aria-haspopup="dialog">Save</button></div>
   </header>
-  <main class="page">
-    <div class="page-heading"><div><p class="eyebrow">LET’S SEE WHAT’S OUT THERE</p><h1 id="page-title">Sunmeadow</h1><p id="page-subtitle">A small moment together. A whole world to discover.</p></div><div class="world-tools"><button id="world-art-button" class="world-art-trigger" aria-label="Change scenery" aria-haspopup="dialog" aria-controls="world-art-dialog" title="Change scenery"><svg class="hud-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3C9 3 3 9 3 17c0 7 5 12 12 12h3c3 0 4-3 2-5s-1-4 2-4h3c7 0 4-17-8-17Z"/><circle cx="11" cy="10" r="1.5"/><circle cx="7" cy="17" r="1.5"/><circle cx="18" cy="8" r="1.5"/><circle cx="24" cy="13" r="1.5"/></svg><span>Scenery</span></button><button data-area="realm" class="map-shortcut"><span data-hud-icon="map"></span>Where shall we go?</button></div></div>
-    <div class="world-layout">
-      <section class="main-column" aria-label="Your world"><div id="area-content" tabindex="-1"></div></section>
-      <aside class="side-column" aria-label="Companion"><section class="companion"><div id="pet-profile"></div><div id="stats" class="stats"></div><p id="pet-mood" class="pet-mood"></p></section></aside>
-    </div>
-    <footer class="footer"><span>A little world, at your pace.</span><span><span id="save-location" role="status">Saved on this device</span> · <button id="footer-save" class="text-button">Keep a save file</button></span></footer>
-  </main>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <dialog id="world-art-dialog" class="world-art-dialog" aria-labelledby="world-art-title"><div class="dialog-header"><div><p class="eyebrow">MAKE YOURSELF AT HOME</p><h2 id="world-art-title">Your world art</h2></div><button id="close-world-art" class="icon-button" aria-label="Close world art">×</button></div><p>Choose a picture from your device to use as scenery. PNG, JPEG or WebP, up to 8 MB.</p><div class="world-art-slots"><section class="world-art-slot" aria-labelledby="meadow-art-title"><h3 id="meadow-art-title">Your meadow</h3><p>Where your friend plays and rests.</p><div class="world-art-preview"><div id="world-art-original-meadow" class="world-art-original" aria-hidden="true"></div><img id="world-art-preview-meadow" alt="Your chosen meadow scenery" hidden></div><button type="button" id="choose-world-art-meadow" class="button secondary-button world-art-picker" aria-describedby="world-art-note">Choose a picture</button><input id="world-art-meadow" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" aria-describedby="world-art-note" class="world-art-file" hidden><div class="world-art-adjust"><label for="world-art-fit-meadow">Picture fit</label><select id="world-art-fit-meadow" disabled><option value="cover">Fill the scene</option><option value="contain">Show whole picture</option></select><button id="world-art-clear-meadow" data-clear-world-art="meadow" class="text-button" disabled>Use Petrealm scenery</button></div></section><section class="world-art-slot" aria-labelledby="place-art-title"><h3 id="place-art-title">Other places</h3><p>Market, games and training arrivals.</p><div class="world-art-preview"><div id="world-art-original-place" class="world-art-original" aria-hidden="true"></div><img id="world-art-preview-place" alt="Your chosen arrival scenery" hidden></div><button type="button" id="choose-world-art-place" class="button secondary-button world-art-picker" aria-describedby="world-art-note">Choose a picture</button><input id="world-art-place" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" aria-describedby="world-art-note" class="world-art-file" hidden><div class="world-art-adjust"><label for="world-art-fit-place">Picture fit</label><select id="world-art-fit-place" disabled><option value="cover">Fill the scene</option><option value="contain">Show whole picture</option></select><button id="world-art-clear-place" data-clear-world-art="place" class="text-button" disabled>Use Petrealm scenery</button></div></section></div><p id="world-art-note" class="world-art-note">Saved on this device. Pictures stay in this browser and aren’t included in your world save file. We resize them to keep them small.</p><p id="world-art-status" class="world-art-status" role="status" aria-live="polite"></p><p id="world-art-error" class="error-text" role="alert"></p></dialog>
-  <dialog id="satchel-dialog" class="satchel-dialog" aria-labelledby="satchel-title"><div class="dialog-header"><div><p class="eyebrow">YOUR ADVENTURE BAG</p><h2 id="satchel-title">What have we got?</h2></div><button id="close-satchel" class="icon-button" aria-label="Close satchel">×</button></div><section class="supplies"><div class="section-heading"><h3>Snacks & supplies</h3><button data-area="market" class="text-button">Go to the market →</button></div><div id="inventory"></div><button data-area="garden" data-scroll-target="wardrobe" class="button secondary-button full-width">Try on an outfit</button></section><section class="daily-card"><div><p class="eyebrow">A LETTER FROM MALLOW</p><h2>A gift for your adventure</h2><p>40 pebbles to spend however you like. There’s a new gift after midnight UTC.</p><button id="daily-reward" class="button dark-button full-width">Open today’s gift</button></div></section><button data-area="trails" data-scroll-target="trail-journal" class="button secondary-button full-width">Open your trail journal</button><section class="milestones"><div class="section-heading"><h3>Adventure keepsakes</h3><span id="milestone-count">0 / 5 collected</span></div><div id="achievements" class="achievement-grid"></div></section></dialog>
-  <dialog id="adoption-dialog" class="adoption-dialog" aria-labelledby="adoption-title">
-    <button type="button" id="close-adoption" class="icon-button close-adoption" aria-label="Close the companion gallery" hidden>×</button>
-    <form id="adoption-form"><div id="welcome-guide" class="welcome-guide" aria-hidden="true"></div>
-      <p class="eyebrow">HELLO, EXPLORER!</p><h2 id="adoption-title">Who will you explore with?</h2>
-      <p class="dialog-description">I’m Mallow, the meadow keeper. Choose a friend and give them a name. Your first little outing is just around the corner.</p>
-      <div class="adoption-layout">
-        <div class="adoption-gallery"><p class="gallery-label">Meet the companions · choose one</p><div id="species-options" class="species-options" role="group" aria-label="Choose your friend"></div></div>
-        <div class="adoption-details"><div id="adoption-preview" class="adoption-preview" aria-live="polite"></div>
-          <label class="input-label" for="pet-personality">Their personality</label><select id="pet-personality" aria-describedby="personality-description"></select><p id="personality-description" class="personality-description"></p>
-          <label class="input-label" for="pet-name">Your companion’s name</label><input id="pet-name" name="pet-name" maxlength="48" placeholder="Try Pip, Pebble or your own idea" required autocomplete="off" aria-describedby="name-hint"><p id="name-hint" class="name-hint">Up to 24 characters. Meeting your friend is free.</p>
-          <p id="adoption-error" class="error-text" role="alert"></p><button type="submit" class="button dark-button full-width" id="adopt-button">Meet my friend <span aria-hidden="true">↗</span></button>
-        </div>
-      </div><p class="dialog-note">No schedule to keep. Your friend stays safe while you’re away.<br>Your world saves on this device; keep a save file to take it with you.</p>
-    </form>
+  <nav class="hedge-nav" aria-label="Your world">
+    <span class="hedge-nav-mark" data-symbol="leaf"></span>
+    <a href="#home"><span data-symbol="home"></span>Home</a>
+    <a href="#paths"><span data-symbol="leaf"></span>Paths</a>
+    <a href="#journal"><span data-symbol="journal"></span>Journal</a>
+    <a href="#neighbours"><span data-symbol="neighbours"></span>Neighbours</a>
+    <span class="hedge-nav-foot">Along the Soothebrook</span>
+  </nav>
+  <main id="hedge-content" tabindex="-1"></main>
+  <div id="hedge-status" role="status" aria-live="polite"></div>
+  <dialog id="hedge-save-dialog" class="hedge-dialog" aria-labelledby="hedge-save-title">
+    <h2 id="hedge-save-title">Keep your little world</h2>
+    <p>Your world saves in this browser. Keep a file to return on another device.</p>
+    <p id="hedge-save-error" role="alert"></p>
+    <div class="hedge-dialog-actions"><button id="hedge-export-save" class="hedge-button">Download save</button><button id="hedge-export-original" class="hedge-button hedge-button--quiet" hidden>Download unopened save</button></div>
+    <hr>
+    <label for="hedge-import-save">Restore an Under the Hedge save</label>
+    <input id="hedge-import-save" type="file" accept="application/json,.json">
+    <p>Restoring replaces this world and keeps the previous save as a backup.</p>
+    <button id="hedge-restore-backup" class="hedge-button hedge-button--quiet">Restore previous backup</button>
+    <button id="hedge-export-backup" class="hedge-button hedge-button--quiet">Download previous backup</button>
+    <hr>
+    <div class="hedge-dialog-actions"><button id="hedge-export-story" class="hedge-button hedge-button--quiet">Keep the journal</button><button id="hedge-export-portrait" class="hedge-button hedge-button--quiet">Save a portrait</button><button id="hedge-customise" class="hedge-button hedge-button--quiet">Name & appearance</button></div>
+    <p><a href="previous-world.html">Visit your previous Petrealm world ↗</a></p>
+    <button id="hedge-save-close" class="hedge-button">Back to the hedge</button>
   </dialog>
-  <dialog id="save-dialog" aria-labelledby="save-title"><div class="dialog-header"><h2 id="save-title">Take your world with you</h2><button id="close-save" class="icon-button" aria-label="Close Save">×</button></div><p>Your world saves in this browser. Download a copy to keep it safe or play on another device.</p><button id="export-save" class="button dark-button full-width">Download save file ↧</button><hr><label class="input-label" for="import-save">Restore a Petrealm save</label><input type="file" id="import-save" accept="application/json,.json"><p class="subtle">Restoring a file replaces this world. We’ll keep your previous save as a backup.</p><button id="restore-backup" class="button secondary-button full-width">Restore previous backup</button><button id="export-backup" class="button secondary-button full-width">Download previous backup</button><button id="export-original" class="button secondary-button full-width">Download original version 1 save</button><button id="export-original-v2" class="button secondary-button full-width">Download original version 2 save</button><button id="export-earlier-v2" class="button secondary-button full-width" hidden>Download earlier original version 2 save</button><section id="finish-upgrade-section" class="upgrade-recovery" hidden><h3>Keep your original, then keep playing</h3><p>An earlier world’s original save is already kept here. Download this world’s original version 2 save above and check that you have the file. Then finish the upgrade to keep playing. Your earlier original and previous backup will stay here.</p><button id="finish-v2-upgrade" class="button dark-button full-width" disabled>I’ve kept the original · finish upgrade</button></section><p id="save-error" class="error-text" role="alert"></p></dialog>
-  <dialog id="recovery-dialog" aria-labelledby="recovery-title"><h2 id="recovery-title">We couldn’t open this save</h2><p id="recovery-message"></p><p>Your original save is still here. Download a copy before starting a new world, or restore another Petrealm save file.</p><div class="recovery-actions"><button id="download-recovery" class="button dark-button">Download original save</button><label class="button secondary-button" for="recovery-import">Restore another save</label><input type="file" id="recovery-import" class="visually-hidden" accept="application/json,.json"><button id="start-fresh" class="button secondary-button">Start a fresh world</button></div><p id="recovery-error" class="error-text" role="alert"></p></dialog>
+  <dialog id="hedge-customise-dialog" class="hedge-dialog" aria-labelledby="hedge-customise-title">
+    <h2 id="hedge-customise-title">One particular Rillum</h2>
+    <form id="hedge-customise-form"><label for="hedge-edit-name">Name</label><input type="text" id="hedge-edit-name" name="name" maxlength="48" required>
+    <label for="hedge-edit-colour">Colour</label><select id="hedge-edit-colour" name="colour"><option value="river">River grey</option><option value="clay">Warm clay</option><option value="stone">Pale stone</option></select>
+    <label for="hedge-edit-marking">Marking</label><select id="hedge-edit-marking" name="marking"><option value="speckles">Soft speckles</option><option value="belly">Pale belly</option><option value="tail">Tail bands</option></select>
+    <p id="hedge-customise-error" role="alert"></p><div class="hedge-dialog-actions"><button class="hedge-button" type="submit">Keep these details</button><button id="hedge-customise-close" class="hedge-button hedge-button--quiet" type="button">Back</button></div></form>
+  </dialog>
+  <noscript><p>This little world needs JavaScript enabled to remember your choices.</p></noscript>
 </body>
 </html>

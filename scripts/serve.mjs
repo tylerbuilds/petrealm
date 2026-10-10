@@ -15,7 +15,7 @@ if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('Cho
 const host = value('--host', '127.0.0.1');
 const root = resolve(value('--dir', '.'));
 const realRoot = await realpath(root);
-const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.mjs':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.webp':'image/webp', '.ico':'image/x-icon', '.woff2':'font/woff2' };
+const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.mjs':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.webp':'image/webp', '.ico':'image/x-icon', '.ttf':'font/ttf', '.woff2':'font/woff2', '.mp3':'audio/mpeg' };
 const MAX_STATIC_BYTES = 64 * 1024 * 1024;
 const server = http.createServer({ requestTimeout: 30000, headersTimeout: 15000 }, async (req, res) => {
   let handle;
@@ -27,7 +27,7 @@ const server = http.createServer({ requestTimeout: 30000, headersTimeout: 15000 
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405, {Allow:'GET, HEAD'}); return res.end(); }
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
     const relative = pathname === '/' ? 'index.html' : pathname.slice(1);
-    const allowed = ['index.html', 'styles.css', 'manifest.json', 'sw.js'].includes(relative) || relative.startsWith('src/') || relative.startsWith('public/');
+    const allowed = ['index.html', 'previous-world.html', 'hedge.css', 'styles.css', 'manifest.json', 'sw.js'].includes(relative) || relative.startsWith('src/') || relative.startsWith('public/');
     const file = resolve(root, relative);
     if (!allowed || !file.startsWith(root + sep) || relative.split('/').some(p => p.startsWith('.')) || !mime[extname(file)]) { res.writeHead(404); return res.end('Not found'); }
     let checkedPath = realRoot;

@@ -1,0 +1,103 @@
+{
+  "passed": true,
+  "opening": {
+    "step": "complete",
+    "surface": "reeds",
+    "route": "waterside",
+    "interest": "water"
+  },
+  "firstOutingMs": 30000,
+  "completedOutings": 7,
+  "routeVisits": {
+    "broadroot": 2,
+    "dryfoot": 1,
+    "alderwater": 4
+  },
+  "mystery": {
+    "chapter": 3,
+    "resolved": true
+  },
+  "twoTabClaimOnce": true,
+  "staleGenerationRejected": true,
+  "importBackupRestored": true,
+  "corruptionPreserved": true,
+  "quotaExportRecovered": true,
+  "legacyUntouched": true,
+  "audioRequiresExplicitToggle": true,
+  "personalisationPreservesHistory": true,
+  "stalePersonalisationRejected": true,
+  "longNameMobileWidth": 320,
+  "exports": [
+    "Fern-world.json",
+    "Fern-journal.html",
+    "Fern-portrait.svg"
+  ],
+  "mobile": [
+    {
+      "route": "home",
+      "width": 390,
+      "document": 390
+    },
+    {
+      "route": "paths",
+      "width": 390,
+      "document": 390
+    },
+    {
+      "route": "journal",
+      "width": 390,
+      "document": 390
+    },
+    {
+      "route": "neighbours",
+      "width": 390,
+      "document": 390
+    },
+    {
+      "route": "home",
+      "width": 320,
+      "document": 320
+    },
+    {
+      "route": "paths",
+      "width": 320,
+      "document": 320
+    },
+    {
+      "route": "journal",
+      "width": 320,
+      "document": 320
+    },
+    {
+      "route": "neighbours",
+      "width": 320,
+      "document": 320
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "date": "2026-10-10",
+  "platform": "Fedora Linux",
+  "node": "25.6.1",
+  "chromium": "156.0.8078.4",
+  "unitTests": {
+    "passed": 184,
+    "failed": 0
+  },
+  "fullLegacyAndHedgeBrowserSuite": "passed before final Hedge-only visual/customisation refinements",
+  "finalHedgeBuiltSuite": "passed after final refinements",
+  "physicalDeviceTest": false,
+  "publicDeployment": false,
+  "sourceSha256": {
+    "index.html": "a93a9fbf695eeec53acf0b0985c803ad27320a96aa15c3342c2b14a16bd67c39",
+    "hedge.css": "07a9c584744ff118b4f445761265ad23419c91931b0ec1c8255676b77bfc120b",
+    "src/hedge-app.js": "5be0ecf2c34e39deaaae12797f9651eb4a0a00ba8fedf9d685df13913e744b09",
+    "src/hedge-model.js": "e2e472f922265fcce99ab1dfb8c35039bfbcc6d9e17f2f1fb098c28f7ab59ea5",
+    "src/hedge-content.js": "93f1ad2ad8f5de9b91604b164f2e433f51b548bcf327ff7ffb1917cfa10bfe51",
+    "src/hedge-storage.js": "37eab426bd9311c4068795899313f6063e3fb1acd63da606e76d9c6d1a7ac90c",
+    "src/hedge-persistence.js": "8ec3400878edc5b5e1d38a66bc773217a64250d4b6dafbaeb7f2997d4b437562",
+    "src/hedge-art.js": "107060ad414c109e5bf6f58b2462f46d1910d6ba2655bd13540f9ce3d3ed4ed8",
+    "src/hedge-views.js": "8a661800640e0770416950e0b9b64ca549caa0ea0818246a07b3a3535e89ade5",
+    "scripts/hedge-smoke.mjs": "bc34d27225f976db0ae7b53b98e74896e9186ef15106976519db350e990a7aed"
+  }
+}

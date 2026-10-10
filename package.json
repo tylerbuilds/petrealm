@@ -1,8 +1,8 @@
 {
   "name": "petrealm",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
-  "description": "An original, local-first virtual pet world for your browser.",
+  "description": "Under the Hedge: an illustrated, local-first world of small creatures and remembered journeys.",
   "type": "module",
   "license": "MIT",
   "engines": {

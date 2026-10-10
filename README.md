@@ -1,93 +1,59 @@
-# Petrealm
+# Under the Hedge
 
-![A friend at home in Sunmeadow](docs/screenshots/world-art-0.7.png)
+An illustrated browser world about one particular small creature, the paths it learns and the things it brings home. The new direction for the Petrealm project, using **Under the Hedge** as a working title.
 
-[On a phone](docs/screenshots/world-art-mobile-0.7.png) · [Explore the map](docs/screenshots/world-map-0.7.png)
+![Bramble Fold, a home beside the Soothebrook](docs/screenshots/hedge-home.png)
 
-[Play Petrealm](https://tylerbuilds.github.io/petrealm/) · [Player guide](docs/explore-petrealm.md)
+Meet Fen, or name your own Rillum. Make room for Pell at a wet doorway. Follow root paths through Broadroot Wood, find your way over Dryfoot Crossing and discover why the far shore of Alderwater glows.
 
-Petrealm is a browser game about looking after animal and monster friends. Choose a companion, share snacks, play games and explore together. Bring treasures home from the little trails and find somewhere for them in your meadow.
+The first playable contains a complete opening, three routes, four neighbours, changing return stories and a mystery with an answer. Repeated experiences reveal specific preferences for water, hollow sounds or sheltered places. Objects and journal entries remember what actually happened.
 
-Your friend remembers shared care and brings home stories from gentle expeditions. Their curiosity, kindness and courage grow through what you do together. Time away never lowers their care or takes away earned progress.
+No care meters, currency, streaks or penalties for time away. Your companion is safe, and every unfinished moment waits.
 
-There are nine original companions to meet. Each keeps their own personality, outfit, experience and bond with you. Care, games and practice help them bloom into a new look. Exploring together builds bond and opens more paths.
+## Play locally
 
-## Start exploring
-
-1. Choose a friend and personality, give them a name, then press **Let’s go!**.
-2. In the meadow, share a treat, play with the ribbon or have a cosy nap. **Fullness**, **Happiness** and **Energy** show how your friend feels.
-3. Open **Our journal** to choose a place and an idea for a free outing. The first takes 30 seconds; later ones take 2, 5 or 10 minutes. Close the tab if you like—the return never expires. Welcome your friend home to read their story and display the keepsake.
-4. Follow a **Trails** sign. Make three choices, find a treasure, then choose **Show in meadow** to bring it home. You can visit another place and return to your unfinished outing later.
-5. Visit **Games** to catch fireflies or find matching flowers. Earn pebbles for snacks, outfits and practice.
-6. Open **Map & quests** for more places and things to try, or **Training** to practise and play a friendly match.
-
-**Satchel** holds your supplies and Mallow’s daily gift. **Friends** lets you choose who comes along. **Save** downloads a copy of your world or restores one from another device.
-
-**Scenery** lets you choose your own meadow and arrival pictures. They stay in this browser, with fit and clear controls; world save files keep your game progress separately.
-
-[The little trails](docs/little-trails.md) explains choices, costs and finds. [Meet the companions](docs/companions.md) explains personalities, favourite snacks and blooming.
-
-## What’s in the world?
-
-| Place | Things to do |
-| --- | --- |
-| Sunmeadow | Care for friends, try on outfits, bloom and show three trail treasures. |
-| Our journal | Send a friend exploring, read their latest three stories, and download an illustrated biography or SVG portrait. |
-| Market lane | Buy seven kinds of supplies and put pebbles away in the Pebble Keep. |
-| Starlight glen | Play Firefly flight and Memory meadow. |
-| Map & quests | Visit each place, try daily and lasting quests, or join the free Explorer Lodge for more friend spaces. |
-| Training grove | Practise and play saved turn-by-turn matches against three rivals. |
-| The little trails | Explore three routes with changing stories, find nine treasures and unlock each friend’s special knack. |
-
-Memory meadow has no timer by default, with an optional 75-second challenge. Games still give Happiness and XP after you’ve earned the day’s game pebbles. Every seven completed quest days earn a bonus, however far apart they are. Bank interest, mail and daily quest gifts reset at midnight UTC. The [game rules](docs/game-rules.md) give every price, reward and limit.
-
-[A discovery on a phone](docs/screenshots/discovery-mobile-0.6.1.png) · [The field journal](docs/screenshots/journal-0.6.png) · [A treasure in the meadow](docs/screenshots/meadow-0.6.png)
-
-## Keep your world
-
-Your world saves in this browser. There’s no account, subscription, cloud save or tracking. Before clearing browser storage or moving to another device, choose **Save → Download save file**.
-
-Restoring a file replaces the current world and keeps the previous save as a backup. If saving fails, the screen tells you and you can download your unsaved progress. If another tab saves a different world, download your changes before reloading. The [player guide](docs/explore-petrealm.md) covers saving; [older-save help](docs/little-trails.md#older-worlds) explains upgrades.
-
-## Run on Linux or macOS
-
-Install Node.js **22.19+ or 24.11+**, then run:
+With Node.js 22.19+ or 24.11+ installed:
 
 ```sh
-git clone https://github.com/tylerbuilds/petrealm.git
-cd petrealm
 npm start
 ```
 
-Open **http://localhost:4203**. Running the game needs no npm install. Use a current browser with JavaScript and local storage, and open the served page rather than the HTML file itself.
+Open **http://localhost:4203**. No installation is needed to run the game. Use a current browser with JavaScript enabled; serve the app rather than opening its HTML file directly.
 
-## Build and check a change
+1. Choose a name, colour and marking.
+2. Make a visiting place through the four short opening choices.
+3. Open **Paths** and choose an outing and weather. The first outing takes 30 seconds; later outings take 2–5 minutes. A finished journey never expires.
+4. Come home to hear what happened. Place finds, visit neighbours and follow the light across Alderwater.
+5. Open **Journal** to revisit your actual experiences. **Sound** enables optional brook ambience; it starts off.
 
-```sh
-npm test
-npm run build
-npm run preview
-```
+[Player and design guide](docs/under-the-hedge.md) · [Phone view](docs/screenshots/hedge-mobile.png)
 
-The build goes into `dist/`; preview serves it at **http://localhost:4203**. To run the browser checks:
+## Keep your world
+
+Your world saves in this browser. **Save → Download save** creates a portable JSON file. Restore it on another device, or keep your journal as an illustrated HTML document and your Rillum as an SVG portrait.
+
+Imports keep the previous saved world as a recoverable backup. Unreadable saves are preserved. If storage is full or unavailable, the app keeps changes for the current visit and offers an export. Keep that file before closing the tab. Journal history retains the latest 100 events; export periodically if you want a longer archive.
+
+Your earlier Petrealm save is separate and untouched by this world. Choose **Save → Visit your previous Petrealm world**, or open `/previous-world.html`. Its [guide and features](README.previous-world.md) remain available. The two worlds use different save files.
+
+## Build and verify
 
 ```sh
 npm ci
-npx playwright install chromium
+npm test
 npm run build
+npx playwright install chromium
 npm run test:browser
 ```
 
-Linux may need `npx playwright install --with-deps chromium`. To use an installed Chrome, set `BROWSER_EXECUTABLE=/path/to/chrome` when running `npm run test:browser`.
+The static build goes to `dist/`. `npm run preview` serves it at port 4203. Linux may need `npx playwright install --with-deps chromium`. Set `BROWSER_EXECUTABLE=/path/to/chrome` to use an installed Chromium browser.
 
-The [Linux/macOS workflow](https://github.com/tylerbuilds/petrealm/actions/workflows/verify.yml) runs tests, builds and browser checks before publishing the demo. [Recorded checks](docs/verification.md) explain what was tested for each release. See [contributing](CONTRIBUTING.md) for working on the game.
+Browser acceptance covers both worlds, full story completion, mobile layouts, optional audio, exports, save recovery and concurrent tabs. [Verification receipts](docs/verification.md) distinguish actual checks from planned work.
 
-The [research-led experience notes](docs/research/companion-experience.md) explain the retained strengths, design changes and questions still to test with players.
+## Art and scope
 
-## About the project
+The Rillum, Tuffet and Limmer families are original SVG artwork. Scenery was generated and refined with image generation; optional environmental audio was generated through ElevenLabs. Fonts are bundled under their OFL licences. There are no runtime external requests, accounts, tracking or paid services.
 
-Petrealm’s code, creatures, stories and SVG artwork are original and released under the [MIT licence](LICENSE). Public Neopets pages helped inform some feature ideas. Petrealm is independent and isn’t affiliated with Neopets.
+[Art production](docs/research/hedge-art-production.md) · [Audio production](docs/research/hedge-audio-production.md)
 
-The meadow, market and trails have their own illustrated scenery, with separate compositions for phones. [Drawing Petrealm](docs/world-art.md) explains the palette and where to find the artwork.
-
-This is a local, single-player game. Online accounts, trading, player shops, auctions and social features are outside its scope. The [feature comparison](docs/parity-ledger.md) keeps the detailed differences and links to sources. [Game rules](docs/game-rules.md) also cover save formats, recovery and how multiple tabs share a world.
+This is a local first playable: one playable family, one catchment and finite authored stories. Seasons, additional playable families and larger regional stories remain future work. The working title is not a claim of commercial name clearance. This change does not publish a new public release.

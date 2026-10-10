@@ -1,5 +1,15 @@
 # Checks by release
 
+## 0.9 Under the Hedge — Fedora verification, 10 October 2026
+
+`npm test` passed **184 tests** with no failures. The static build and complete `npm run test:browser` suite passed, including the previous Petrealm world and its ten application-boundary scenarios. After the final Under the Hedge visual and customisation refinements, its expanded acceptance suite was run again against a fresh `dist/` build and passed.
+
+Actual browser journeys completed the opening and seven timed outings, visited all four neighbours, moved a find, followed the rainy and calm Alderwater variants and reached the mystery’s answer. The first outing took 30 seconds on a controlled clock. Native-lock races proved that two tabs collect a return only once and a queued pre-import action cannot alter the replacement world. Corrupt stored bytes remained intact until deliberate recovery; a failed storage write kept the unsaved companion exportable. JSON save, illustrated HTML journal and SVG portrait downloads succeeded, and import/backup restore round-tripped the state. Previous Petrealm save bytes stayed unchanged.
+
+Sound playback began only after its toggle and paused when toggled off. There were zero browser runtime/console errors and zero external requests. Desktop and 390px/320px captures were reviewed, including the welcome and all four pages. A maximum-length name fitted all four pages at 320px. Keyboard opening activation worked. Name and appearance edits preserved history through reload; a stale customisation dialogue could not overwrite a newly imported world. Find placement changes the corresponding object in the home scene.
+
+The [machine-readable receipt](research/hedge-verification.json) includes final source hashes and the case results. [Desktop](screenshots/hedge-home.png) and [phone](screenshots/hedge-mobile.png) images are browser captures. Full local evidence is in `test-results/hedge-final/`; earlier whole-app evidence is in `test-results/browser-smoke/`. These are synthetic test worlds on Fedora, Node.js 25.6.1 and Chromium 156.0.8078.4. No physical phone test, new macOS CI run, public deployment, retention study or audio listening/seam certification is claimed.
+
 ## 0.8 companion experience — Fedora verification, 10 October 2026
 
 `npm test` passed **150 tests**, followed by a successful static build and the full `npm run test:browser` suite on Fedora, Node.js 25.6.1 and Playwright Chromium 156.0.8078.4. The original gameplay, scenery and ten application-boundary checks remain included.

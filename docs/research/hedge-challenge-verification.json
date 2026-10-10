@@ -1,0 +1,132 @@
+{
+  "passed": true,
+  "inputOnlyCompletion": true,
+  "compulsoryTiming": true,
+  "clock": "Playwright virtual requestAnimationFrame time; real browser input events",
+  "missMarkerFrozenAtInput": true,
+  "earlyPressMiss": true,
+  "timeoutMiss": true,
+  "threeMissFailureNoRewards": true,
+  "retryAfterFailure": true,
+  "heldSpaceCannotAutoEarn": true,
+  "touchStopSuccess": true,
+  "timingPauseFreezesMarkerAndDeadline": true,
+  "mobileStopReachable": [
+    320,
+    390
+  ],
+  "keyboardWalkDistance": 19.181999999999988,
+  "keyboardDashDistance": 47.359999999999914,
+  "touchMovedAndReleased": true,
+  "pauseAndFocusLossHandler": true,
+  "hiddenDocumentHandlerSimulated": true,
+  "navigationPreservedRun": true,
+  "offscreenAnimationFramesStopped": true,
+  "result": {
+    "level": "broadroot",
+    "stars": 2,
+    "seeds": 8,
+    "secret": true,
+    "timeMs": 44428,
+    "bumps": 4,
+    "assist": false
+  },
+  "clearsAfterReload": 1,
+  "nextTrailUnlocked": true,
+  "homeDecoration": "moss-patch",
+  "seedsAfterBuilding": 4,
+  "completedLevels": [
+    {
+      "level": "broadroot",
+      "stars": 2,
+      "seeds": 8,
+      "secret": true,
+      "timeMs": 44428,
+      "bumps": 4,
+      "assist": false
+    },
+    {
+      "level": "dryfoot",
+      "stars": 2,
+      "seeds": 8,
+      "secret": true,
+      "timeMs": 40512,
+      "bumps": 4,
+      "assist": false
+    },
+    {
+      "level": "alderwater",
+      "stars": 2,
+      "seeds": 8,
+      "secret": true,
+      "timeMs": 46779,
+      "bumps": 6,
+      "assist": false
+    }
+  ],
+  "finalSeedBank": 20,
+  "persistedPersonalBests": {
+    "broadroot": {
+      "clears": 1,
+      "stars": 2,
+      "seeds": 8,
+      "secret": true,
+      "timeMs": 44428
+    },
+    "dryfoot": {
+      "clears": 1,
+      "stars": 2,
+      "seeds": 8,
+      "secret": true,
+      "timeMs": 40512
+    },
+    "alderwater": {
+      "clears": 1,
+      "stars": 2,
+      "seeds": 8,
+      "secret": true,
+      "timeMs": 46779
+    }
+  },
+  "errors": [],
+  "external": [],
+  "mobile": [
+    {
+      "width": 390,
+      "document": 390,
+      "visibleWorldWidth": 540,
+      "playerDrawWidth": 63.37777777777778
+    },
+    {
+      "width": 320,
+      "document": 320,
+      "visibleWorldWidth": 540,
+      "playerDrawWidth": 51.45185185185185
+    }
+  ],
+  "date": "2026-10-10",
+  "version": "0.11.0",
+  "unitTests": {
+    "passed": 212,
+    "failed": 0
+  },
+  "fullBuiltBrowserSuitePassed": true,
+  "engineThreeStarTimesMs": {
+    "broadroot": 33980,
+    "dryfoot": 24330,
+    "alderwater": 21240
+  },
+  "physicalDeviceTest": false,
+  "childPlaytest": false,
+  "sourceHashes": {
+    "index.html": "e4b4bfb041117fc98f7ab198e583081b8f4e955c6e5edd182cc9e77fb43cb673",
+    "hedge-play.css": "4ccf7c6197e38a20e4b7ecb273332158e094e8eedb979af4eec9fb1ec68f4b62",
+    "src/hedge-play.js": "75ea476a5ec1a32ea4257825889ffe3d990c624ac4817368cb8a2e8573e3bbd3",
+    "src/hedge-play-engine.js": "4d6bbd42e21648417fbe39b2ee2c332d04d9c45f22b921a8276e56c401dd33eb",
+    "src/hedge-play-content.js": "b29565d6fae3b73a9c27f515be03603f134b4ce58e9d9f9c0ca71cd38486f411",
+    "src/hedge-app.js": "06c08c2e18607c1b372d5bd9820079601b1fe50bc391cc538198aa346f14903a",
+    "src/hedge-adventure-views.js": "e4b8d114cfcbe1f301b1e91a38f53dadca603fe0a84ea14db834eecf7248385b",
+    "src/hedge-views.js": "21f2b261667a7663a6bcc87b37b663ecc0e1f07036968d217820b51af47ea74e",
+    "scripts/hedge-play-smoke.mjs": "05c2a5efad3beaa86a72bfeda39d5ae022e6501ca8082a389bf0e01305201923"
+  }
+}

@@ -46,7 +46,7 @@ function render(focus = false) {
     if(state.companion && route()==='home') {
       $('.hedge-home-scene')?.insertAdjacentHTML('beforeend',renderHomeDecorations(state));
       $('.hedge-home-grid')?.insertAdjacentHTML('afterend',renderWorkshop(state));
-      content.insertAdjacentHTML('afterbegin','<a class="adventure-play-link" href="#play"><span><strong>Ready for a real adventure?</strong>Move, dash and find things for your hideout.</span><span aria-hidden="true">↗</span></a>');
+      content.insertAdjacentHTML('afterbegin','<a class="adventure-play-link" href="#play"><span><strong>Ready for a real adventure?</strong>Move, dash and time your catches.</span><span aria-hidden="true">↗</span></a>');
     }
   }
   document.querySelectorAll('.hedge-nav a').forEach(a => {
@@ -62,7 +62,7 @@ function gameSound(kind) {
     soundContext ||= new (window.AudioContext || window.webkitAudioContext)();
     if(soundContext.state==='suspended') soundContext.resume().catch(()=>{});
     const oscillator=soundContext.createOscillator(), gain=soundContext.createGain(), at=soundContext.currentTime;
-    oscillator.type='sine';oscillator.frequency.setValueAtTime(({seed:660,pickup:660,dash:280,secret:880,finish:1046,bump:130})[kind] || 440,at);
+    oscillator.type='sine';oscillator.frequency.setValueAtTime(({seed:660,pickup:660,dash:280,secret:880,finish:1046,bump:130,miss:110,perfect:990})[kind] || 440,at);
     oscillator.frequency.exponentialRampToValueAtTime(kind==='dash'?460:330,at+.14);
     gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(.055,at+.01);gain.gain.exponentialRampToValueAtTime(.0001,at+.2);
     oscillator.connect(gain);gain.connect(soundContext.destination);oscillator.start(at);oscillator.stop(at+.22);

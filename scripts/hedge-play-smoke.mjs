@@ -50,10 +50,35 @@ export async function smokeHedgePlay({browser,expect,output,url}) {
   const advance=ms=>page.clock.runFor(ms);
   const capture=async name=>{await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:resolve(output,`${name}.png`),fullPage:true,animations:'disabled'});};
   const hold=async(key,ms)=>{await page.keyboard.down(key);await advance(ms);await page.keyboard.up(key);};
-  const walkTo=async target=>{
+  const resolveTiming=async({touch=false}={})=>{
+    let challenge=(await run()).challenge;
+    if (!challenge) return;
+    for(let frame=0;frame<600;frame++) {
+      const current=await run(); challenge=current.challenge;
+      if (!challenge || current.finished || current.failed) return;
+      if (challenge.status==='active') {
+        const middle=(challenge.targetStart+challenge.targetEnd)/2;
+        if (Math.abs(challenge.position-middle)<(challenge.targetEnd-challenge.targetStart)*.08) {
+          if (touch) {
+            await page.locator('[data-play-action="stop"]').tap();
+          } else await page.keyboard.down('Space');
+          await advance(16);
+          if (!touch) await page.keyboard.up('Space');
+          expect((await run()).challenge?.status).toMatch(/hit|perfect/);
+        }
+      }
+      await advance(16);
+    }
+    throw new Error('Timing gate did not resolve through player input');
+  };
+  const walkTo=async(target,{resolveChallenges=true}={})=>{
     for(const point of pathTo(await run(),target)) {
       for(let attempt=0;attempt<150;attempt++) {
-        const current=await run(); if(current.finished)return;
+        let current=await run(); if(current.finished || current.failed)return;
+        if (current.challenge) {
+          if (!resolveChallenges) return;
+          await resolveTiming(); current=await run();
+        }
         const dx=point.x-current.player.x,dy=point.y-current.player.y;
         if(Math.hypot(dx,dy)<7)break;
         const horizontal=Math.abs(dx)>Math.abs(dy),distance=Math.abs(horizontal?dx:dy);
@@ -71,11 +96,11 @@ export async function smokeHedgePlay({browser,expect,output,url}) {
     await expect(canvas).toBeVisible();
     await advance(32); await canvas.focus();
     const initial=await run();
-    await hold('ArrowRight',300);
-    const moved=await run(), walkDistance=moved.player.x-initial.player.x;
-    expect(walkDistance).toBeGreaterThan(25);
+    await hold('ArrowLeft',150);
+    const moved=await run(), walkDistance=initial.player.x-moved.player.x;
+    expect(walkDistance).toBeGreaterThan(15);
     await page.keyboard.down('ArrowRight'); await page.keyboard.down('Space');
-    await advance(250); await page.keyboard.up('Space'); await page.keyboard.up('ArrowRight');
+    await advance(120); await page.keyboard.up('Space'); await page.keyboard.up('ArrowRight');
     const dashed=await run(),dashDistance=dashed.player.x-moved.player.x;
     expect(dashDistance).toBeGreaterThan(walkDistance*1.4);
     expect(dashed.player.cooldown).toBeGreaterThan(0);
@@ -98,14 +123,14 @@ export async function smokeHedgePlay({browser,expect,output,url}) {
 
     // CDP sends actual touch contact/release events through the browser's pointer pipeline.
     await page.setViewportSize({width:390,height:844});
-    await page.locator('[data-play-move="right"]').scrollIntoViewIfNeeded();
-    const touch=await context.newCDPSession(page),box=await page.locator('[data-play-move="right"]').boundingBox();
-    expect(await page.locator('[data-play-move="right"]').evaluate(node=>{const r=node.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return node===top||node.contains(top);}), 'Touch direction must not be covered by navigation').toBe(true);
+    await page.locator('[data-play-move="left"]').scrollIntoViewIfNeeded();
+    const touch=await context.newCDPSession(page),box=await page.locator('[data-play-move="left"]').boundingBox();
+    expect(await page.locator('[data-play-move="left"]').evaluate(node=>{const r=node.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return node===top||node.contains(top);}), 'Touch direction must not be covered by navigation').toBe(true);
     const beforeTouch=await run();
     await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width/2,y:box.y+box.height/2,id:1}]});
     await advance(350);
     await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-    const afterTouch=await run(); expect(afterTouch.player.x-beforeTouch.player.x).toBeGreaterThan(25);
+    const afterTouch=await run(); expect(beforeTouch.player.x-afterTouch.player.x).toBeGreaterThan(25);
     await advance(350); const released=await run();
     expect(released.player.x).toBeCloseTo(afterTouch.player.x,5);
     expect(released.player.y).toBeCloseTo(afterTouch.player.y,5);
@@ -135,6 +160,61 @@ export async function smokeHedgePlay({browser,expect,output,url}) {
     expect(await canvas.evaluate(node=>node===window.__hedgeQaCanvas)).toBe(true);
     expect((await run()).player).toEqual(detached.player);
     await resume(); await page.setViewportSize({width:1440,height:1000}); await canvas.focus();
+
+    // Failure is earned through genuine mistimed presses and a missed deadline.
+    const waitForActive=async()=>{
+      for(let frame=0;frame<160;frame++) {
+        if ((await run()).challenge?.status==='active') return;
+        await advance(16);
+      }
+      throw new Error('Timing gate did not become active');
+    };
+    await walkTo((await run()).seeds[0],{resolveChallenges:false});
+    await waitForActive();
+    const initialGate=await run(); expect(initialGate.collected).toBe(0);
+    expect(initialGate.challenge.position).toBeLessThan(initialGate.challenge.targetStart);
+    await page.keyboard.down('Space'); await advance(16);
+    expect((await run()).misses).toBe(1); expect((await run()).collected).toBe(0);
+    expect((await run()).challenge.position,'Miss marker stays at the input position').toBe(initialGate.challenge.position);
+    await waitForActive(); await advance(1000);
+    expect((await run()).misses,'Held Space cannot repeatedly submit a timing attempt').toBe(1);
+    expect((await run()).collected,'Held Space cannot automatically collect a seed').toBe(0);
+    expect((await run()).challenge.status).toBe('active');
+    await page.keyboard.up('Space'); await advance(16);
+    await advance(Math.ceil((await run()).challenge.remaining*1000)+32);
+    expect((await run()).misses,'Doing nothing misses the deadline').toBe(2);
+    expect((await run()).collected).toBe(0);
+    await waitForActive();
+    await page.keyboard.down('Space'); await advance(16); await page.keyboard.up('Space');
+    const failure=await run();
+    expect(failure.failed).toBe(true); expect(failure.finished).toBe(true); expect(failure.result).toBeNull();
+    expect(failure.misses).toBe(3); expect(failure.collected).toBe(0);
+    await expect(page.locator('[data-play-overlay]')).toContainText('Out of chances');
+    const failedSave=await state();
+    expect(failedSave.play.seeds).toBe(0); expect(failedSave.play.best.broadroot.clears).toBe(0);
+    expect(failedSave.play.best.dryfoot.clears).toBe(0); expect(failedSave.play.decorations).toEqual([]);
+    expect(failedSave.play.claimed).toEqual([]);
+    await capture('timing-failed-no-reward');
+    await page.locator('[data-play-action="replay"]').click(); await advance(32);
+    await expect.poll(async()=>(await run()).failed).toBe(false); expect((await run()).misses).toBe(0);
+    await walkTo((await run()).seeds[0],{resolveChallenges:false}); await waitForActive();
+    await page.locator('[data-play-action="pause"]').click();
+    const pausedGate=await run(); await assertPaused('Active timing challenge');
+    expect((await run()).challenge).toEqual(pausedGate.challenge);
+    await resume();
+    for (const width of [390,320]) {
+      await page.setViewportSize({width,height:844});
+      const stop=page.locator('[data-play-action="stop"]');
+      await expect(stop).toBeVisible();
+      expect(await stop.evaluate(node=>{const r=node.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return r.y>=0&&r.bottom<=innerHeight&&(node===top||node.contains(top));}),`Timing Stop reachable at ${width}px`).toBe(true);
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+      await capture(`timing-challenge-${width}`);
+    }
+    await page.setViewportSize({width:390,height:844});
+    await resolveTiming({touch:true});
+    expect((await run()).collected,'Actual touch Stop earns a seed').toBe(1);
+    expect((await run()).misses).toBe(0);
+    await page.setViewportSize({width:1440,height:1000}); await canvas.focus();
 
     for(const seed of (await run()).seeds) {
       if(!(await run()).seeds.find(item=>item.id===seed.id).collected) await walkTo(seed);
@@ -209,7 +289,7 @@ export async function smokeHedgePlay({browser,expect,output,url}) {
     await expect(page.locator('.adventure-home-prop--canopy')).toHaveAttribute('aria-label','Golden petals');
     await capture('home-all-trail-rewards');
     expect(errors,'Browser errors').toEqual([]); expect(external,'External requests').toEqual([]);
-    const receipt={passed:true,inputOnlyCompletion:true,keyboardWalkDistance:walkDistance,keyboardDashDistance:dashDistance,touchMovedAndReleased:true,pauseAndFocusLossHandler:true,hiddenDocumentHandlerSimulated:true,navigationPreservedRun:true,offscreenAnimationFramesStopped:true,result:completed.result,clearsAfterReload:1,nextTrailUnlocked:true,homeDecoration:'moss-patch',seedsAfterBuilding:4,completedLevels,finalSeedBank:finalPlay.seeds,persistedPersonalBests:finalPlay.best,errors,external,mobile};
+    const receipt={passed:true,inputOnlyCompletion:true,compulsoryTiming:true,clock:'Playwright virtual requestAnimationFrame time; real browser input events',missMarkerFrozenAtInput:true,earlyPressMiss:true,timeoutMiss:true,threeMissFailureNoRewards:true,retryAfterFailure:true,heldSpaceCannotAutoEarn:true,touchStopSuccess:true,timingPauseFreezesMarkerAndDeadline:true,mobileStopReachable:[320,390],keyboardWalkDistance:walkDistance,keyboardDashDistance:dashDistance,touchMovedAndReleased:true,pauseAndFocusLossHandler:true,hiddenDocumentHandlerSimulated:true,navigationPreservedRun:true,offscreenAnimationFramesStopped:true,result:completed.result,clearsAfterReload:1,nextTrailUnlocked:true,homeDecoration:'moss-patch',seedsAfterBuilding:4,completedLevels,finalSeedBank:finalPlay.seeds,persistedPersonalBests:finalPlay.best,errors,external,mobile};
     await writeFile(resolve(output,'hedge-play.json'),`${JSON.stringify(receipt,null,2)}\n`);
     return receipt;
   } finally {await context.close();}

@@ -6,6 +6,14 @@ export const LEVELS = Object.freeze([
   Object.freeze({ id: 'dryfoot', title: 'Brook Skip', subtitle: 'Find the crossings. Slip past the muddy currents.', parSeconds: 32, colour: '#6ba9a6' }),
   Object.freeze({ id: 'alderwater', title: 'Lantern Trail', subtitle: 'Follow the glow. Time your dash through the ripples.', parSeconds: 35, colour: '#8d96be' }),
 ]);
+export const TIMING_LIMIT_SECONDS = 4;
+export const TIMING_FEEDBACK_SECONDS = .65;
+export const MAX_MISSES = 3;
+const timingDifficulty = Object.freeze({
+  broadroot: { width: .20, speed: .8 },
+  dryfoot: { width: .18, speed: .9 },
+  alderwater: { width: .15, speed: 1 },
+});
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const wall = (x, y, w, h, kind = 'root') => ({ x, y, w, h, kind });
@@ -54,7 +62,9 @@ export function createRun(levelId, options = {}) {
   return {
     level: level.id, assist: options.assist === true, elapsed: 0, collected: 0, bumps: 0,
     start: { x: layout.start[0], y: layout.start[1] },
-    finished: false, result: null, banner: 'Find 5 glowseeds, then reach the glowing arch.',
+    finished: false, failed: false, result: null, challenge: null, misses: 0, perfects: 0,
+    timingPhase: 0, trailElapsed: 0, stopHeld: false,
+    banner: 'Stop the spark in the green to earn 5 glowseeds. Three misses end the run.',
     player: { x: layout.start[0], y: layout.start[1], radius: 15, facing: 'right', dashTime: 0, cooldown: 0, slowTime: 0, invincibleTime: 0, directionX: 1, directionY: 0 },
     walls: layout.walls.map(item => ({ ...item })),
     seeds: layout.seeds.map(([x, y], index) => ({ id: `seed-${index + 1}`, x, y, collected: false })),
@@ -86,6 +96,72 @@ function movePlayer(run, dx, dy) {
   }
 }
 
+function startChallenge(run, seed) {
+  const index = run.seeds.indexOf(seed);
+  const width = run.assist ? .27 : timingDifficulty[run.level].width;
+  const centre = [.57, .72, .43, .64, .36, .76, .52, .67][index];
+  run.timingPhase = 0;
+  run.player.dashTime = 0;
+  run.challenge = {
+    seedId: seed.id, position: 0, targetStart: centre - width / 2, targetEnd: centre + width / 2,
+    perfectStart: centre - width * .14, perfectEnd: centre + width * .14,
+    remaining: TIMING_LIMIT_SECONDS, status: 'active', feedbackRemaining: 0,
+  };
+  run.banner = 'Stop the spark inside the green. Aim for the bright centre!';
+}
+function resolveChallenge(run, stopped) {
+  const challenge = run.challenge;
+  const hit = stopped && challenge.position >= challenge.targetStart && challenge.position <= challenge.targetEnd;
+  if (hit) {
+    const seed = run.seeds.find(item => item.id === challenge.seedId);
+    const perfect = challenge.position >= challenge.perfectStart && challenge.position <= challenge.perfectEnd;
+    challenge.status = perfect ? 'perfect' : 'hit';
+    seed.collected = true;
+    run.collected++;
+    if (perfect) run.perfects++;
+    run.goal.open = run.collected >= 5;
+    effect(run, 'seed', seed.x, seed.y);
+    run.banner = perfect ? 'Perfect stop! A glowseed earned.' : 'Nice stop! A glowseed earned.';
+  } else {
+    challenge.status = 'miss';
+    run.misses++;
+    effect(run, 'bump', run.player.x, run.player.y);
+    run.banner = stopped ? 'Outside the green. Watch the next pass.' : 'Time ran out. Catch the next spark.';
+    if (run.misses >= MAX_MISSES) {
+      run.failed = true;
+      run.finished = true;
+      run.banner = 'Three missed sparks. Try again — each run is a fresh start.';
+    }
+  }
+  challenge.feedbackRemaining = TIMING_FEEDBACK_SECONDS;
+}
+function advanceChallenge(run, stopPressed, delta) {
+  const challenge = run.challenge;
+  if (challenge.status !== 'active') {
+    challenge.feedbackRemaining = Math.max(0, challenge.feedbackRemaining - delta);
+    if (challenge.feedbackRemaining === 0) {
+      if (challenge.status === 'miss') startChallenge(run, run.seeds.find(item => item.id === challenge.seedId));
+      else run.challenge = null;
+    }
+    return;
+  }
+  // Judge the marker that was displayed when input arrived, before advancing it.
+  // This keeps timing consistent across frame rates and makes the boundary inclusive.
+  if (stopPressed) {
+    resolveChallenge(run, true);
+    return;
+  }
+  challenge.remaining = Math.max(0, challenge.remaining - delta);
+  if (challenge.remaining <= 1e-9) {
+    challenge.remaining = 0;
+    resolveChallenge(run, false);
+    return;
+  }
+  const speed = run.assist ? .6 : timingDifficulty[run.level].speed;
+  run.timingPhase = (run.timingPhase + speed * delta) % 2;
+  challenge.position = run.timingPhase <= 1 ? run.timingPhase : 2 - run.timingPhase;
+}
+
 /** Advance at most 50 ms. Call only while visible/unpaused; no wall-clock time is read. */
 export function stepRun(run, input = {}, dt = 0) {
   if (run.finished) return run;
@@ -93,11 +169,19 @@ export function stepRun(run, input = {}, dt = 0) {
   if (!delta) return run;
   const player = run.player;
   run.elapsed += delta;
+  const stopPressed = input.stop === true && !run.stopHeld;
+  run.stopHeld = input.stop === true;
+  run.effects = run.effects.map(item => ({ ...item, life: item.life - delta })).filter(item => item.life > 0);
+  if (run.challenge) {
+    run.dashHeld = input.dash === true;
+    advanceChallenge(run, stopPressed, delta);
+    return run;
+  }
+  run.trailElapsed += delta;
   player.cooldown = Math.max(0, player.cooldown - delta);
   player.dashTime = Math.max(0, player.dashTime - delta);
   player.slowTime = Math.max(0, player.slowTime - delta);
   player.invincibleTime = Math.max(0, player.invincibleTime - delta);
-  run.effects = run.effects.map(item => ({ ...item, life: item.life - delta })).filter(item => item.life > 0);
   let x = Number.isFinite(input.x) ? clamp(input.x, -1, 1) : 0;
   let y = Number.isFinite(input.y) ? clamp(input.y, -1, 1) : 0;
   const magnitude = Math.hypot(x, y);
@@ -116,10 +200,10 @@ export function stepRun(run, input = {}, dt = 0) {
   const speed = dashing ? 370 : player.slowTime > 0 ? 72 : 138;
   movePlayer(run, (dashing ? player.directionX : x) * speed * delta, (dashing ? player.directionY : y) * speed * delta);
   for (const hazard of run.hazards) {
-    const wave = Math.sin(run.elapsed * Math.PI * 2 / hazard.period + hazard.phase);
+    const wave = Math.sin(run.trailElapsed * Math.PI * 2 / hazard.period + hazard.phase);
     hazard.x = hazard.originX + (hazard.axis === 'x' ? wave * hazard.range : 0);
     hazard.y = hazard.originY + (hazard.axis === 'y' ? wave * hazard.range : 0);
-    hazard.active = !hazard.pulse || ((run.elapsed + hazard.phase) % hazard.pulse) / hazard.pulse < .52;
+    hazard.active = !hazard.pulse || ((run.trailElapsed + hazard.phase) % hazard.pulse) / hazard.pulse < .52;
     if (hazard.active && !dashing && player.invincibleTime === 0 && distance(player, hazard) < player.radius + hazard.radius * (run.assist ? .55 : 1)) {
       player.slowTime = run.assist ? .3 : .75; player.invincibleTime = 1.4; run.bumps++;
       effect(run, 'bump', player.x, player.y);
@@ -128,8 +212,8 @@ export function stepRun(run, input = {}, dt = 0) {
   }
   for (const seed of run.seeds) {
     if (!seed.collected && distance(player, seed) <= (run.assist ? 40 : 28)) {
-      seed.collected = true; run.collected++; effect(run, 'seed', seed.x, seed.y);
-      run.banner = run.collected >= 5 ? 'The arch is open! Head home, or find every glowseed.' : `${run.collected} of 5 glowseeds. Keep exploring!`;
+      startChallenge(run, seed);
+      return run;
     }
   }
   if (!run.secret.collected && distance(player, run.secret) <= (run.assist ? 40 : 28)) {

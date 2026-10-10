@@ -1,5 +1,15 @@
 # Checks by release
 
+## 0.11 timing challenges — Fedora verification, 10 October 2026
+
+`npm test` passed **212 tests**, including 19 engine tests. The static build and complete built-app browser suite passed. The original worlds, save recovery and app-boundary checks remain included.
+
+The new browser checks deliberately stopped outside the target, waited for a timeout and held Space. Three misses ended the attempt without seed rewards or a trail unlock. Retrying started a fresh run. An active challenge preserved its marker and countdown while paused. Real keyboard and browser touch input caught seeds; every seed and secret was then collected on all three trails, with rewards and records surviving reload. The 320px and 390px timing cards and Stop buttons were reachable. No result or player position was injected.
+
+Deterministic engine runs used movement, dashing and successful timed stops to earn all eight seeds, a secret and three stars on every course: 33.98s, 24.33s and 21.24s respectively. Existing par times and save validation rules remain unchanged. Ordinary timing windows last roughly 250ms, 200ms and 150ms per pass; gentle mode widens this to 450ms. These values describe rules, not measured age suitability.
+
+[The receipt](research/hedge-challenge-verification.json) includes browser outcomes and source hashes. [Phone timing](screenshots/hedge-timing-mobile.png) shows the actual challenge interface. The browser used controlled animation time with genuine input events. This verifies the rules and controls, not human reaction times or enjoyment. No child playtest or physical device test is claimed.
+
 ## 0.10 playable adventures — Fedora verification, 10 October 2026
 
 `npm test` passed **203 tests**. A fresh static build and the complete `npm run test:browser` suite passed, including the previous Petrealm game, its ten application-boundary scenarios, the earlier Hedge story and the new direct-control adventures.

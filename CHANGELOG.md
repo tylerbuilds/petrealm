@@ -1,5 +1,13 @@
 # Changes
 
+## 0.11: Timing matters
+
+- Seeds require a successful timed stop; walking over them no longer earns rewards.
+- Three mistakes end a run. Clear hit, perfect, miss and timeout feedback, with immediate free retries.
+- Faster markers and smaller targets on later trails; gentler timing remains available.
+- Keyboard and touch timing controls, with pause preserving the current challenge.
+- Existing saves, unlocked trails and earned decorations remain valid.
+
 ## 0.10: Play the hedge
 
 - Direct-control Broadroot Rush, Brook Skip and Lantern Trail, with keyboard, touch movement and dashing.

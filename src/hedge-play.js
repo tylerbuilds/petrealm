@@ -182,7 +182,7 @@ export function mountHedgePlay(container, options={}) {
   const metadata=LEVELS.find(level=>level.id===levelId)||LEVELS[0];
   let run=createRun(metadata.id,{assist:Boolean(options.assist),seed:1});
   let ground=buildGround(run,metadata.id), destroyed=false, paused=false, finishedAnnounced=false, frame=0, previousTime=0, hudTime=-1, noticeTime=0;
-  let path=[], pointerPoint=null, pointerHeld=false, dashQueued=false, lastSoundEffect=-1, lastCollected=0;
+  let path=[], pointerPoint=null, pointerHeld=false, dashQueued=false, stopQueued=false, spaceDown=false, challengeKey=null, lastChallengeStatus=null, lastSoundEffect=-1, lastCollected=0;
   const keys=new Set(), held=new Map(), listenerRemovers=[];
   const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
   const camera={x:WORLD_WIDTH/2,y:WORLD_HEIGHT/2,w:WORLD_WIDTH,h:WORLD_HEIGHT};
@@ -191,17 +191,17 @@ export function mountHedgePlay(container, options={}) {
   const [neighbourName,neighbourFamily,neighbourTone]=neighbours[metadata.id]||neighbours.broadroot;
   const neighbourImage=imageFor(neighbourFamily,{name:neighbourName,tone:neighbourTone,pose:'greet'});
   container.innerHTML=`<section class="hedge-game" aria-label="${esc(metadata.title)} adventure">
-    <header class="hedge-game-toolbar"><div class="hedge-game-quest"><span class="hedge-game-kicker">${options.assist?'Easy exploring':'Take the trail'}</span><h2>${esc(metadata.title)}</h2><p id="hedge-game-instructions">Move with arrows or WASD. Space to dash. Or tap where you want to go.</p></div><button type="button" class="hedge-game-icon-button" data-play-action="pause" aria-label="Pause adventure" title="Pause (Escape)"><span aria-hidden="true">Ⅱ</span></button></header>
-    <div class="hedge-game-scorebar"><span class="hedge-game-seeds"><span aria-hidden="true">◆</span> <strong data-play-seeds>0 / ${run.seeds.length}</strong><span>seeds</span></span><span class="hedge-game-secret" data-play-secret><span aria-hidden="true">✧</span> Secret to find</span><span class="hedge-game-time"><strong data-play-time>0:00</strong><span>Star pace ${clock(metadata.parSeconds||90)}</span></span></div>
-    <div class="hedge-game-viewport"><canvas id="hedge-game-canvas" tabindex="0" aria-label="Control ${esc(companion.name||'Fen')} through ${esc(metadata.title)}. Collect the gold seeds, then reach ${esc(neighbourName)}." aria-describedby="hedge-game-instructions"></canvas><div class="hedge-game-objective" data-play-objective>Find 5 glowseeds, then reach ${esc(neighbourName)}.</div><div class="hedge-game-notice" data-play-notice role="status" aria-live="polite"></div><div class="hedge-game-overlay" data-play-overlay hidden></div><div class="hedge-game-dash-state" aria-hidden="true"><span data-play-dash-meter></span></div></div>
-    <div class="hedge-game-controls"><div class="hedge-game-dpad" aria-label="Movement controls"><button type="button" data-play-move="up" aria-label="Move up">↑</button><button type="button" data-play-move="left" aria-label="Move left">←</button><span aria-hidden="true">✦</span><button type="button" data-play-move="right" aria-label="Move right">→</button><button type="button" data-play-move="down" aria-label="Move down">↓</button></div><p class="hedge-game-control-tip"><strong>Small paws. Big shortcuts.</strong><span>Dash through tricky patches.<br>5 seeds open the finish.</span></p><button type="button" class="hedge-game-dash" data-play-action="dash" aria-label="Dash forward"><span aria-hidden="true">↗</span><strong>Dash</strong><small>Space</small></button></div>
+    <header class="hedge-game-toolbar"><div class="hedge-game-quest"><span class="hedge-game-kicker">${options.assist?'Gentler timing':'Three chances. Make them count.'}</span><h2>${esc(metadata.title)}</h2><p id="hedge-game-instructions">Move: arrows, WASD or tap. Space: dash / stop the seed meter.</p></div><button type="button" class="hedge-game-icon-button" data-play-action="pause" aria-label="Pause adventure" title="Pause (Escape)"><span aria-hidden="true">Ⅱ</span></button></header>
+    <div class="hedge-game-scorebar"><span class="hedge-game-seeds"><span aria-hidden="true">◆</span> <strong data-play-seeds>0 / ${run.seeds.length}</strong><span>seeds</span></span><span class="hedge-game-chances" data-play-chances aria-label="3 chances left">● ● ● <span>3 chances</span></span><span class="hedge-game-secret" data-play-secret><span aria-hidden="true">✧</span> Secret to find</span><span class="hedge-game-time"><strong data-play-time>0:00</strong><span>Star pace ${clock(metadata.parSeconds||90)}</span></span></div>
+    <div class="hedge-game-viewport"><canvas id="hedge-game-canvas" tabindex="0" aria-label="Control ${esc(companion.name||'Fen')} through ${esc(metadata.title)}. Stop each seed meter in the green, then reach ${esc(neighbourName)}." aria-describedby="hedge-game-instructions"></canvas><div class="hedge-game-objective" data-play-objective>Time 5 seed catches. Then reach ${esc(neighbourName)}.</div><div class="hedge-game-notice" data-play-notice role="status" aria-live="polite"></div><div class="hedge-game-challenge" data-play-challenge hidden><section class="hedge-game-timing-card" aria-labelledby="hedge-timing-title"><div class="hedge-game-timing-top"><span class="hedge-game-kicker">Catch the glowseed</span><span data-play-countdown></span></div><h3 id="hedge-timing-title">Stop in the green</h3><div class="hedge-game-timing-track" aria-hidden="true"><span class="hedge-game-timing-target" data-play-target></span><span class="hedge-game-timing-perfect" data-play-perfect></span><span class="hedge-game-timing-pointer" data-play-pointer></span></div><p class="hedge-game-timing-feedback" data-play-timing-feedback role="status" aria-live="polite">Bright centre = perfect. Three misses end the run.</p><button type="button" class="hedge-game-stop" data-play-action="stop">STOP <small>Space</small></button></section></div><div class="hedge-game-overlay" data-play-overlay hidden></div><div class="hedge-game-dash-state" aria-hidden="true"><span data-play-dash-meter></span></div></div>
+    <div class="hedge-game-controls"><div class="hedge-game-dpad" aria-label="Movement controls"><button type="button" data-play-move="up" aria-label="Move up">↑</button><button type="button" data-play-move="left" aria-label="Move left">←</button><span aria-hidden="true">✦</span><button type="button" data-play-move="right" aria-label="Move right">→</button><button type="button" data-play-move="down" aria-label="Move down">↓</button></div><p class="hedge-game-control-tip"><strong>Every seed is a skill check.</strong><span>Stop in the green to catch it.<br>Three misses end your run.</span></p><button type="button" class="hedge-game-dash" data-play-action="dash" aria-label="Dash forward"><span aria-hidden="true">↗</span><strong>Dash</strong><small>Space</small></button></div>
     <footer class="hedge-game-footer"><span>Finish. Find all 8 seeds. Beat ${clock(metadata.parSeconds)}. Three stars to chase.</span><button type="button" data-play-action="exit">Back to trails</button></footer>
   </section>`;
   const canvas=container.querySelector('canvas'),ctx=canvas.getContext('2d'),viewport=canvas.parentElement;
-  const overlay=container.querySelector('[data-play-overlay]'),timeEl=container.querySelector('[data-play-time]'),seedsEl=container.querySelector('[data-play-seeds]'),secretEl=container.querySelector('[data-play-secret]'),objectiveEl=container.querySelector('[data-play-objective]'),noticeEl=container.querySelector('[data-play-notice]'),dashMeter=container.querySelector('[data-play-dash-meter]');
+  const overlay=container.querySelector('[data-play-overlay]'),timeEl=container.querySelector('[data-play-time]'),seedsEl=container.querySelector('[data-play-seeds]'),secretEl=container.querySelector('[data-play-secret]'),objectiveEl=container.querySelector('[data-play-objective]'),noticeEl=container.querySelector('[data-play-notice]'),dashMeter=container.querySelector('[data-play-dash-meter]'),challengeEl=container.querySelector('[data-play-challenge]'),chancesEl=container.querySelector('[data-play-chances]');
   if(!ctx){container.innerHTML='<p>This browser cannot draw the adventure. Try a browser with canvas support.</p>';return{destroy(){},pause(){},resume(){},setSaveStatus(){},getSnapshot(){return null;}};}
   const on=(target,event,handler,options)=>{target.addEventListener(event,handler,options);listenerRemovers.push(()=>target.removeEventListener(event,handler,options));};
-  const clearInput=()=>{keys.clear();held.clear();dashQueued=false;pointerHeld=false;container.querySelectorAll('.is-held').forEach(button=>button.classList.remove('is-held'));};
+  const clearInput=()=>{keys.clear();held.clear();dashQueued=false;stopQueued=false;pointerHeld=false;container.querySelectorAll('.is-held').forEach(button=>button.classList.remove('is-held'));};
   function announce(message){noticeEl.textContent=message;noticeTime=2.8;}
   function focusCanvas(){canvas.focus({preventScroll:true});}
   function resize(){
@@ -225,15 +225,20 @@ export function mountHedgePlay(container, options={}) {
   function setSaveStatus(status,message){if(!destroyed)saveMarkup(status,message);}
   function pause(){
     if(destroyed||paused||run.finished)return;paused=true;cancelAnimationFrame(frame);clearInput();path=[];
-    overlay.hidden=false;overlay.innerHTML=`<section class="hedge-game-pause-card"><span class="hedge-game-kicker">A breather</span><h3>Right where you left it.</h3><p>Your clock is paused.</p><button type="button" class="hedge-game-primary" data-play-action="resume">Keep exploring <span aria-hidden="true">↗</span></button><button type="button" class="hedge-game-secondary" data-play-action="exit">Back to trails</button></section>`;
+    challengeEl.hidden=true;overlay.hidden=false;overlay.innerHTML=`<section class="hedge-game-pause-card"><span class="hedge-game-kicker">A breather</span><h3>Right where you left it.</h3><p>Your clock and seed meter are paused.</p><button type="button" class="hedge-game-primary" data-play-action="resume">Back to the run <span aria-hidden="true">↗</span></button><button type="button" class="hedge-game-secondary" data-play-action="exit">Back to trails</button></section>`;
     container.querySelector('[data-play-action="pause"]').setAttribute('aria-label','Resume adventure');
     overlay.querySelector('button').focus({preventScroll:true});
   }
-  function resume(){if(destroyed||!paused||run.finished)return;paused=false;previousTime=0;clearInput();overlay.hidden=true;container.querySelector('[data-play-action="pause"]').setAttribute('aria-label','Pause adventure');focusCanvas();frame=requestAnimationFrame(tick);}
+  function resume(){if(destroyed||!paused||run.finished)return;paused=false;previousTime=0;clearInput();overlay.hidden=true;container.querySelector('[data-play-action="pause"]').setAttribute('aria-label','Pause adventure');updateChallenge();focusCanvas();frame=requestAnimationFrame(tick);}
   function complete(){
     if(finishedAnnounced)return;finishedAnnounced=true;clearInput();path=[];
+    challengeEl.hidden=true;
+    if(run.failed){
+      overlay.hidden=false;overlay.innerHTML=`<section class="hedge-game-result hedge-game-failed"><span class="hedge-game-kicker">Three misses. Run over.</span><div class="hedge-game-failed-symbol" aria-hidden="true">×</div><h3>Out of chances</h3><p>You caught ${run.collected} of ${run.seeds.length} seeds. Finish the trail to keep your finds.</p><p class="hedge-game-next-try">Watch the pointer. Press Stop as it enters the green. Aim for the bright centre.</p><div class="hedge-game-result-actions"><button type="button" class="hedge-game-primary" data-play-action="replay">Try again ↗</button><button type="button" class="hedge-game-secondary" data-play-action="exit">Back to trails</button></div></section>`;
+      overlay.querySelector('[data-play-action="replay"]').focus({preventScroll:true});return;
+    }
     const result=run.result;
-    overlay.hidden=false;overlay.innerHTML=`<section class="hedge-game-result"><span class="hedge-game-kicker">Trail complete</span><div class="hedge-game-stars" aria-label="${result.stars} out of 3 stars">${Array.from({length:3},(_,i)=>`<span class="${i<result.stars?'is-earned':''}" aria-hidden="true">★</span>`).join('')}</div><h3>${result.stars===3?'A little trail legend.':result.stars===2?'That was a good run.':'Look how far you came.'}</h3><p>${esc(neighbourName)} has a place ready for you.</p><dl class="hedge-game-result-stats"><div><dt>Seeds</dt><dd>${result.seeds}/${run.seeds.length}</dd></div><div><dt>Time</dt><dd>${clock(result.timeMs/1000)}</dd></div><div><dt>Secret</dt><dd>${result.secret?'Found!':'Still out there'}</dd></div></dl><p class="hedge-game-next-try">${result.stars===3?(result.secret?'Every seed, a hidden keepsake, and a pace to be proud of.':'Three stars! There is still a hidden keepsake to find.'):result.seeds<8?'Collect all 8 glowseeds for another star.':`Try a dash shortcut: finish under ${clock(metadata.parSeconds)} for another star.`}</p><p class="hedge-game-save" data-play-save role="status">Keeping this adventure…</p><div class="hedge-game-result-actions"><button type="button" class="hedge-game-primary" data-play-action="replay">Play again <span aria-hidden="true">↗</span></button><button type="button" class="hedge-game-secondary" data-play-action="exit">Back to trails</button></div>${options.onHome?'<button type="button" class="hedge-game-home-reward" data-play-action="home">Take your finds home ↗</button>':''}</section>`;
+    overlay.hidden=false;overlay.innerHTML=`<section class="hedge-game-result"><span class="hedge-game-kicker">Trail complete</span><div class="hedge-game-stars" aria-label="${result.stars} out of 3 stars">${Array.from({length:3},(_,i)=>`<span class="${i<result.stars?'is-earned':''}" aria-hidden="true">★</span>`).join('')}</div><h3>${result.stars===3?'A little trail legend.':result.stars===2?'That was a good run.':'Look how far you came.'}</h3><p>${run.perfects||0} perfect catches. ${esc(neighbourName)} is impressed.</p><dl class="hedge-game-result-stats"><div><dt>Seeds</dt><dd>${result.seeds}/${run.seeds.length}</dd></div><div><dt>Time</dt><dd>${clock(result.timeMs/1000)}</dd></div><div><dt>Secret</dt><dd>${result.secret?'Found!':'Still out there'}</dd></div></dl><p class="hedge-game-next-try">${result.stars===3?(result.secret?'Every seed, a hidden keepsake, and a pace to be proud of.':'Three stars! There is still a hidden keepsake to find.'):result.seeds<8?'Collect all 8 glowseeds for another star.':`Try a dash shortcut: finish under ${clock(metadata.parSeconds)} for another star.`}</p><p class="hedge-game-save" data-play-save role="status">Keeping this adventure…</p><div class="hedge-game-result-actions"><button type="button" class="hedge-game-primary" data-play-action="replay">Play again <span aria-hidden="true">↗</span></button><button type="button" class="hedge-game-secondary" data-play-action="exit">Back to trails</button></div>${options.onHome?'<button type="button" class="hedge-game-home-reward" data-play-action="home">Take your finds home ↗</button>':''}</section>`;
     const resultTitle=overlay.querySelector('h3');resultTitle.tabIndex=-1;resultTitle.focus({preventScroll:true});
     saveMarkup('pending');
     try{const pending=options.onComplete?.({...result});if(pending?.catch)pending.catch(error=>setSaveStatus('error',error.message));if(!options.onComplete)setSaveStatus('saved','Trail complete.');}
@@ -241,7 +246,7 @@ export function mountHedgePlay(container, options={}) {
   }
   function replay(){
     if(options.onReplay){options.onReplay();return;}
-    run=createRun(metadata.id,{assist:Boolean(options.assist),seed:1});ground=buildGround(run,metadata.id);finishedAnnounced=false;paused=false;previousTime=0;hudTime=-1;lastCollected=0;lastSoundEffect=-1;path=[];clearInput();overlay.hidden=true;secretEl.innerHTML='<span aria-hidden="true">✧</span> Secret to find';secretEl.classList.remove('is-found');seedsEl.textContent=`0 / ${run.seeds.length}`;objectiveEl.textContent=`Find 5 glowseeds, then reach ${neighbourName}.`;noticeEl.textContent='';resize();focusCanvas();frame=requestAnimationFrame(tick);
+    run=createRun(metadata.id,{assist:Boolean(options.assist),seed:1});ground=buildGround(run,metadata.id);finishedAnnounced=false;paused=false;previousTime=0;hudTime=-1;lastCollected=0;lastSoundEffect=-1;challengeKey=null;lastChallengeStatus=null;path=[];clearInput();overlay.hidden=true;challengeEl.hidden=true;secretEl.innerHTML='<span aria-hidden="true">✧</span> Secret to find';secretEl.classList.remove('is-found');seedsEl.textContent=`0 / ${run.seeds.length}`;objectiveEl.textContent=`Find 5 glowseeds, then reach ${neighbourName}.`;noticeEl.textContent='';resize();focusCanvas();frame=requestAnimationFrame(tick);
   }
   function input(){
     let x=0,y=0;
@@ -253,7 +258,7 @@ export function mountHedgePlay(container, options={}) {
       while(path.length&&Math.hypot(path[0].x-run.player.x,path[0].y-run.player.y)<8)path.shift();
       if(path.length){const point=path[0],distance=Math.hypot(point.x-run.player.x,point.y-run.player.y);x=(point.x-run.player.x)/Math.max(1,distance);y=(point.y-run.player.y)/Math.max(1,distance);}
     }
-    const dash=dashQueued;dashQueued=false;return{x,y,dash};
+    const dash=dashQueued,stop=stopQueued;dashQueued=false;stopQueued=false;return{x,y,dash,stop};
   }
   function worldPoint(event){const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)/rect.width*camera.w+camera.x-camera.w/2,y:(event.clientY-rect.top)/rect.height*camera.h+camera.y-camera.h/2};}
   function pathToDestination(point){
@@ -264,8 +269,8 @@ export function mountHedgePlay(container, options={}) {
     return findPath(run.player,point,obstacles);
   }
   function setDestination(event){pointerPoint=worldPoint(event);path=pathToDestination(pointerPoint);if(!path.length)announce('Tap a clear patch of ground.');}
-  on(canvas,'pointerdown',event=>{if(paused||run.finished||event.button>0)return;event.preventDefault();pointerHeld=true;focusCanvas();canvas.setPointerCapture?.(event.pointerId);setDestination(event);});
-  on(canvas,'pointermove',event=>{if(pointerHeld&&!paused&&!run.finished)setDestination(event);});
+  on(canvas,'pointerdown',event=>{if(paused||run.finished||run.challenge||event.button>0)return;event.preventDefault();pointerHeld=true;focusCanvas();canvas.setPointerCapture?.(event.pointerId);setDestination(event);});
+  on(canvas,'pointermove',event=>{if(pointerHeld&&!paused&&!run.finished&&!run.challenge)setDestination(event);});
   on(canvas,'pointerup',()=>{pointerHeld=false;});on(canvas,'pointercancel',()=>{pointerHeld=false;});
   on(window,'keydown',event=>{
     if(!container.contains(document.activeElement))return;
@@ -273,24 +278,28 @@ export function mountHedgePlay(container, options={}) {
     if(paused||run.finished||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
     const key=event.key.length===1?event.key.toLowerCase():event.key;
     if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d',' '].includes(key)){
-      event.preventDefault();if(key===' '){if(!event.repeat)dashQueued=true;}else keys.add(key);
+      event.preventDefault();if(key===' '){if(!event.repeat&&!spaceDown){if(run.challenge?.status==='active')stopQueued=true;else if(!run.challenge)dashQueued=true;}spaceDown=true;}else if(!run.challenge)keys.add(key);
     }
   });
-  on(window,'keyup',event=>{keys.delete(event.key.length===1?event.key.toLowerCase():event.key);});
+  on(window,'keyup',event=>{if(event.key===' ')spaceDown=false;keys.delete(event.key.length===1?event.key.toLowerCase():event.key);});
   for(const button of container.querySelectorAll('[data-play-move]')){
-    on(button,'pointerdown',event=>{if(paused||run.finished)return;event.preventDefault();button.setPointerCapture?.(event.pointerId);held.set(event.pointerId,button.dataset.playMove);button.classList.add('is-held');});
+    on(button,'pointerdown',event=>{if(paused||run.finished||run.challenge)return;event.preventDefault();button.setPointerCapture?.(event.pointerId);held.set(event.pointerId,button.dataset.playMove);button.classList.add('is-held');});
     const release=event=>{held.delete(event.pointerId);button.classList.remove('is-held');};on(button,'pointerup',release);on(button,'pointercancel',release);on(button,'lostpointercapture',release);
     // Enter/Space on a focused direction button is also a usable movement input.
-    on(button,'keydown',event=>{if((event.key==='Enter'||event.key===' ')&&!paused&&!run.finished){event.preventDefault();event.stopPropagation();held.set(`key-${button.dataset.playMove}`,button.dataset.playMove);}});
+    on(button,'keydown',event=>{if((event.key==='Enter'||event.key===' ')&&!paused&&!run.finished&&!run.challenge){event.preventDefault();event.stopPropagation();held.set(`key-${button.dataset.playMove}`,button.dataset.playMove);}});
     on(button,'keyup',()=>held.delete(`key-${button.dataset.playMove}`));on(button,'blur',()=>held.delete(`key-${button.dataset.playMove}`));
   }
+  on(container,'pointerdown',event=>{
+    const action=event.target.closest('[data-play-action]')?.dataset.playAction;
+    if((action==='stop'||action==='dash')&&run.challenge?.status==='active'&&!paused&&!run.finished){event.preventDefault();stopQueued=true;focusCanvas();}
+  });
   on(container,'click',event=>{
     const action=event.target.closest('[data-play-action]')?.dataset.playAction;if(!action)return;
     if(action==='pause')paused?resume():pause();if(action==='resume')resume();if(action==='exit'){clearInput();options.onExit?.();}
-    if(action==='home')options.onHome?.();if(action==='replay')replay();if(action==='dash'&&!paused&&!run.finished){dashQueued=true;focusCanvas();}
+    if(action==='home')options.onHome?.();if(action==='replay')replay();if((action==='dash'||action==='stop')&&!paused&&!run.finished){if(run.challenge?.status==='active'){if(event.detail===0)stopQueued=true;}else if(!run.challenge&&action==='dash')dashQueued=true;focusCanvas();}
     if(action==='retry-save'&&run.finished){setSaveStatus('pending');try{const pending=options.onRetrySave?.({...run.result});if(pending?.catch)pending.catch(error=>setSaveStatus('error',error.message));}catch(error){setSaveStatus('error',error.message);}}
   });
-  on(window,'blur',()=>pause());on(document,'visibilitychange',()=>{if(document.hidden)pause();});
+  on(window,'blur',()=>{spaceDown=false;pause();});on(document,'visibilitychange',()=>{if(document.hidden)pause();});
   on(window,'resize',resize);
   const observer=typeof ResizeObserver==='function'?new ResizeObserver(resize):null;observer?.observe(viewport);
 
@@ -367,12 +376,34 @@ export function mountHedgePlay(container, options={}) {
     drawGoal(time);drawPlayer(time,moving);drawParticles();drawCompass();drawMinimap();
     ctx.setTransform(1,0,0,1,0,0);
   }
+  function updateChallenge(){
+    const challenge=run.challenge, active=Boolean(challenge&&!run.finished&&!paused);
+    challengeEl.hidden=!active;container.querySelector('.hedge-game').classList.toggle('has-challenge',active);
+    const chances=Math.max(0,3-(run.misses||0));
+    chancesEl.innerHTML=`${'● '.repeat(chances)}${'○ '.repeat(3-chances)}<span>${chances} ${chances===1?'chance':'chances'}</span>`;
+    chancesEl.setAttribute('aria-label',`${chances} chances left`);chancesEl.dataset.urgent=String(chances===1);
+    if(!challenge){challengeKey=null;lastChallengeStatus=null;return;}
+    if(challengeKey!==challenge.seedId){clearInput();path=[];challengeKey=challenge.seedId;lastChallengeStatus=null;if(active)focusCanvas();}
+    const card=challengeEl.querySelector('section');card.dataset.status=challenge.status;
+    challengeEl.querySelector('[data-play-pointer]').style.left=`${challenge.position*100}%`;
+    for(const [name,start,end] of [['target',challenge.targetStart,challenge.targetEnd],['perfect',challenge.perfectStart,challenge.perfectEnd]]){
+      const target=challengeEl.querySelector(`[data-play-${name}]`);target.style.left=`${start*100}%`;target.style.width=`${(end-start)*100}%`;
+    }
+    challengeEl.querySelector('[data-play-countdown]').textContent=challenge.status==='active'?`${Math.max(0,challenge.remaining).toFixed(1)}s`:challenge.status==='perfect'?'PERFECT':challenge.status==='hit'?'+1 SEED':'MISS';
+    challengeEl.querySelector('[data-play-action="stop"]').disabled=challenge.status!=='active';
+    if(challenge.status!==lastChallengeStatus){
+      lastChallengeStatus=challenge.status;
+      challengeEl.querySelector('h3').textContent=challenge.status==='perfect'?'Perfect catch!':challenge.status==='hit'?'Got it!':challenge.status==='miss'?'Missed it!':'Stop in the green';
+      challengeEl.querySelector('[data-play-timing-feedback]').textContent=challenge.status==='perfect'?'Right in the centre. Keep that rhythm.':challenge.status==='hit'?'One more seed caught.':challenge.status==='miss'?`${chances} ${chances===1?'chance':'chances'} left. Watch, then stop.`:'Bright centre = perfect. Three misses end the run.';
+    }
+  }
   function updateHud(){
+    updateChallenge();
     const seconds=Math.floor(run.elapsed);if(seconds!==hudTime){hudTime=seconds;timeEl.textContent=clock(run.elapsed);}
     if(run.collected!==lastCollected){lastCollected=run.collected;seedsEl.textContent=`${run.collected} / ${run.seeds.length}`;if(run.goal.open){if(run.collected===5&&path.length)path=pathToDestination(path[path.length-1]);objectiveEl.textContent=`Finish with ${neighbourName}, or find all 8 seeds.`;announce(run.collected===5?`The finish is open. Find ${neighbourName}!`:`${run.collected} of 8 glowseeds.`);}else announce(`${run.collected} of ${run.seeds.length} seeds.`);}
     if(run.secret?.collected&&!secretEl.classList.contains('is-found')){secretEl.innerHTML='<span aria-hidden="true">✦</span> Secret found';secretEl.classList.add('is-found');announce('A hidden keepsake!');}
     const cooldown=Math.max(0,run.player.cooldown||0);dashMeter.style.width=`${clamp((1-cooldown/1.2)*100,0,100)}%`;
-    const dashButton=container.querySelector('[data-play-action="dash"]');dashButton.dataset.ready=cooldown<=0?'true':'false';dashButton.querySelector('strong').textContent=cooldown<=0?'Dash':'Charging';
+    const dashButton=container.querySelector('[data-play-action="dash"]');dashButton.dataset.ready=cooldown<=0?'true':'false';dashButton.querySelector('strong').textContent=run.challenge?'Stop':cooldown<=0?'Dash':'Charging';dashButton.setAttribute('aria-label',run.challenge?'Stop seed meter':'Dash forward');dashButton.dataset.timing=String(Boolean(run.challenge));
     for(const effect of run.effects||[]){if(effect.id>lastSoundEffect){lastSoundEffect=effect.id;try{options.onSound?.(effect.type);}catch{/* Optional audio never blocks play. */}}}
   }
   function tick(timestamp){
@@ -381,7 +412,7 @@ export function mountHedgePlay(container, options={}) {
     if(!paused&&!run.finished){const controls=input();moving=Boolean(controls.x||controls.y);stepRun(run,controls,dt);updateHud();if(noticeTime>0){noticeTime-=dt;if(noticeTime<=0)noticeEl.textContent='';}if(run.finished)complete();}
     draw(run.elapsed,moving);if(!paused&&!run.finished)frame=requestAnimationFrame(tick);
   }
-  function getSnapshot(){return JSON.parse(JSON.stringify({level:metadata.id,player:run.player,seeds:run.seeds,walls:run.walls,hazards:run.hazards,goal:run.goal,secret:run.secret,collected:run.collected,elapsed:run.elapsed,paused,finished:run.finished,result:run.result,camera,assist:Boolean(options.assist)}));}
+  function getSnapshot(){return JSON.parse(JSON.stringify({level:metadata.id,player:run.player,seeds:run.seeds,walls:run.walls,hazards:run.hazards,goal:run.goal,secret:run.secret,collected:run.collected,elapsed:run.elapsed,paused,finished:run.finished,failed:run.failed,challenge:run.challenge,misses:run.misses,perfects:run.perfects,result:run.result,camera,assist:Boolean(options.assist)}));}
   // A read-only snapshot helps diagnose input and accessibility issues. It cannot
   // move the creature, finish a run, or grant a reward.
   Object.defineProperty(canvas,'hedgeSnapshot',{get:getSnapshot,configurable:true});

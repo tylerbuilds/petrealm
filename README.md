@@ -1,12 +1,12 @@
 # Under the Hedge
 
-A woodland adventure where you control your own Rillum: dash through roots, collect glowseeds, dodge moving obstacles and build a hideout with what you bring home. The new direction for the Petrealm project, using **Under the Hedge** as a working title.
+A woodland adventure where you control your own Rillum: dash through roots, time your glowseed catches, dodge moving obstacles and build a hideout with what you bring home. The new direction for the Petrealm project, using **Under the Hedge** as a working title.
 
-![Playing Broadroot Rush](docs/screenshots/hedge-play.png)
+![Timing a glowseed catch](docs/screenshots/hedge-timing.png)
 
 Three playable trails introduce root mazes, brook crossings and pulsing shore ripples. Finish a trail to open the next. Find all eight seeds, discover its secret and beat your best time. Completed runs unlock decorations that visibly change your home.
 
-There are no lives, countdown failures or missed-day penalties. A gentler setting gives more room to learn with the same rewards. Stories and quiet walks remain available alongside the action.
+Each seed requires a timed stop inside a moving marker’s target. Three misses end the run; retries are immediate and free. Later trails have faster markers and narrower targets. A gentler setting widens the targets with the same rewards. Stories and quiet walks remain available alongside the action.
 
 ## Play locally
 
@@ -20,7 +20,7 @@ Open **http://localhost:4203**. No installation is needed to run the game. Use a
 
 1. Choose a name, colour and marking, then press **Let’s play**. You go straight into Broadroot Rush.
 2. Move with **WASD / arrows**, use **Space** to dash, or use the touch controls. Tap a destination to move there.
-3. Collect at least five glowseeds and reach the neighbour at the glowing arch. Collect all eight and beat the trail time for three stars.
+3. Approach a glowseed, then press **Space** or **Stop** inside the target to catch it. Catch five and reach the glowing arch. Three misses end the attempt. Catch all eight and beat the trail time for three stars.
 4. Open **Home → Build your hideout** to use your discoveries. Replay trails to improve your records or find their secrets.
 5. Open **Journal**, visit neighbours or take a quiet walk when you feel like a slower visit.
 

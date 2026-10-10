@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { smokeWorldArt } from './world-art-smoke.mjs';
 import { smokeAppBoundary } from './app-boundary-smoke.mjs';
 import { smokeHedge } from './hedge-smoke.mjs';
+import { smokeHedgePlay } from './hedge-play-smoke.mjs';
 import { smokeCompanionExperience } from './companion-smoke.mjs';
 const {name} = JSON.parse(await readFile('package.json', 'utf8'));
 const port = 4322;
@@ -234,6 +235,7 @@ try {
     expect(boundary.results).toHaveLength(10);
     await smokeCompanionExperience({browser, expect, output:resolve(output,'companion-experience'), url:`http://127.0.0.1:${port}/previous-world.html`});
     await smokeHedge({browser, expect, output:resolve(output,'under-the-hedge'), url:`http://127.0.0.1:${port}/`});
+    await smokeHedgePlay({browser, expect, output:resolve(output,'hedge-play'), url:`http://127.0.0.1:${port}/`});
   } else throw new Error(`Unknown app: ${name}`);
   await page.screenshot({path:resolve(output,'desktop.png'),fullPage:true,animations:'disabled'});
   expect(errors, 'browser errors').toEqual([]);

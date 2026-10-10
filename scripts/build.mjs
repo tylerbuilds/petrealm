@@ -3,8 +3,8 @@ import { resolve } from 'node:path';
 const output = resolve('dist');
 await rm(output, {recursive:true, force:true});
 await mkdir(output, {recursive:true});
-for (const input of ['index.html','previous-world.html','hedge.css','styles.css','src','public','manifest.json','sw.js']) {
+for (const input of ['index.html','previous-world.html','hedge.css','hedge-play.css','hedge-adventure.css','styles.css','src','public','manifest.json','sw.js']) {
   try { await stat(input); await cp(input, resolve(output, input), {recursive:true}); }
-  catch (error) { if (error.code !== 'ENOENT') throw error; if (['index.html','previous-world.html','hedge.css','styles.css','src'].includes(input)) throw error; }
+  catch (error) { if (error.code !== 'ENOENT') throw error; if (['index.html','previous-world.html','hedge.css','hedge-play.css','hedge-adventure.css','styles.css','src'].includes(input)) throw error; }
 }
 console.log('Static app built in dist/');

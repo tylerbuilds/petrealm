@@ -65,8 +65,8 @@ test('unavailable storage or mutex permits exportable memory play without unsafe
 });
 test('invalid operations/imports and duplicate or overnested stored JSON never overwrite data',async()=>{
   const f=fixture();const s=await mutateHedgeWorld(loadHedgeWorld(),begin);
-  await assert.rejects(mutateHedgeWorld(s,x=>({...x,version:2})));await assert.rejects(importHedgeWorld(s,'{"version":1}'));assert.equal(f.data.get(HEDGE_SAVE_KEY),s.raw);
-  f.data.set(HEDGE_SAVE_KEY,s.raw.replace('"version":1','"version":1,"version":1'));assert.equal(loadHedgeWorld().blocked,true);
+  await assert.rejects(mutateHedgeWorld(s,x=>({...x,version:999})));await assert.rejects(importHedgeWorld(s,'{"version":1}'));assert.equal(f.data.get(HEDGE_SAVE_KEY),s.raw);
+  f.data.set(HEDGE_SAVE_KEY,s.raw.replace('"version":2','"version":2,"version":2'));assert.equal(loadHedgeWorld().blocked,true);
   f.data.set(HEDGE_SAVE_KEY,s.raw.replace('"format":1','"format":1,"format":1'));assert.equal(loadHedgeWorld().blocked,true);
   f.data.set(HEDGE_SAVE_KEY,'['.repeat(50)+'0'+']'.repeat(50));assert.equal(loadHedgeWorld().blocked,true);
 });

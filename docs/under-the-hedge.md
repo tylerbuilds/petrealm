@@ -1,5 +1,7 @@
 # Under the Hedge
 
+**Update:** the [playable adventures revision](playable-adventures.md) adds direct movement, dashing, trail challenges and home-building rewards. The opening below remains an optional quieter story; new players can play immediately.
+
 A companion learns how to notice a small living world, and brings that history home.
 
 This first playable develops the direction in Tyler’s supplied *Under the Hedge: research and development recommendation*, dated 10 October 2026. It gives the former Petrealm project a focused new experience: one Rillum, one home, three local routes and four recurring neighbours. **Under the Hedge is a working title.** The supplied research raises naming associations and calls for professional clearance; this implementation does not establish commercial clearance or a public launch.

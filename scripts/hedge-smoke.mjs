@@ -78,6 +78,7 @@ export async function smokeHedge({ browser, expect, output, url }) {
     await page.locator('input[name="colour"][value="clay"]').check();
     await page.locator('input[name="marking"][value="tail"]').check();
     await page.locator('#hedge-welcome-form button[type="submit"]').click();
+    await page.locator('.hedge-nav a[href="#home"]').click();
     await expect(action('surface')).toHaveCount(2);
     expect((await state()).companion).toEqual({name:'Fern', appearance:{colour:'clay',marking:'tail'}});
     await action('surface', '[data-choice="reeds"]').focus();

@@ -1,0 +1,125 @@
+{
+  "passed": true,
+  "inputOnlyCompletion": true,
+  "keyboardWalkDistance": 41.39999999999998,
+  "keyboardDashDistance": 88.80000000000018,
+  "touchMovedAndReleased": true,
+  "pauseAndFocusLossHandler": true,
+  "hiddenDocumentHandlerSimulated": true,
+  "navigationPreservedRun": true,
+  "offscreenAnimationFramesStopped": true,
+  "result": {
+    "level": "broadroot",
+    "stars": 3,
+    "seeds": 8,
+    "secret": true,
+    "timeMs": 33759,
+    "bumps": 4,
+    "assist": false
+  },
+  "clearsAfterReload": 1,
+  "nextTrailUnlocked": true,
+  "homeDecoration": "moss-patch",
+  "seedsAfterBuilding": 4,
+  "completedLevels": [
+    {
+      "level": "broadroot",
+      "stars": 3,
+      "seeds": 8,
+      "secret": true,
+      "timeMs": 33759,
+      "bumps": 4,
+      "assist": false
+    },
+    {
+      "level": "dryfoot",
+      "stars": 3,
+      "seeds": 8,
+      "secret": true,
+      "timeMs": 30592,
+      "bumps": 5,
+      "assist": false
+    },
+    {
+      "level": "alderwater",
+      "stars": 2,
+      "seeds": 8,
+      "secret": true,
+      "timeMs": 36971,
+      "bumps": 6,
+      "assist": false
+    }
+  ],
+  "finalSeedBank": 20,
+  "persistedPersonalBests": {
+    "broadroot": {
+      "clears": 1,
+      "stars": 3,
+      "seeds": 8,
+      "secret": true,
+      "timeMs": 33759
+    },
+    "dryfoot": {
+      "clears": 1,
+      "stars": 3,
+      "seeds": 8,
+      "secret": true,
+      "timeMs": 30592
+    },
+    "alderwater": {
+      "clears": 1,
+      "stars": 2,
+      "seeds": 8,
+      "secret": true,
+      "timeMs": 36971
+    }
+  },
+  "errors": [],
+  "external": [],
+  "mobile": [
+    {
+      "width": 390,
+      "document": 390,
+      "visibleWorldWidth": 540,
+      "playerDrawWidth": 63.37777777777778
+    },
+    {
+      "width": 320,
+      "document": 320,
+      "visibleWorldWidth": 540,
+      "playerDrawWidth": 51.45185185185185
+    }
+  ],
+  "date": "2026-10-10",
+  "version": "0.10.0",
+  "unitTests": {
+    "passed": 203,
+    "failed": 0
+  },
+  "fullBuiltBrowserSuitePassed": true,
+  "platform": {
+    "os": "Fedora Linux",
+    "node": "25.6.1",
+    "chromium": "156.0.8078.4"
+  },
+  "tapDestinationCheck": {
+    "courses": 3,
+    "destinations": 30,
+    "passed": true,
+    "standaloneRenderer": true
+  },
+  "physicalDeviceTest": false,
+  "childPlaytest": false,
+  "sourceHashes": {
+    "index.html": "e4b4bfb041117fc98f7ab198e583081b8f4e955c6e5edd182cc9e77fb43cb673",
+    "hedge-play.css": "2f068346d3a4dd4aaf91216859eac80af3963fafaf02ad2c8f9e9c5d90311d93",
+    "hedge-adventure.css": "9f47a24f6d0df64de7f2fb1993dc1b2838579e48369410ff9dbd888998af038e",
+    "src/hedge-app.js": "21714798eed3e00a7c78d41106ce39e90cf90a7c02470e8295e37d02439f011e",
+    "src/hedge-model.js": "9ef4bdc9b5b8ee9d33800dc5fbac5fe1b4a29a024dbcae661fbdf92aad56c0d9",
+    "src/hedge-play.js": "34db9a940ac801315ca7a99fe8fd0b3286830b1005306d318597b673d6828ca0",
+    "src/hedge-play-engine.js": "850454eb9ab1f8965d330dc177838069d1f4a4f82236ec820109563cbfea6277",
+    "src/hedge-play-content.js": "ec538d84c5e6499008885ef3972c409d040787f3b6f92ad7992a9c0be503a810",
+    "src/hedge-adventure-views.js": "c289ef11404e607a855b4913bf2e543e88ecd761ac6b27f70d26f36f7fb10147",
+    "scripts/hedge-play-smoke.mjs": "7421cd4659b084cbe75bef5eabe4a2eb11da2d2d082307c6d88b7dcba918a765"
+  }
+}

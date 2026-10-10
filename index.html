@@ -4,22 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f8f6ee">
-  <meta name="description" content="A quiet, illustrated world of root paths, small creatures and things worth remembering. Find your place under the hedge.">
+  <meta name="description" content="Take control of your Rillum. Dash through woodland trails, find secrets and build a home from your discoveries.">
   <title>Under the Hedge · Bramble Fold</title>
   <link rel="icon" href="public/art/acorn.svg" type="image/svg+xml">
   <link rel="stylesheet" href="hedge.css">
+  <link rel="stylesheet" href="hedge-play.css">
+  <link rel="stylesheet" href="hedge-adventure.css">
   <script type="module" src="src/hedge-app.js"></script>
 </head>
 <body>
   <a class="hedge-skip-link" href="#hedge-content">Skip to the world</a>
   <header class="hedge-header">
-    <a class="hedge-brand" href="#home">Under the Hedge</a>
+    <a class="hedge-brand" href="#play">Under the Hedge</a>
     <div class="hedge-header-actions"><span class="hedge-save-state" id="hedge-save-state">Saved in this browser</span><button id="hedge-sound" type="button" aria-pressed="false" aria-label="Turn brook sounds on">Sound off</button><button id="hedge-save-button" type="button" aria-haspopup="dialog">Save</button></div>
   </header>
   <nav class="hedge-nav" aria-label="Your world">
     <span class="hedge-nav-mark" data-symbol="leaf"></span>
+    <a href="#play"><span data-symbol="sun"></span>Play</a>
     <a href="#home"><span data-symbol="home"></span>Home</a>
-    <a href="#paths"><span data-symbol="leaf"></span>Paths</a>
+    <a href="#paths"><span data-symbol="leaf"></span>Walks</a>
     <a href="#journal"><span data-symbol="journal"></span>Journal</a>
     <a href="#neighbours"><span data-symbol="neighbours"></span>Neighbours</a>
     <span class="hedge-nav-foot">Along the Soothebrook</span>

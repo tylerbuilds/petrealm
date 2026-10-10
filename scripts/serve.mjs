@@ -27,7 +27,7 @@ const server = http.createServer({ requestTimeout: 30000, headersTimeout: 15000 
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405, {Allow:'GET, HEAD'}); return res.end(); }
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
     const relative = pathname === '/' ? 'index.html' : pathname.slice(1);
-    const allowed = ['index.html', 'previous-world.html', 'hedge.css', 'styles.css', 'manifest.json', 'sw.js'].includes(relative) || relative.startsWith('src/') || relative.startsWith('public/');
+    const allowed = ['index.html', 'previous-world.html', 'hedge.css', 'hedge-play.css', 'hedge-adventure.css', 'styles.css', 'manifest.json', 'sw.js'].includes(relative) || relative.startsWith('src/') || relative.startsWith('public/');
     const file = resolve(root, relative);
     if (!allowed || !file.startsWith(root + sep) || relative.split('/').some(p => p.startsWith('.')) || !mime[extname(file)]) { res.writeHead(404); return res.end('Not found'); }
     let checkedPath = realRoot;

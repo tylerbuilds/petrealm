@@ -1,14 +1,21 @@
 /** Pure, immutable Under the Hedge rules. Clocks are supplied; absence has no penalty. */
 import { APPEARANCES, HOME_SPOTS, ROUTES, NEIGHBOURS, FIND_DETAILS, openingScene, preferenceText } from './hedge-content.js';
 export { APPEARANCES, HOME_SPOTS, ROUTES, NEIGHBOURS, FIND_DETAILS } from './hedge-content.js';
+import { PLAY_LEVELS, DECORATIONS, DECORATION_SPOTS } from './hedge-play-content.js';
+import { LEVELS as ENGINE_LEVELS } from './hedge-play-engine.js';
+export { PLAY_LEVELS, DECORATIONS, DECORATION_SPOTS } from './hedge-play-content.js';
 export const HEDGE_SAVE_KEY = 'under-the-hedge.save.v1';
 export const HEDGE_BRAND = 'under-the-hedge';
-export const HEDGE_VERSION = 1;
+export const HEDGE_VERSION = 2;
 export const FIRST_OUTING_MS = 30000;
 export const HISTORY_LIMIT = 100;
 export const MAX_TIMESTAMP = 253402300799999;
 const MAX_COUNTER = 1000000000;
 const MAX_SAVE_BYTES = 150000;
+const MAX_PLAY_SEEDS = 9999;
+const MAX_RUN_TIME = 86400000;
+const CLAIM_HISTORY = 40;
+function newPlay() { return {active:null,best:Object.fromEntries(PLAY_LEVELS.map(level=>[level.id,{clears:0,stars:0,seeds:0,secret:false,timeMs:null}])),seeds:0,decorations:[],equipped:{root:null,riverside:null,canopy:null},claimed:[]}; }
 const steps = ['surface', 'custom', 'route', 'notice', 'complete'];
 const interests = ['water', 'sound', 'shelter'];
 const neighbourIds = NEIGHBOURS.map(x => x.id);
@@ -46,12 +53,15 @@ export function createHedgeState(now = Date.now()) {
     opening: { step: 'surface', surface: null, route: null, interest: null },
     home: { visitorSeat: false, returningStones: 0 }, outing: null, completedOutings: 0,
     routeVisits: { broadroot: 0, dryfoot: 0, alderwater: 0 }, preferences: { water: 0, sound: 0, shelter: 0 },
-    neighbours: { pell: 0, dindle: 0, mallow: 0, ossel: 0 }, mystery: { chapter: 0, resolved: false }, finds: [], events: [],
+    neighbours: { pell: 0, dindle: 0, mallow: 0, ossel: 0 }, mystery: { chapter: 0, resolved: false }, finds: [], events: [], play: newPlay(),
   };
 }
 export function validateHedgeState(state) {
-  obj(state, ['brand','version','createdAt','updatedAt','sequence','companion','opening','home','outing','completedOutings','routeVisits','preferences','neighbours','mystery','finds','events']);
-  assert(state.brand === HEDGE_BRAND && state.version === HEDGE_VERSION, 'Choose an Under the Hedge version 1 save. Your old Petrealm save stays separate.');
+  return validateState(state, false);
+}
+function validateState(state, legacy = false) {
+  obj(state, ['brand','version','createdAt','updatedAt','sequence','companion','opening','home','outing','completedOutings','routeVisits','preferences','neighbours','mystery','finds','events',...(legacy?[]:['play'])]);
+  assert(state.brand === HEDGE_BRAND && state.version === (legacy ? 1 : HEDGE_VERSION), 'Choose an Under the Hedge save. Your old Petrealm save stays separate.');
   timestamp(state.createdAt); timestamp(state.updatedAt); assert(state.updatedAt >= state.createdAt); integer(state.sequence); integer(state.completedOutings);
   if (state.companion !== null) { obj(state.companion, ['name','appearance']); nameCheck(state.companion.name); appearanceCheck(state.companion.appearance); }
   obj(state.opening, ['step','surface','route','interest']); assert(steps.includes(state.opening.step));
@@ -84,12 +94,13 @@ export function validateHedgeState(state) {
   let previousTime = state.createdAt, previousId = 0;
   for (const entry of state.events) {
     obj(entry,['id','type','at','place','text','findId','neighbour','disposition']); const id = identifier(entry.id, 'event'); assert(id > previousId && id <= state.sequence); previousId = id;
-    assert(['begin','surface','custom','route','opening','depart','return','place','neighbour','rename'].includes(entry.type)); timestamp(entry.at); assert(entry.at >= previousTime && entry.at <= state.updatedAt); previousTime = entry.at; string(entry.place,80); string(entry.text); assert(entry.findId === null || findIds.has(entry.findId)); assert(entry.neighbour === null || neighbourIds.includes(entry.neighbour)); assert(entry.disposition === null || spots.includes(entry.disposition));
+    assert(['begin','surface','custom','route','opening','depart','return','place','neighbour','rename',...(!legacy?['play','decorate']:[])].includes(entry.type)); timestamp(entry.at); assert(entry.at >= previousTime && entry.at <= state.updatedAt); previousTime = entry.at; string(entry.place,80); string(entry.text); assert(entry.findId === null || findIds.has(entry.findId)); assert(entry.neighbour === null || neighbourIds.includes(entry.neighbour)); assert(entry.disposition === null || spots.includes(entry.disposition));
   }
   for (const item of state.finds) assert(Number(item.id.slice(5)) <= state.sequence);
   if (!state.companion) assert(stage === 0 && state.sequence === 0 && !state.outing && state.events.length === 0 && state.finds.length === 0 && state.completedOutings === 0 && Object.values(state.neighbours).every(v => v === 0) && Object.values(state.preferences).every(v => v === 0));
   if (stage < 4) assert(state.finds.length === 0 && state.completedOutings === 0);
   if (stage === 4) assert(kinds.has('seed-case') && state.neighbours.pell > 0);
+  if (!legacy) validatePlay(state, identifier);
   return state;
 }
 function rejectDuplicateKeys(text) {
@@ -142,7 +153,9 @@ function rejectDuplicateKeys(text) {
 export function parseHedgeSave(raw) {
   assert(typeof raw === 'string' && new TextEncoder().encode(raw).length <= MAX_SAVE_BYTES, 'That save file is too large. Choose an Under the Hedge export.');
   let parsed; try { parsed = JSON.parse(raw); } catch { error('That file is not readable JSON. Choose an Under the Hedge export.'); }
-  rejectDuplicateKeys(raw); validateHedgeState(parsed); return structuredClone(parsed);
+  rejectDuplicateKeys(raw);
+  if (parsed?.version === 1) { validateState(parsed, true); parsed = {...parsed,version:HEDGE_VERSION,play:newPlay()}; }
+  validateHedgeState(parsed); return structuredClone(parsed);
 }
 export function serialiseHedgeSave(state) { validateHedgeState(state); const raw = JSON.stringify(state, null, 2); assert(new TextEncoder().encode(raw).length <= MAX_SAVE_BYTES, 'This save is too large to export safely.'); return raw; }
 export function beginHedge(state, name = 'Fen', appearance = { colour:'river', marking:'speckles' }, now = Date.now()) {
@@ -231,5 +244,105 @@ export function readHedgeView(state, now = Date.now()) {
     latestEvent:state.events.at(-1) || null,
     greeting:state.outing ? (now >= state.outing.readyAt ? `${name} has a story waiting. Welcome it home whenever you like.` : `${name} is following a familiar way home. Its discoveries will wait.`) : state.companion ? `${name} is safe at home. There is room to notice something small.` : 'A small life, just beyond the familiar.',
     mystery:state.mystery.resolved ? 'The flowers respond to still warmth. A warm seep keeps the far-bank root glowing; nobody needs to be asleep there.' : state.mystery.chapter === 2 ? 'Follow the Broadroot and Dryfoot paths, then choose a calm Alderwater outing to investigate the far bank.' : state.mystery.chapter === 1 ? 'A light on the far shore. Return to Alderwater when you feel like following the warm current.' : null,
+  };
+}
+
+function levelUnlocked(play, level) { return !level.requires || play.best[level.requires].clears > 0; }
+function validatePlay(state, identifier) {
+  const play = state.play;
+  obj(play,['active','best','seeds','decorations','equipped','claimed']);
+  obj(play.best,PLAY_LEVELS.map(level=>level.id)); integer(play.seeds,MAX_PLAY_SEEDS);
+  let clears = 0;
+  for (const level of PLAY_LEVELS) {
+    const best = play.best[level.id]; obj(best,['clears','stars','seeds','secret','timeMs']);
+    integer(best.clears); integer(best.stars,3); integer(best.seeds,8); assert(typeof best.secret === 'boolean');
+    if (best.clears === 0) assert(best.stars === 0 && best.seeds === 0 && !best.secret && best.timeMs === null);
+    else {
+      assert(best.stars >= 1 && best.seeds >= 5 && levelUnlocked(play,level)); integer(best.timeMs,MAX_RUN_TIME); assert(best.timeMs > 0);
+      const collectionStar = Number(best.seeds === 8), speedStar = Number(best.timeMs <= ENGINE_LEVELS.find(item=>item.id === level.id).parSeconds * 1000);
+      assert(best.stars >= 1 + Math.max(collectionStar,speedStar) && best.stars <= 1 + collectionStar + speedStar);
+      if (best.clears === 1) assert(best.stars === 1 + collectionStar + speedStar);
+    }
+    clears += best.clears;
+  }
+  assert(Array.isArray(play.claimed) && play.claimed.length <= CLAIM_HISTORY && play.claimed.length <= clears);
+  let previous = 0;
+  for (const id of play.claimed) { const number = identifier(id,'run'); assert(number > previous); previous = number; }
+  if (play.active !== null) {
+    obj(play.active,['id','level','assist','startedAt']); const number = identifier(play.active.id,'run'); assert(number > previous);
+    const level = PLAY_LEVELS.find(level=>level.id === play.active.level);
+    assert(level && levelUnlocked(play,level) && typeof play.active.assist === 'boolean'); timestamp(play.active.startedAt); assert(play.active.startedAt >= state.createdAt && play.active.startedAt <= state.updatedAt);
+  }
+  assert(Array.isArray(play.decorations) && play.decorations.length <= DECORATIONS.length && new Set(play.decorations).size === play.decorations.length);
+  for (const id of play.decorations) { const item = DECORATIONS.find(item=>item.id === id); assert(item && play.best[item.level].clears > 0); }
+  for (const item of DECORATIONS.filter(item=>item.cost === 0)) assert(play.decorations.includes(item.id) === (play.best[item.level].clears > 0));
+  obj(play.equipped,DECORATION_SPOTS);
+  for (const spot of DECORATION_SPOTS) {
+    const id = play.equipped[spot]; assert(id === null || play.decorations.includes(id) && DECORATIONS.find(item=>item.id === id).spot === spot);
+  }
+  if (!state.companion) assert(clears === 0 && !play.active && play.seeds === 0 && play.decorations.length === 0 && play.claimed.length === 0);
+  if (clears === 0) assert(play.seeds === 0);
+}
+
+/** A saved ticket binds results to the latest attempt; replacing one costs nothing. */
+export function beginPlayRun(state, levelId, assist = false, now = Date.now()) {
+  const next = copy(state,now); begun(next);
+  const level = PLAY_LEVELS.find(level=>level.id === levelId);
+  assert(level && levelUnlocked(next.play,level), 'Finish the previous trail to open this one.');
+  assert(typeof assist === 'boolean', 'Choose standard play or gentle mode.');
+  next.play.active = {id:`run-${seq(next)}`,level:level.id,assist,startedAt:next.updatedAt};
+  return finish(next);
+}
+export function abandonPlayRun(state, now = Date.now()) {
+  const next = copy(state,now); next.play.active = null; return finish(next);
+}
+export function completePlayRun(state, expectedId, result, now = Date.now()) {
+  const next = copy(state,now); begun(next);
+  const active = next.play.active;
+  assert(active && active.id === expectedId && !next.play.claimed.includes(expectedId), 'This trail result has already been collected, or a newer attempt has started.');
+  obj(result,['level','stars','seeds','secret','timeMs','bumps','assist']);
+  assert(result.level === active.level && result.assist === active.assist && typeof result.secret === 'boolean', 'This result belongs to another trail attempt.');
+  integer(result.stars,3); integer(result.seeds,8); assert(result.seeds >= 5, 'Reach the arch with at least five glowseeds to finish a trail.');
+  integer(result.timeMs,MAX_RUN_TIME); assert(result.timeMs > 0); integer(result.bumps,100000);
+  const par = ENGINE_LEVELS.find(item=>item.id === active.level).parSeconds * 1000;
+  assert(result.stars === 1 + Number(result.seeds === 8) + Number(result.timeMs <= par), 'The stars do not match this trail result.');
+  const level = PLAY_LEVELS.find(level=>level.id === active.level), best = next.play.best[level.id];
+  assert(levelUnlocked(next.play,level)); assert(best.clears < MAX_COUNTER, 'This trail record is full. Export your story to keep it safe.');
+  const firstClear = best.clears === 0, firstSecret = result.secret && !best.secret;
+  best.clears += 1; best.stars = Math.max(best.stars,result.stars); best.seeds = Math.max(best.seeds,result.seeds); best.secret ||= result.secret; best.timeMs = best.timeMs === null ? result.timeMs : Math.min(best.timeMs,result.timeMs);
+  next.play.seeds = Math.min(MAX_PLAY_SEEDS,next.play.seeds + result.seeds);
+  next.play.claimed.push(active.id); next.play.claimed = next.play.claimed.slice(-CLAIM_HISTORY); next.play.active = null;
+  const reward = DECORATIONS.find(item=>item.cost === 0 && item.level === level.id);
+  if (firstClear) {
+    next.play.decorations.push(reward.id);
+    if (next.play.equipped[reward.spot] === null) next.play.equipped[reward.spot] = reward.id;
+    meet(next,level.neighbour);
+  }
+  learn(next,level.interest);
+  const secret = result.secret ? ` ${firstSecret ? 'Discovered' : 'Found again'}: ${level.secretName}.` : '';
+  const rewardText = firstClear ? ` A ${reward.name.toLowerCase()} is ready at home.` : '';
+  event(next,'play',level.place,`${next.companion.name} finished ${level.name}, gathering ${result.seeds} fallen ${result.seeds === 1 ? 'seed' : 'seeds'} and earning ${result.stars} ${result.stars === 1 ? 'star' : 'stars'}.${secret}${rewardText}${result.assist ? ' Played in gentle mode.' : ''}`,{neighbour:level.neighbour});
+  return finish(next);
+}
+export function buildHedgeDecoration(state, id, spot, now = Date.now()) {
+  const next = copy(state,now); begun(next);
+  const item = DECORATIONS.find(item=>item.id === id);
+  assert(item && item.spot === spot, 'Choose a decoration and its place at home.');
+  assert(next.play.best[item.level].clears > 0, 'Play this decoration’s trail to discover it first.');
+  const owned = next.play.decorations.includes(id);
+  if (!owned) {
+    assert(next.play.seeds >= item.cost, `Gather ${item.cost} fallen seeds to make this decoration.`);
+    next.play.seeds -= item.cost; next.play.decorations.push(id);
+  }
+  if (next.play.equipped[spot] === id) return finish(next);
+  next.play.equipped[spot] = id;
+  event(next,'decorate','Bramble Fold',`${next.companion.name} ${owned ? 'places' : 'makes'} a ${item.name.toLowerCase()} ${spot === 'root' ? 'beside the root entrance' : spot === 'riverside' ? 'by the shallow water' : 'under the canopy'}.`);
+  return finish(next);
+}
+export function readPlayProgress(state) {
+  validateHedgeState(state);
+  return {seeds:state.play.seeds,stars:Object.values(state.play.best).reduce((total,best)=>total+best.stars,0),
+    levels:PLAY_LEVELS.map(level=>({...level,...state.play.best[level.id],unlocked:Boolean(state.companion) && levelUnlocked(state.play,level)})),
+    decorations:DECORATIONS.map(item=>({...item,owned:state.play.decorations.includes(item.id),available:state.play.best[item.level].clears > 0,equipped:state.play.equipped[item.spot] === item.id})),
   };
 }

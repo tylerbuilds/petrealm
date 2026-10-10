@@ -1,5 +1,14 @@
 # Changes
 
+## 0.10: Play the hedge
+
+- Direct-control Broadroot Rush, Brook Skip and Lantern Trail, with keyboard, touch movement and dashing.
+- Moving obstacles, eight glowseeds, a secret and a finish in each course; optional gentler hazards and three-star personal bests.
+- Immediate first play without dialogue or waiting gates. Completed trails unlock the next course and natural home decorations.
+- Build with earned glowseeds, see rewards at home and swap owned decorations freely.
+- Pause and preserve a run while visiting other pages; stop offscreen simulation and rendering.
+- Strict save version 2 migration retains the earlier world and adds replay-safe run claims and progression.
+
 ## 0.8: A friend with stories of their own
 
 - A personal field journal, free asynchronous expeditions to three places, authored return stories and meadow keepsakes that never expire.

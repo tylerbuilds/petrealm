@@ -1,14 +1,12 @@
 # Under the Hedge
 
-An illustrated browser world about one particular small creature, the paths it learns and the things it brings home. The new direction for the Petrealm project, using **Under the Hedge** as a working title.
+A woodland adventure where you control your own Rillum: dash through roots, collect glowseeds, dodge moving obstacles and build a hideout with what you bring home. The new direction for the Petrealm project, using **Under the Hedge** as a working title.
 
-![Bramble Fold, a home beside the Soothebrook](docs/screenshots/hedge-home.png)
+![Playing Broadroot Rush](docs/screenshots/hedge-play.png)
 
-Meet Fen, or name your own Rillum. Make room for Pell at a wet doorway. Follow root paths through Broadroot Wood, find your way over Dryfoot Crossing and discover why the far shore of Alderwater glows.
+Three playable trails introduce root mazes, brook crossings and pulsing shore ripples. Finish a trail to open the next. Find all eight seeds, discover its secret and beat your best time. Completed runs unlock decorations that visibly change your home.
 
-The first playable contains a complete opening, three routes, four neighbours, changing return stories and a mystery with an answer. Repeated experiences reveal specific preferences for water, hollow sounds or sheltered places. Objects and journal entries remember what actually happened.
-
-No care meters, currency, streaks or penalties for time away. Your companion is safe, and every unfinished moment waits.
+There are no lives, countdown failures or missed-day penalties. A gentler setting gives more room to learn with the same rewards. Stories and quiet walks remain available alongside the action.
 
 ## Play locally
 
@@ -20,13 +18,15 @@ npm start
 
 Open **http://localhost:4203**. No installation is needed to run the game. Use a current browser with JavaScript enabled; serve the app rather than opening its HTML file directly.
 
-1. Choose a name, colour and marking.
-2. Make a visiting place through the four short opening choices.
-3. Open **Paths** and choose an outing and weather. The first outing takes 30 seconds; later outings take 2–5 minutes. A finished journey never expires.
-4. Come home to hear what happened. Place finds, visit neighbours and follow the light across Alderwater.
-5. Open **Journal** to revisit your actual experiences. **Sound** enables optional brook ambience; it starts off.
+1. Choose a name, colour and marking, then press **Let’s play**. You go straight into Broadroot Rush.
+2. Move with **WASD / arrows**, use **Space** to dash, or use the touch controls. Tap a destination to move there.
+3. Collect at least five glowseeds and reach the neighbour at the glowing arch. Collect all eight and beat the trail time for three stars.
+4. Open **Home → Build your hideout** to use your discoveries. Replay trails to improve your records or find their secrets.
+5. Open **Journal**, visit neighbours or take a quiet walk when you feel like a slower visit.
 
-[Player and design guide](docs/under-the-hedge.md) · [Phone view](docs/screenshots/hedge-mobile.png)
+Pause whenever you like. Navigating to another in-app page preserves your current run; reloading restarts an unfinished run while keeping completed rewards. Sound starts off and can be enabled in the header.
+
+[What changed and how to play](docs/playable-adventures.md) · [World and story guide](docs/under-the-hedge.md)
 
 ## Keep your world
 
@@ -48,7 +48,7 @@ npm run test:browser
 
 The static build goes to `dist/`. `npm run preview` serves it at port 4203. Linux may need `npx playwright install --with-deps chromium`. Set `BROWSER_EXECUTABLE=/path/to/chrome` to use an installed Chromium browser.
 
-Browser acceptance covers both worlds, full story completion, mobile layouts, optional audio, exports, save recovery and concurrent tabs. [Verification receipts](docs/verification.md) distinguish actual checks from planned work.
+Browser acceptance covers real movement and trail completion, touch controls, pausing, rewards, both earlier worlds, exports, save recovery and concurrent tabs. [Verification receipts](docs/verification.md) distinguish actual checks from planned work.
 
 ## Art and scope
 
@@ -56,4 +56,4 @@ The Rillum, Tuffet and Limmer families are original SVG artwork. Scenery was gen
 
 [Art production](docs/research/hedge-art-production.md) · [Audio production](docs/research/hedge-audio-production.md)
 
-This is a local first playable: one playable family, one catchment and finite authored stories. Seasons, additional playable families and larger regional stories remain future work. The working title is not a claim of commercial name clearance. This change does not publish a new public release.
+This is a local playable prototype: one playable family, three fixed adventure courses, one catchment and finite authored stories. Seasons, additional playable families and larger regional stories remain future work. The working title is not a claim of commercial name clearance. This change does not publish a new public release.

@@ -1,5 +1,17 @@
 # Checks by release
 
+## 0.10 playable adventures — Fedora verification, 10 October 2026
+
+`npm test` passed **203 tests**. A fresh static build and the complete `npm run test:browser` suite passed, including the previous Petrealm game, its ten application-boundary scenarios, the earlier Hedge story and the new direct-control adventures.
+
+Real browser keyboard input completed all three trails with all eight glowseeds and each secret. Rewards, trail unlocks, personal bests and purchased home decorations survived reload. No completion result or player position was injected. Controlled browser time accelerated the runs. Separate pointer input reached all 30 seed, secret and finish destinations across the three courses; this exposed and fixed tap routes accidentally crossing the open finish before reaching the selected seed.
+
+Movement, dashing, touch contact/release, explicit pause, the focus-loss handler, a simulated hidden document and navigation away from the game were checked. Paused and detached games stopped requesting animation frames; returning to Play preserved the run. Phone checks at 390px and 320px verified no horizontal overflow and reachable movement and completion controls. There were zero browser errors and zero external requests.
+
+[The machine-readable receipt](research/hedge-play-verification.json) records course results, saved progress, mobile measurements and source hashes. [Desktop](screenshots/hedge-play.png) and [phone](screenshots/hedge-play-mobile.png) are actual browser captures. Full evidence remains in `test-results/browser-smoke/hedge-play/`.
+
+These are synthetic browser journeys on Fedora, Node.js 25.6.1 and Chromium 156.0.8078.4. They verify functioning play, not enjoyment, age suitability or retention. No child playtest, physical phone test, new macOS CI run or public deployment is claimed. The three courses are fixed layouts; [the play guide](playable-adventures.md) describes their scope and save behaviour.
+
 ## 0.9 Under the Hedge — Fedora verification, 10 October 2026
 
 `npm test` passed **184 tests** with no failures. The static build and complete `npm run test:browser` suite passed, including the previous Petrealm world and its ten application-boundary scenarios. After the final Under the Hedge visual and customisation refinements, its expanded acceptance suite was run again against a fresh `dist/` build and passed.

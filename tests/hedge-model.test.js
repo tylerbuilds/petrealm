@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createHedgeState, beginHedge, investigateSurface, chooseOpening, startOuting, collectOuting, placeFind, speakToNeighbour, renameCompanion, readHedgeView, validateHedgeState, parseHedgeSave, serialiseHedgeSave, FIRST_OUTING_MS, MAX_TIMESTAMP, HISTORY_LIMIT, HEDGE_SAVE_KEY } from '../src/hedge-model.js';
+import { createHedgeState, beginHedge, investigateSurface, chooseOpening, startOuting, collectOuting, placeFind, speakToNeighbour, renameCompanion, readHedgeView, validateHedgeState, parseHedgeSave, serialiseHedgeSave, FIRST_OUTING_MS, MAX_TIMESTAMP, HISTORY_LIMIT, HEDGE_SAVE_KEY, HEDGE_VERSION } from '../src/hedge-model.js';
 const NOW = 1791662400000;
 const appearance = {colour:'river',marking:'speckles'};
 function started() { return beginHedge(createHedgeState(NOW),'Fen',appearance,NOW); }
@@ -108,7 +108,7 @@ test('history is bounded while objects keep their original provenance',()=>{
 test('invalid imports reject prototype fields, future versions, malformed counters, links and impossible stages',()=>{
   const base=opened();
   for(const mutate of [
-    s=>{s.version=2;},s=>{s.extra=true;},s=>{s.preferences.water=-1;},s=>{s.preferences.sound=Infinity;},
+    s=>{s.version=HEDGE_VERSION+1;},s=>{s.extra=true;},s=>{s.preferences.water=-1;},s=>{s.preferences.sound=Infinity;},
     s=>{s.opening.step='surface';},s=>{s.home.returningStones=99;},s=>{s.updatedAt=MAX_TIMESTAMP+1;},
     s=>{s.companion.appearance.colour='gold';},s=>{s.finds[0].at=NOW+1;},s=>{s.finds[0].disposition='sold';},
     s=>{s.events[0].findId='not-found';},s=>{s.events[0].neighbour='stranger';},s=>{s.events[1].id=s.events[0].id;},
@@ -135,7 +135,7 @@ test('time overflow, rollback, stale identifiers and arbitrary action inputs fai
 
 test('imports reject duplicate keys, excessive depth, invisible controls and reused sequence IDs',()=>{
   const base=opened();
-  assert.throws(()=>parseHedgeSave(serialiseHedgeSave(base).replace('"version": 1','"version": 1, "version": 1')),/twice/);
+  assert.throws(()=>parseHedgeSave(serialiseHedgeSave(base).replace(`"version": ${HEDGE_VERSION}`,`"version": ${HEDGE_VERSION}, "version": ${HEDGE_VERSION}`)),/twice/);
   assert.throws(()=>parseHedgeSave('['.repeat(14)+'0'+']'.repeat(14)),/layers/);
   assert.throws(()=>beginHedge(createHedgeState(NOW),'Fen\u202e',appearance,NOW));
   assert.throws(()=>beginHedge(createHedgeState(NOW),'Fe\u000an',appearance,NOW));

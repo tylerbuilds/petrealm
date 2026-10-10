@@ -10,10 +10,12 @@ const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const pet = () => adopt(createState(START), 'Fern', 'mossling', START);
 
-test('fresh saves offer three original species, starter coins and independent inventory', () => {
+test('fresh saves retain starter resources and offer the original and expanded companion roster', () => {
   const first = createState(START);
   const second = createState(START);
-  assert.deepEqual(Object.keys(SPECIES), ['mossling', 'emberkit', 'moonfin']);
+  assert.deepEqual(Object.keys(SPECIES).slice(0, 3), ['mossling', 'emberkit', 'moonfin']);
+  assert.equal(Object.values(SPECIES).filter((species) => species.kind === 'animal').length, 3);
+  assert.equal(Object.values(SPECIES).filter((species) => species.kind === 'monster').length, 3);
   assert.equal(first.wallet, 120);
   assert.equal(readActivePet(first), null);
   assert.deepEqual(first.inventory, { berry: 3, acorn: 2, ribbon: 1, leafcap: 0, moonscarf: 0, potion: 0, 'lodge-deed': 0 });

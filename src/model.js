@@ -1,9 +1,26 @@
 /** Original, local-only pet game rules. No network, browser or clock dependencies. */
 export const SPECIES = Object.freeze({
-  mossling: Object.freeze({ id: 'mossling', name: 'Mossling', description: 'A gentle woodland friend with a leafy crest.' }),
-  emberkit: Object.freeze({ id: 'emberkit', name: 'Emberkit', description: 'A curious little companion with a warm glow.' }),
-  moonfin: Object.freeze({ id: 'moonfin', name: 'Moonfin', description: 'A dreamy tide dweller who follows the stars.' }),
+  mossling: Object.freeze({ id: 'mossling', name: 'Mossling', kind: 'woodland spirit', description: 'A gentle woodland friend with a leafy crest.', trait: 'Patient keeper of tiny gardens', favourite: null, personality: 'steady' }),
+  emberkit: Object.freeze({ id: 'emberkit', name: 'Emberkit', kind: 'hearth spirit', description: 'A curious little companion with a warm glow.', trait: 'Finds wonder in the smallest sparks', favourite: null, personality: 'steady' }),
+  moonfin: Object.freeze({ id: 'moonfin', name: 'Moonfin', kind: 'tide spirit', description: 'A dreamy tide dweller who follows the stars.', trait: 'Dreams in ripples and constellations', favourite: null, personality: 'steady' }),
+  briarhare: Object.freeze({ id: 'briarhare', name: 'Briarhare', kind: 'animal', description: 'A long-eared pathfinder with a seed-soft tail.', trait: 'A quick-footed collector of fallen seeds', favourite: 'acorn', personality: 'spirited' }),
+  pebblepup: Object.freeze({ id: 'pebblepup', name: 'Pebblepup', kind: 'animal', description: 'A floppy-eared friend with paws made for wandering.', trait: 'Keeps your place beside the warmest stone', favourite: 'berry', personality: 'gentle' }),
+  cloudmoth: Object.freeze({ id: 'cloudmoth', name: 'Cloudmoth', kind: 'animal', description: 'A velvet-winged wanderer of the evening flowers.', trait: 'Reads the wind with feathery antennae', favourite: 'acorn', personality: 'curious' }),
+  kilnback: Object.freeze({ id: 'kilnback', name: 'Kilnback', kind: 'monster', description: 'A little clay giant carrying the warmth of a hearth.', trait: 'A sturdy soul with a copper-bright heart', favourite: 'acorn', personality: 'steady' }),
+  gloomdrop: Object.freeze({ id: 'gloomdrop', name: 'Gloomdrop', kind: 'monster', description: 'An inky puddle of kindness with a sky full of flecks.', trait: 'Finds shy little lights in the deepest shade', favourite: 'berry', personality: 'gentle' }),
+  thistlehorn: Object.freeze({ id: 'thistlehorn', name: 'Thistlehorn', kind: 'monster', description: 'A shaggy, horned rambler with a wildflower mane.', trait: 'Small in stature, enormous in courage', favourite: 'berry', personality: 'spirited' }),
 });
+
+export const PERSONALITIES = Object.freeze({
+  steady: Object.freeze({ id: 'steady', name: 'Steady', description: 'An easy-going friend who enjoys your usual care.' }),
+  gentle: Object.freeze({ id: 'gentle', name: 'Gentle', description: 'Cosy naps bring 3 extra happiness.' }),
+  curious: Object.freeze({ id: 'curious', name: 'Curious', description: 'Their favourite snack brings 2 extra happiness.' }),
+  spirited: Object.freeze({ id: 'spirited', name: 'Spirited', description: 'Ribbon play brings 3 extra happiness.' }),
+});
+export const TRAINING_COST = 20;
+export const GROWTH_COST = 60;
+const JOURNEY_KEYS = ['feeds', 'plays', 'rests', 'trainings', 'growth'];
+const freshJourney = () => ({ feeds: 0, plays: 0, rests: 0, trainings: 0, growth: 0 });
 
 export const ITEMS = Object.freeze({
   berry: Object.freeze({ id: 'berry', name: 'Sunberry', price: 12, description: 'A sweet snack: +22 fullness, +6 happiness.' }),
@@ -236,7 +253,7 @@ function validateV2State(state) {
   if (!Array.isArray(state.pets) || state.pets.length > petCapacity(state)) fail(`This membership supports at most ${petCapacity(state)} companions.`);
   const equipped = { leafcap: 0, moonscarf: 0 };
   for (const [index, pet] of state.pets.entries()) {
-    record(pet, ['id', 'name', 'species', 'adoptedAt', 'stats', 'wearing', 'xp', 'level'], 'Pet');
+    record(pet, ['id', 'name', 'species', 'adoptedAt', 'stats', 'wearing', 'xp', 'level'], 'Pet', ['personality', 'journey']);
     if (pet.id !== `pet-${index + 1}`) fail('Pet IDs must be unique and ordered by adoption.');
     checkName(pet.name);
     if (typeof pet.species !== 'string' || !Object.hasOwn(SPECIES, pet.species)) fail('Unknown pet species.');
@@ -250,12 +267,21 @@ function validateV2State(state) {
     }
     integer(pet.xp, 0, MAX_XP, 'Experience');
     if (pet.level !== levelForXp(pet.xp)) fail('Pet level does not match experience.');
+    if (Object.hasOwn(pet, 'personality') || Object.hasOwn(pet, 'journey')) {
+      if (typeof pet.personality !== 'string' || !Object.hasOwn(PERSONALITIES, pet.personality)) fail('Choose an available companion personality.');
+      record(pet.journey, JOURNEY_KEYS, 'Companion journey');
+      for (const key of JOURNEY_KEYS) integer(pet.journey[key], 0, key === 'growth' ? 1 : MAX_COUNTER, `Companion ${key}`);
+      if (pet.journey.growth && (pet.level < 3 || ['feeds', 'plays', 'rests'].some((key) => pet.journey[key] < 1))) fail('Companion growth needs level 3 and a meal, play and rest.');
+    }
     record(pet.wearing, ['head', 'neck'], 'Pet clothing');
     for (const slot of ['head', 'neck']) {
       const id = pet.wearing[slot];
       if (id !== null && (typeof id !== 'string' || !Object.hasOwn(ITEMS, id) || ITEMS[id].slot !== slot)) fail(`Choose an accessory for the ${slot} slot.`);
       if (id !== null) equipped[id] += 1;
     }
+  }
+  for (const key of ['feeds', 'plays', 'rests']) {
+    if (state.pets.reduce((total, pet) => total + (pet.journey?.[key] ?? 0), 0) > state.counts[key]) fail(`Companion ${key} exceed the recorded activity.`);
   }
   for (const [id, quantity] of Object.entries(equipped)) {
     if (quantity > state.inventory[id]) fail('Equipped accessories exceed the copies in your inventory.');
@@ -432,6 +458,9 @@ export function migrateState(state) {
     const next = clone(state);
     if (!Object.hasOwn(next.bank, 'tier')) next.bank = freshBank(next.bank.balance);
     if (!Object.hasOwn(next, 'questLog')) next.questLog = freshQuestLog(next.quests.daily);
+    for (const pet of next.pets) {
+      if (!Object.hasOwn(pet, 'personality')) { pet.personality = 'steady'; pet.journey = freshJourney(); }
+    }
     validateState(next);
     return next;
   }
@@ -443,7 +472,7 @@ export function migrateState(state) {
   next.daily = clone(state.daily);
   next.game = { ...clone(state.game), rounds: { firefly: state.counts.games, memory: 0 } };
   if (state.pet) {
-    next.pets = [{ ...clone(state.pet), id: 'pet-1', wearing: { head: null, neck: null }, xp: 0, level: 1 }];
+    next.pets = [{ ...clone(state.pet), id: 'pet-1', wearing: { head: null, neck: null }, xp: 0, level: 1, personality: 'steady', journey: freshJourney() }];
     next.activePetId = 'pet-1';
   }
   validateState(next);
@@ -468,16 +497,18 @@ export function advanceTime(state, now = Date.now()) {
   return next;
 }
 
-export function adopt(state, name, species, now = Date.now()) {
+export function adopt(state, name, species, now = Date.now(), personality = undefined) {
   const next = advanceTime(state, now);
   requireNoBattle(next);
   if (next.pets.length >= petCapacity(next)) fail(`Your lodge is full at ${petCapacity(next)} companions. Try explorer membership or a lodge expansion.`);
   if (typeof name !== 'string') fail('Give your companion a name.');
   const cleanName = name.trim().normalize('NFC');
   checkName(cleanName);
-  if (typeof species !== 'string' || !Object.hasOwn(SPECIES, species)) fail('Choose one of the three available species.');
+  if (typeof species !== 'string' || !Object.hasOwn(SPECIES, species)) fail('Choose an available companion species.');
+  const nature = personality === undefined ? SPECIES[species].personality : personality;
+  if (typeof nature !== 'string' || !Object.hasOwn(PERSONALITIES, nature)) fail('Choose an available companion personality.');
   const id = `pet-${next.pets.length + 1}`;
-  next.pets.push({ id, name: cleanName, species, adoptedAt: next.lastUpdated, stats: { satiety: 85, happiness: 80, energy: 85 }, wearing: { head: null, neck: null }, xp: 0, level: 1 });
+  next.pets.push({ id, name: cleanName, species, adoptedAt: next.lastUpdated, stats: { satiety: 85, happiness: 80, energy: 85 }, wearing: { head: null, neck: null }, xp: 0, level: 1, personality: nature, journey: freshJourney() });
   next.activePetId = id;
   next.counts.adoptions += 1;
   return finish(next);
@@ -533,6 +564,8 @@ export function care(state, action, itemId, now = Date.now()) {
     if (next.inventory[itemId] < 1) fail(`You have no ${ITEMS[itemId].name.toLowerCase()} left. Visit the shop.`);
     next.inventory[itemId] -= 1;
     changeStats(pet, itemId === 'berry' ? { satiety: 22, happiness: 6 } : { satiety: 12, happiness: 3, energy: 12 });
+    if (SPECIES[pet.species].favourite === itemId) changeStats(pet, { happiness: 3 + (pet.personality === 'curious' ? 2 : 0) });
+    pet.journey.feeds += 1;
     next.counts.feeds += 1;
     next.quests.daily.feeds += 1;
     gainXp(pet, 4);
@@ -541,16 +574,59 @@ export function care(state, action, itemId, now = Date.now()) {
     if (next.inventory.ribbon < 1) fail('You need a rainbow ribbon. Visit the shop.');
     if (pet.stats.energy < 12) fail('Your companion needs a rest before playing.');
     changeStats(pet, { happiness: 20, energy: -12, satiety: -4 });
+    if (pet.personality === 'spirited') changeStats(pet, { happiness: 3 });
+    pet.journey.plays += 1;
     next.counts.plays += 1;
     next.questLog.progress.plays += 1;
     gainXp(pet, 6);
   } else if (action === 'rest') {
     if (itemId !== undefined && itemId !== null) fail('Rest does not use an item.');
     changeStats(pet, { energy: 30, satiety: -5, happiness: 3 });
+    if (pet.personality === 'gentle') changeStats(pet, { happiness: 3 });
+    pet.journey.rests += 1;
     next.counts.rests += 1;
     next.questLog.progress.rests += 1;
     gainXp(pet, 2);
   } else fail('Unknown care action. Choose feed, play or rest.');
+  return finish(next);
+}
+
+/** Paid practice uses the same earned wallet and bounded experience as care. */
+export function trainPet(state, now = Date.now()) {
+  const next = advanceTime(state, now);
+  requireNoBattle(next);
+  const pet = requirePet(next);
+  if (pet.xp >= MAX_XP) fail('Your companion has reached level 20. Enjoy the arena and your garden together.');
+  if (next.wallet < TRAINING_COST) fail(`Practice costs ${TRAINING_COST} pebbles. Earn some through games, quests or daily gifts.`);
+  if (pet.stats.energy < 12) fail('Your companion needs 12 energy for practice. Give them a nap first.');
+  next.wallet -= TRAINING_COST;
+  changeStats(pet, { energy: -12, satiety: -4 });
+  pet.journey.trainings += 1;
+  gainXp(pet, pet.journey.growth ? 24 : 18);
+  return finish(next);
+}
+
+export function growthProgress(state) {
+  const pet = readActivePet(state);
+  const journey = pet?.journey ?? freshJourney();
+  const grown = journey.growth === 1;
+  const cared = ['feeds', 'plays', 'rests'].every((key) => journey[key] > 0);
+  return { grown, cared, ready: Boolean(pet && !grown && pet.level >= 3 && cared && state.wallet >= GROWTH_COST && state.battle?.status !== 'active'), cost: GROWTH_COST };
+}
+
+/** A permanent, explicit milestone. No repeat currency or experience grant. */
+export function growPet(state, now = Date.now()) {
+  const next = advanceTime(state, now);
+  requireNoBattle(next);
+  const pet = requirePet(next);
+  if (pet.journey.growth) fail('Your companion has already marked their first bloom.');
+  if (pet.level < 3) fail('Reach level 3 before marking your companion’s first bloom.');
+  if (['feeds', 'plays', 'rests'].some((key) => pet.journey[key] < 1)) fail('Share a meal, ribbon play and a nap with this companion before their first bloom.');
+  if (next.wallet < GROWTH_COST) fail(`A first bloom costs ${GROWTH_COST} pebbles. Earn some through games, quests or daily gifts.`);
+  next.wallet -= GROWTH_COST;
+  pet.journey.growth = 1;
+  gainXp(pet, 40);
+  changeStats(pet, { happiness: 10, energy: 10 });
   return finish(next);
 }
 

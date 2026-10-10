@@ -10,6 +10,10 @@ Standard mode has seven spaces. Explorer Lodge mode adds seven more. Both are fr
 
 Names accept 1–24 Unicode characters, are trimmed and NFC-normalised, and cannot contain control characters. Newly adopted friends start at 85 fullness, 80 happiness, 85 energy and zero XP.
 
+The roster contains three original spirits, three animals and three monsters. [The companion guide](companions.md) lists their names, traits, food preferences and personalities. Each new species has a favourite snack giving +3 happiness. Curious adds a further +2 on that favourite; Gentle adds +3 to rest happiness; Spirited adds +3 to play happiness. Steady is neutral. The original three species have no food bonus, preserving their existing behaviour. Stats remain bounded at 100.
+
+Each companion independently tracks fresh feeds, plays, rests, practices and one first-bloom marker. Care counters increment only after a successful action; sums cannot exceed the world's recorded feed/play/rest totals. An unsuccessful action changes neither inventory, money, stats, XP nor milestones.
+
 ## Care, supplies and bank
 
 Every stat stays between 0 and 100. Prices are fixed in the model.
@@ -47,6 +51,10 @@ Click Collect interest to credit `ceil(bank balance × annual basis points / 3,6
 Each elapsed hour decreases fullness by 3, happiness by 2 and energy by 1. Fractional hours count. A time update applies at most 72 hours, floors every stat at zero, then advances the saved timestamp. Reload does not reapply the same elapsed period. Clock rollback never adds stats or moves saved time backwards.
 
 Companions cannot die or disappear from low stats. Rest remains available outside a match. Every 100 XP raises a level. XP caps at 1,999 and level 20. Care, games, quests and victories award experience; switching companions keeps their progress independent. The player controls the device clock and local files; this is not a server-owned anti-cheat economy.
+
+Training grove practice costs 20 wallet pebbles, 12 energy and four fullness. It grants 18 XP, or 24 after a first bloom, subject to the XP cap. Insufficient wallet money/energy, an active match, a saturated practice counter or level 20 rejects the whole action. Savings are not silently withdrawn.
+
+A first bloom is explicit and permanent. The active friend must reach level 3, have at least one newly tracked feed, play and rest, and have 60 wallet pebbles available. It costs 60 pebbles and grants 40 XP, ten happiness and ten energy, subject to their caps. The first-bloom marker changes that species' original portrait and future practice benefit. Repeat attempts, reloads and clock rollback cannot grant a second bloom. Growth does not change an arena snapshot; both practice and growth are refused during an active match.
 
 ## Daily gifts, Lodge and quests
 
@@ -104,6 +112,8 @@ The existing keys `petrealm.save.v1` and `petrealm.backup.v1` remain in use so i
 Version 1 imports are first validated against their original complete schema, then migrated. The existing companion becomes `pet-1`; stats, wallet, original supplies, reward history, counts and achievements are retained. New systems start empty, without invented XP or battle history. An automatic first load retains the original v1 text separately at `petrealm.migration-original.v1` before persisting v2; the save manager can download it. This original survives later ordinary backup swaps. A failed original-retention write blocks every later save overwrite until retention succeeds, keeping the original durable world and the in-memory migration available for export.
 
 Older version 2 saves may omit the complete new bank metadata and quest-log record. Validation accepts that older schema, then initialises Seedling saver and empty interest/streak history. An already paid same-day daily feast stays paid and its feed progress stays intact; the other new task counters start at zero. Money, companions, original progress and lasting claims are unchanged. Partial new metadata, unknown tiers, unearned/duplicate daily claims, future reward dates, inconsistent streaks and invalid counters are rejected.
+
+The schema remains version 2. Per-pet `personality` and `journey` are optional together for earlier files; `journey` contains `feeds`, `plays`, `rests`, `trainings` (bounded whole counters) and `growth` (zero or one). If absent, migration adds Steady and all-zero milestones without assigning old shared care history. Original pet fields, monetary and reward ledgers, battle snapshots and timestamps remain exact. Partial, unknown, non-integer or inconsistent companion metadata is refused. Practice and bloom capture the visible companion identity and world generation before awaiting the existing save mutex; a different fresh active friend or replaced world causes a fresh render and an explanatory no-charge refusal. Same-friend concurrent purchases and practices still compose from the latest saved state.
 
 Files are limited to 32 KiB. Validation rejects unknown/missing fields, unsupported versions, duplicate keys, excessive nesting, invalid finite numbers/dates, mismatched pet IDs/levels, excess worn copies, bank bounds, inconsistent quest claims, impossible battle health/status/progression and duplicate reward markers. A failed import leaves the current world unchanged. Explicit replacement first retains the freshest world (or dirty in-memory world when appropriate) as a backup; failed replacement writes roll back backup/generation changes. Recovery keeps the original invalid text available for download, valid import or explicit Start fresh. The save manager can download invalid prior backup text without trying to apply it.
 

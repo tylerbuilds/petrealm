@@ -1,4 +1,4 @@
-import { SPECIES, ITEMS, createState, adopt, advanceTime, care, purchase, claimDaily, claimGameReward, parseSave, serialiseSave, readActivePet, selectPet, deposit, withdraw, equipAccessory, claimQuest, startBattle, battleAction, petCapacity, setMembership, claimLodgeParcel, useExpansion, claimBankInterest, upgradeBankTier, claimQuestDay } from './model.js';
+import { SPECIES, PERSONALITIES, ITEMS, createState, adopt, advanceTime, care, purchase, claimDaily, claimGameReward, parseSave, serialiseSave, readActivePet, selectPet, deposit, withdraw, equipAccessory, claimQuest, startBattle, battleAction, petCapacity, setMembership, claimLodgeParcel, useExpansion, claimBankInterest, upgradeBankTier, claimQuestDay, trainPet, growPet } from './model.js';
 import { creature } from './art.js';
 import { withSaveLock } from './persistence.js';
 import { renderGarden, renderMarket, renderRealm, renderArena, renderGlen, itemSymbols, battleActive } from './views.js';
@@ -16,6 +16,7 @@ const day = (now = Date.now()) => new Date(now).toISOString().slice(0, 10);
 let state = createState(Date.now());
 let currentArea = 'garden';
 let selectedSpecies = 'mossling';
+let selectedPersonality = 'steady';
 let adoptionStartedCount = 0;
 let marketFilter = 'all';
 let gameMode = 'firefly';
@@ -24,6 +25,7 @@ let memoryFlipTimer;
 let recoveryRaw = null;
 let persistenceAvailable = true;
 let durableBaseRaw = null;
+let stateGeneration = null;
 let dirtyMemory = false;
 let pendingMigrationRaw = null;
 let toastTimer;
@@ -60,7 +62,7 @@ function persist() {
     const raw = serialiseSave(state);
     retainMigrationOriginal();
     localStorage.setItem(SAVE_KEY, raw);
-    durableBaseRaw = raw; dirtyMemory = false;
+    durableBaseRaw = raw; dirtyMemory = false; stateGeneration = readLocal(WORLD_KEY);
     persistenceAvailable = true;
     $('#save-location').textContent = 'Saved on this device';
     $('#save-location').classList.remove('unsaved');
@@ -98,6 +100,7 @@ function readCurrentWorld() {
   if (raw !== null) {
     try {
       state = parseSave(raw);
+      stateGeneration = readLocal(WORLD_KEY);
       if (JSON.parse(raw).version === 1) pendingMigrationRaw = raw;
     }
     catch (error) { enterRecovery(raw, error.message); throw error; }
@@ -119,6 +122,17 @@ async function update(action, message) {
     });
     if (message) toast(message);
   } catch (error) { toast(error.message); }
+}
+function updateObservedPet(action, message) {
+  const observed = petIdentity(readActivePet(state));
+  const generation = stateGeneration;
+  return update((fresh) => {
+    if (observed !== petIdentity(readActivePet(fresh)) || generation !== readLocal(WORLD_KEY)) {
+      renderCurrentWorld();
+      throw new Error('Your world or active companion changed in another tab. Choose your friend again before practising or marking a bloom.');
+    }
+    return action(fresh);
+  }, message);
 }
 function restoreRaw(key, raw) {
   if (raw === null) localStorage.removeItem(key); else localStorage.setItem(key, raw);
@@ -169,7 +183,7 @@ function mood() {
 function renderProfile() {
   const pet = readActivePet(state);
   $('#wallet').textContent = state.wallet;
-  $('#pet-profile').innerHTML = pet ? `<div class="profile-line"><div class="pet-avatar">${creature(pet.species, 'An original Petrealm companion', pet.wearing)}</div><div><h2 id="companion-name">${escape(pet.name)}</h2><p>${escape(SPECIES[pet.species].name)} · Your forever friend</p><div class="level-line"><span class="level-badge" id="pet-level">Level ${pet.level}</span><span class="experience-track"><span style="width:${pet.level >= 20 ? 100 : pet.xp % 100}%"></span></span><span id="pet-xp">${pet.xp} XP</span></div></div></div>` : `<div class="profile-line"><div class="pet-avatar">${creature('mossling')}</div><div><h2>A friend awaits</h2><p>A little companion to call your own</p></div></div>`;
+  $('#pet-profile').innerHTML = pet ? `<div class="profile-line"><div class="pet-avatar">${creature(pet.species, `${SPECIES[pet.species].name}, ${pet.journey.growth ? 'first bloom' : 'young companion'}`, pet.wearing, Boolean(pet.journey.growth))}</div><div><h2 id="companion-name">${escape(pet.name)}</h2><p>${escape(SPECIES[pet.species].name)} · ${PERSONALITIES[pet.personality].name}${pet.journey.growth ? ' · First bloom' : ''}</p><div class="level-line"><span class="level-badge" id="pet-level">Level ${pet.level}</span><span class="experience-track"><span style="width:${pet.level >= 20 ? 100 : pet.xp % 100}%"></span></span><span id="pet-xp">${pet.xp} XP</span></div></div></div>` : `<div class="profile-line"><div class="pet-avatar">${creature('mossling')}</div><div><h2>A friend awaits</h2><p>A little companion to call your own</p></div></div>`;
   $('#stats').innerHTML = ['satiety', 'happiness', 'energy'].map((stat) => {
     const value = pet ? Math.round(pet.stats[stat]) : 0;
     return `<div class="stat ${stat}"><div class="stat-label"><span>${{satiety:'Fullness',happiness:'Happiness',energy:'Energy'}[stat]}</span><span id="stat-${stat}">${value} / 100</span></div><div class="stat-track" role="progressbar" aria-label="${stat}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${value}"><div class="stat-fill" style="width:${value}%"></div></div></div>`;
@@ -201,6 +215,7 @@ function positionCompanion() {
 }
 compactWorld?.addEventListener('change', positionCompanion);
 function render() {
+  const growthOpen = $('#growth-disclosure')?.open;
   const bankDraft = $('#bank-amount')?.value;
   const bankTierDraft = $('#bank-tier')?.value;
   const focused = document.activeElement;
@@ -219,12 +234,14 @@ function render() {
   $('#page-subtitle').textContent = headings[currentArea][1];
   $('#area-content').innerHTML = { garden, market, glen, realm, arena }[currentArea]();
   positionCompanion();
+  if (growthOpen !== undefined && $('#growth-disclosure')) $('#growth-disclosure').open = growthOpen;
   if (bankDraft !== undefined && $('#bank-amount')) $('#bank-amount').value = bankDraft;
   const bankTier = $('#bank-tier');
   if (bankTierDraft && bankTier && Array.from(bankTier.options).some((option) => option.value === bankTierDraft && !option.disabled)) bankTier.value = bankTierDraft;
   const restoredFocus = focusedInArea ? focusedId ? document.getElementById(focusedId)
     : focusedAction ? document.querySelector(`#area-content button${focusedAction}`) : null : null;
   if (restoredFocus && !restoredFocus.disabled) restoredFocus.focus({preventScroll:true});
+  else if (focusedInArea && focusedId === 'pet-grow') $('#growth-disclosure summary')?.focus({preventScroll:true});
 }
 function changeArea(area) {
   if (!['garden','market','glen','realm','arena'].includes(area)) return;
@@ -232,11 +249,21 @@ function changeArea(area) {
   history.replaceState(null, '', `#${area}`);
 }
 function selectSpecies() {
-  $('#species-options').innerHTML = Object.entries(SPECIES).map(([id, species]) => `<button type="button" data-species="${id}" class="species-button ${id === selectedSpecies ? 'selected' : ''}" aria-pressed="${id === selectedSpecies}">${creature(id)}<strong>${escape(species.name)}</strong><small>${escape(species.description)}</small></button>`).join('');
+  const focusedSpecies = document.activeElement?.dataset?.species;
+  $('#species-options').innerHTML = Object.entries(SPECIES).map(([id, species]) => `<button type="button" data-species="${id}" class="species-button ${id === selectedSpecies ? 'selected' : ''}" aria-pressed="${id === selectedSpecies}">${creature(id, species.name)}<span class="species-kind">${escape(species.kind)}</span><strong>${escape(species.name)}</strong><span class="species-chosen">${id === selectedSpecies ? 'Chosen ✓' : 'Meet this friend'}</span></button>`).join('');
+  renderAdoptionPreview();
+  if (focusedSpecies) $(`#species-options [data-species="${focusedSpecies}"]`)?.focus({preventScroll:true});
+}
+function renderAdoptionPreview() {
+  const species = SPECIES[selectedSpecies];
+  $('#adoption-preview').innerHTML = `<div class="adoption-portrait">${creature(selectedSpecies, species.name)}</div><div><p class="eyebrow">YOUR NEW ${escape(species.kind.toUpperCase())}</p><h3 id="adoption-species-name">${escape(species.name)}</h3><p>${escape(species.description)}</p><p class="species-trait">${escape(species.trait)}</p><p class="species-favourite">${species.favourite ? `Loves ${escape(ITEMS[species.favourite].name.toLowerCase())} · +3 extra happiness` : 'Enjoys both snacks equally'}</p></div>`;
+  $('#pet-personality').innerHTML = Object.values(PERSONALITIES).map((personality) => `<option value="${personality.id}" ${personality.id === selectedPersonality ? 'selected' : ''}>${personality.name}</option>`).join('');
+  $('#personality-description').textContent = PERSONALITIES[selectedPersonality].description;
 }
 function showAdoption() {
   if ($('#adoption-dialog').open) return;
   adoptionStartedCount = state.pets.length;
+  selectedPersonality = SPECIES[selectedSpecies].personality;
   $('#pet-name').value = '';
   $('#adoption-error').textContent = '';
   $('#close-adoption').hidden = !readActivePet(state);
@@ -410,14 +437,19 @@ $('#adoption-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const name = $('#pet-name').value.trim();
   const species = selectedSpecies;
+  const personality = selectedPersonality;
   try {
     await withSaveLock(() => {
       readCurrentWorld();
-      state = adopt(state, name, species, Date.now());
+      state = adopt(state, name, species, Date.now(), personality);
       persist(); render(); $('#adoption-dialog').close();
     });
     toast(`Welcome home, ${readActivePet(state).name}. Your adventure starts here.`);
   } catch (error) { $('#adoption-error').textContent = error.message; }
+});
+$('#pet-personality').addEventListener('change', () => {
+  selectedPersonality = $('#pet-personality').value;
+  $('#personality-description').textContent = PERSONALITIES[selectedPersonality].description;
 });
 $('#close-adoption').addEventListener('click', () => { if (readActivePet(state)) $('#adoption-dialog').close(); });
 $('#adoption-dialog').addEventListener('cancel', (event) => { if (!readActivePet(state)) event.preventDefault(); });
@@ -518,12 +550,14 @@ document.addEventListener('click', (event) => {
   }
   if (target.id === 'lodge-parcel') update((s) => claimLodgeParcel(s,Date.now()), 'A Lodge parcel! 20 pebbles and a sunberry added to your satchel.');
   if (target.id === 'use-expansion') update((s) => useExpansion(s,Date.now()), 'A little more room for wonder. One permanent companion space added.');
-  if (target.dataset.species) { selectedSpecies = target.dataset.species; selectSpecies(); }
+  if (target.dataset.species) { selectedSpecies = target.dataset.species; selectedPersonality = SPECIES[selectedSpecies].personality; selectSpecies(); }
+  if (target.id === 'pet-train') updateObservedPet((s) => trainPet(s, Date.now()), 'A good practice, safely learned. Your companion’s experience has grown.');
+  if (target.id === 'pet-grow') updateObservedPet((s) => growPet(s, Date.now()), 'Their first bloom! A new look, and a little more wisdom for future practice.');
   if (target.dataset.buy) update((s) => purchase(s, target.dataset.buy, Date.now()), `${ITEMS[target.dataset.buy].name} tucked into your satchel.`);
-  if (target.id === 'feed-berry') update((s) => care(s, 'feed', 'berry', Date.now()), 'A sweet little snack. Fullness +22, happiness +6.');
-  if (target.id === 'feed-acorn') update((s) => care(s, 'feed', 'acorn', Date.now()), 'A hearty little treat. Fullness +12, energy +12, happiness +3.');
-  if (target.id === 'care-play') update((s) => care(s, 'play', 'ribbon', Date.now()), 'A very good wiggle. Happiness +20, energy −12, fullness −4.');
-  if (target.id === 'care-rest') update((s) => care(s, 'rest', undefined, Date.now()), 'A cosy nap. Energy +30, fullness −5, happiness +3.');
+  if (target.id === 'feed-berry') update((s) => care(s, 'feed', 'berry', Date.now()), 'A sweet snack shared. Their fullness and happiness are brighter.');
+  if (target.id === 'feed-acorn') update((s) => care(s, 'feed', 'acorn', Date.now()), 'A hearty snack shared. A little more fullness, energy and happiness.');
+  if (target.id === 'care-play') update((s) => care(s, 'play', 'ribbon', Date.now()), 'A very good wiggle. Happier, and ready for a little rest.');
+  if (target.id === 'care-rest') update((s) => care(s, 'rest', undefined, Date.now()), 'A cosy nap. Rested, happy, and ready for the next little adventure.');
   if (target.id === 'game-start') beginGame();
   if (target.id === 'game-catch') catchLight();
 });
@@ -548,7 +582,7 @@ window.addEventListener('storage', async (event) => {
       const updated = parseSave(raw);
       durableBaseRaw = raw;
       if (game && (game.generation !== readLocal(WORLD_KEY) || game.pet !== petIdentity(readActivePet(updated)) || battleActive(updated))) stopGame();
-      state = advanceTime(updated, Date.now()); recoveryRaw = null;
+      state = advanceTime(updated, Date.now()); stateGeneration = readLocal(WORLD_KEY); recoveryRaw = null;
       $('#recovery-dialog').close(); renderCurrentWorld();
       if (readActivePet(state)) {
         if ($('#adoption-dialog').open && (state.pets.length !== adoptionStartedCount || state.pets.length >= petCapacity(state) || battleActive(state))) $('#adoption-dialog').close();
@@ -573,6 +607,7 @@ try {
   await withSaveLock(() => {
     const saved = readLocal(SAVE_KEY);
     durableBaseRaw = saved;
+    stateGeneration = readLocal(WORLD_KEY);
     if (saved !== null) {
       try {
         state = advanceTime(parseSave(saved), Date.now());

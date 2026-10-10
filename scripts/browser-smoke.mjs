@@ -135,8 +135,54 @@ try {
     await expect(page.locator('[data-claim-quest="daily-parcel"]')).toBeDisabled();
     await expect(page.locator('#quest-day-claimed')).toHaveText('1 claimed · 5 needed');
     await expect(page.locator('#quest-day-complete')).toBeDisabled();
+    // Exercise the built 0.4 companion UI using the same earned world.
+    await page.locator('.nav-button[data-area="garden"]').click();
+    await page.locator('#adopt-another').click();
+    await expect(page.locator('#species-options [data-species]')).toHaveCount(9);
+    await page.locator('[data-species="thistlehorn"]').click();
+    await expect(page.locator('[data-species="thistlehorn"]')).toHaveAttribute('aria-pressed','true');
+    await expect(page.locator('#adoption-preview [data-creature]')).toHaveAttribute('data-creature','thistlehorn');
+    await page.locator('#pet-personality').selectOption('spirited');
+    await page.locator('#pet-name').fill('Bramble');
+    await page.locator('#adopt-button').click();
+    await expect(page.locator('#pet-profile')).toContainText('Bramble');
+    const world=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('petrealm.save.v1')));
+    const chosen=s=>s.pets.find(p=>p.id===s.activePetId);
+    expect(chosen(await world()).personality).toBe('spirited');
+    await page.locator('.nav-button[data-area="garden"]').click();
+    await page.locator('#feed-berry').click();
+    await page.waitForFunction(()=>JSON.parse(localStorage.getItem('petrealm.save.v1')).pets.find(p=>p.name==='Bramble').journey.feeds===1);
+    await page.locator('#care-play').click();
+    await page.waitForFunction(()=>JSON.parse(localStorage.getItem('petrealm.save.v1')).pets.find(p=>p.name==='Bramble').journey.plays===1);
+    await page.locator('#care-rest').click();
+    await page.waitForFunction(()=>JSON.parse(localStorage.getItem('petrealm.save.v1')).pets.find(p=>p.name==='Bramble').journey.rests===1);
+    await page.locator('#growth-disclosure summary').click();
+    await expect(page.locator('#pet-grow')).toBeDisabled();
+    await page.locator('.nav-button[data-area="arena"]').click();
+    const beforePractice=await world();
+    await page.locator('#pet-train').click();
+    await page.waitForFunction(()=>JSON.parse(localStorage.getItem('petrealm.save.v1')).pets.find(p=>p.name==='Bramble').journey.trainings===1);
+    const practised=await world();
+    expect(practised.wallet).toBe(beforePractice.wallet-20);
+    expect(chosen(practised).xp).toBe(chosen(beforePractice).xp+18);
+    const elapsedHours=(practised.lastUpdated-beforePractice.lastUpdated)/3600000;
+    expect(chosen(practised).stats.energy).toBeCloseTo(chosen(beforePractice).stats.energy-12-elapsedHours,9);
+    for(let i=0;i<2;i++){
+      const previous=beforePractice.pets[i],current=practised.pets[i];
+      expect({...current,stats:previous.stats}).toEqual(previous);
+      for(const[stat,rate]of[['satiety',3],['happiness',2],['energy',1]])expect(current.stats[stat]).toBeCloseTo(Math.max(0,previous.stats[stat]-rate*elapsedHours),9);
+    }
+    await page.reload();
+    expect(chosen(await world()).journey).toEqual(chosen(practised).journey);
+    await page.locator('#save-button').click();
+    const companionSave=JSON.parse((await download('#export-save','companions-0.4.json')).toString());
+    expect(companionSave.pets.map(p=>p.name)).toEqual(['Aster','Nova','Bramble']);
+    expect(chosen(companionSave).species).toBe('thistlehorn');
+    expect(chosen(companionSave).personality).toBe('spirited');
+    expect(chosen(companionSave).journey).toEqual(chosen(practised).journey);
+    await page.locator('#close-save').click();
   } else throw new Error(`Unknown app: ${name}`);
-  await page.screenshot({path:resolve(output,'desktop.png'),fullPage:true});
+  await page.screenshot({path:resolve(output,'desktop.png'),fullPage:true,animations:'disabled'});
   expect(errors, 'browser errors').toEqual([]);
   console.log(`${name}: built-app edit, persistence and export browser smoke passed`);
 } finally {

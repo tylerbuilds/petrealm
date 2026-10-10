@@ -1,5 +1,6 @@
 // Original Petrealm vector illustrations, written for this project.
 // No third-party artwork, fonts, sprites or remote resources are used.
+import { creatureBody, accessoryAnchors } from './creatures.js';
 export function itemArt(id) {
   const illustrations = {
     berry: '<path d="M31 24Q28 12 37 7" fill="none" stroke="#637e4d" stroke-width="3" stroke-linecap="round"/><path d="M32 20Q15 21 16 9Q28 7 32 20M34 17Q39 5 49 11Q47 22 34 17" fill="#93ae70"/><circle cx="24" cy="34" r="12" fill="#ca816b"/><circle cx="42" cy="33" r="12" fill="#dc9a7b"/><circle cx="33" cy="46" r="12" fill="#d38970"/><path d="M19 30l2-2M37 28l2-2M28 42l2-2" stroke="#f9d4b3" stroke-width="3" stroke-linecap="round"/>',
@@ -13,7 +14,7 @@ export function itemArt(id) {
   return `<svg class="item-art" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true" focusable="false">${illustrations[id] || illustrations.berry}</svg>`;
 }
 
-export function creature(species = 'mossling', label = 'A Petrealm companion', wearing = {}) {
+export function creature(species = 'mossling', label = 'A Petrealm companion', wearing = {}, grown = false) {
   const common = `<ellipse cx="120" cy="201" rx="63" ry="9" fill="#64744c" opacity=".10"/>`;
   const face = `<ellipse cx="101" cy="121" rx="5" ry="7" fill="#344935"/><ellipse cx="141" cy="121" rx="5" ry="7" fill="#344935"/><circle cx="102" cy="119" r="1.5" fill="#fff9e9"/><circle cx="142" cy="119" r="1.5" fill="#fff9e9"/><path d="M115 133Q121 140 127 133" fill="none" stroke="#344935" stroke-width="3" stroke-linecap="round"/><ellipse cx="87" cy="132" rx="9" ry="5" fill="#dbac91" opacity=".65"/><ellipse cx="155" cy="132" rx="9" ry="5" fill="#dbac91" opacity=".65"/>`;
   const shapes = {
@@ -21,8 +22,16 @@ export function creature(species = 'mossling', label = 'A Petrealm companion', w
     emberkit: `<path d="M173 141Q226 110 214 75Q244 117 208 153Q192 164 171 157" fill="#dd985e" stroke="#c98250" stroke-width="3"/><path d="M214 75Q238 99 222 119Q211 109 214 75" fill="#f3cf8f"/><ellipse cx="90" cy="185" rx="18" ry="14" fill="#d39366"/><ellipse cx="150" cy="185" rx="18" ry="14" fill="#d39366"/><path d="M69 86L64 28Q90 35 105 65M139 65Q156 33 178 29L174 89" fill="#e3a16e" stroke="#c5875c" stroke-width="3"/><path d="M77 70L74 45L93 70M150 70L167 45L165 70" fill="#f3d4aa"/><path d="M64 119Q63 66 117 64Q175 59 180 113Q188 178 122 190Q57 182 64 119" fill="#e8ac7e" stroke="#c5875c" stroke-width="3"/><path d="M90 167Q84 142 98 139Q121 152 142 139Q157 145 149 170Q117 189 90 167" fill="#f5dec0"/><path d="M109 78L121 99L133 78" stroke="#d8976a" stroke-width="4" fill="none" stroke-linecap="round"/>${face}`,
     moonfin: `<path d="M169 125Q202 77 213 95L201 126L218 151Q201 166 170 140" fill="#a1afd0" stroke="#8596bf" stroke-width="3"/><path d="M99 73Q114 23 139 30L135 71" fill="#bbc5e1" stroke="#8d9fc3" stroke-width="3"/><path d="M100 166Q117 201 144 195L140 166" fill="#bbc5e1" stroke="#8d9fc3" stroke-width="3"/><path d="M64 96Q104 59 145 83Q184 106 173 145Q167 180 117 179Q60 179 49 140Q38 112 64 96" fill="#bfcee3" stroke="#8d9fc3" stroke-width="3"/><path d="M59 140Q72 104 94 123Q102 142 70 158" fill="#dce4f1" stroke="#a2b2cf" stroke-width="2"/><ellipse cx="128" cy="156" rx="23" ry="12" fill="#e5e9f1"/><path d="M82 80Q76 64 82 53" stroke="#8d9fc3" stroke-width="3" fill="none"/><circle cx="83" cy="49" r="7" fill="#f9e9b5"/><path d="M127 88L130 97L139 99L130 102L127 111L124 102L115 99L124 97Z" fill="#f9e9b5"/>${face}`
   };
-  const accessories = `${wearing.head === 'leafcap' ? '<path d="M77 81Q77 48 121 46Q164 48 166 81Z" fill="#57754d" stroke="#3f613b" stroke-width="2"/><ellipse cx="122" cy="82" rx="51" ry="9" fill="#78945f"/><path d="M117 61Q120 38 143 41Q140 58 117 61" fill="#c7d49b"/>' : ''}${wearing.neck === 'moonscarf' ? '<path d="M72 144Q121 156 171 143L168 161Q121 173 75 160Z" fill="#8a83b6" stroke="#706a96" stroke-width="2"/><path d="M146 154L162 160L154 197L137 189Z" fill="#aca3d1" stroke="#8077ab" stroke-width="2"/><path d="M148 184L155 187" stroke="#e3dabc" stroke-width="4"/>' : ''}`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220" role="img" aria-label="${label.replace(/[&<>"']/g, '')}">${common}${shapes[species] || shapes.mossling}${accessories}</svg>`;
+  const anchors = accessoryAnchors(species);
+  // Fit the reusable wardrobe to each silhouette without changing its rules.
+  const head = wearing.head === 'leafcap' ? '<path d="M77 81Q77 48 121 46Q164 48 166 81Z" fill="#57754d" stroke="#3f613b" stroke-width="2"/><ellipse cx="122" cy="82" rx="51" ry="9" fill="#78945f"/><path d="M117 61Q120 38 143 41Q140 58 117 61" fill="#c7d49b"/>' : '';
+  const neck = wearing.neck === 'moonscarf' ? '<path d="M72 144Q121 156 171 143L168 161Q121 173 75 160Z" fill="#8a83b6" stroke="#706a96" stroke-width="2"/><path d="M146 154L162 160L154 197L137 189Z" fill="#aca3d1" stroke="#8077ab" stroke-width="2"/><path d="M148 184L155 187" stroke="#e3dabc" stroke-width="4"/>' : '';
+  const growthArt = grown && shapes[species] ? ({
+    mossling: '<path d="M95 46Q69 26 53 46Q62 65 95 57M143 49Q164 23 181 42Q174 65 143 59" fill="#91ae74" stroke="#6a8c5a" stroke-width="2"/><circle cx="111" cy="33" r="7" fill="#e2bd86"/>',
+    emberkit: '<path d="M194 135Q232 117 220 92Q247 139 207 156" fill="#f2ce86" stroke="#cb975d" stroke-width="2"/><path d="M114 87l7-9 7 9-7 11Z" fill="#f7deb0"/>',
+    moonfin: '<path d="M102 62Q105 19 128 12L138 58" fill="#a8b9d5" stroke="#8d9fc3" stroke-width="2"/><path d="M151 95l3-6 3 6 7 2-6 4 1 7-5-4-6 4 1-7-5-4Z" fill="#f4df9f"/>',
+  }[species]) : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220" role="img" aria-label="${label.replace(/[&<>"']/g, '')}" data-creature="${species}" data-growth="${grown ? 'bloomed' : 'young'}">${common}${creatureBody(species, {grown}) || shapes[species] || shapes.mossling}${growthArt}<g transform="${anchors.head}">${head}</g><g transform="${anchors.neck}">${neck}</g></svg>`;
 }
 
 export function gardenArt() {

@@ -1,5 +1,6 @@
 import { SPECIES, PERSONALITIES, ITEMS, createState, adopt, advanceTime, care, purchase, claimDaily, claimGameReward, parseSave, serialiseSave, readActivePet, selectPet, deposit, withdraw, equipAccessory, claimQuest, startBattle, battleAction, petCapacity, setMembership, claimLodgeParcel, useExpansion, claimBankInterest, upgradeBankTier, claimQuestDay, trainPet, growPet } from './model.js';
 import { creature } from './art.js';
+import { guideArt, hudIcon } from './world-art.js';
 import { withSaveLock } from './persistence.js';
 import { renderGarden, renderMarket, renderRealm, renderArena, renderGlen, itemSymbols, battleActive } from './views.js';
 
@@ -11,6 +12,8 @@ const $ = (selector) => document.querySelector(selector);
 const companionCard = $('.companion');
 const companionSidebar = $('.side-column');
 const compactWorld = typeof window.matchMedia === 'function' ? window.matchMedia('(max-width: 800px)') : null;
+document.querySelectorAll('[data-hud-icon]').forEach((node) => { node.innerHTML = hudIcon(node.dataset.hudIcon); });
+$('#welcome-guide').innerHTML = guideArt();
 const escape = (value) => String(value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const day = (now = Date.now()) => new Date(now).toISOString().slice(0, 10);
 let state = createState(Date.now());
@@ -192,7 +195,7 @@ function renderProfile() {
   $('#inventory').innerHTML = Object.entries(ITEMS).map(([id, item]) => `<div class="inventory-item"><span class="item-symbol ${id}" aria-hidden="true">${itemSymbols[id]}</span><span>${escape(item.name)}</span><span id="inventory-${id}" class="inventory-count">${state.inventory[id]}</span></div>`).join('');
   const claimed = state.daily.lastClaimDay !== null && state.daily.lastClaimDay >= day();
   $('#daily-reward').disabled = claimed || !pet;
-  $('#daily-reward').textContent = claimed ? 'Gift collected. See you tomorrow ♡' : "Collect today's gift ↗";
+  $('#daily-reward').textContent = claimed ? 'Gift opened ✓' : "Open today’s gift · 40 pebbles";
   const achieved = state.achievements.filter((id) => milestones.some(([milestone]) => milestone === id));
   $('#milestone-count').textContent = `${achieved.length} / ${milestones.length} collected`;
   $('#achievements').innerHTML = milestones.map(([id, label, symbol, description]) => `<div class="achievement ${achieved.includes(id) ? 'unlocked' : ''}" title="${escape(description)}${achieved.includes(id) ? ' · Collected!' : ''}"><div class="achievement-icon" aria-hidden="true">${symbol}</div><span>${label}</span><span class="visually-hidden">${achieved.includes(id) ? 'Collected' : description}</span></div>`).join('');
@@ -203,10 +206,9 @@ function glen() { return renderGlen(state,gameMode); }
 function realm() { return renderRealm(state); }
 function arena() { return renderArena(state); }
 function positionCompanion() {
-  if (!compactWorld) return;
-  const carePanel = currentArea === 'garden' && compactWorld.matches ? $('.care-panel') : null;
-  if (carePanel) {
-    carePanel.before(companionCard);
+  const dock = $('#companion-dock');
+  if (currentArea === 'garden' && dock) {
+    dock.append(companionCard);
     companionCard.classList.add('inline-companion');
   } else {
     companionSidebar.prepend(companionCard);
@@ -216,6 +218,8 @@ function positionCompanion() {
 compactWorld?.addEventListener('change', positionCompanion);
 function render() {
   const growthOpen = $('#growth-disclosure')?.open;
+  const friendOpen = $('#friends')?.open;
+  const wardrobeOpen = $('#wardrobe')?.open;
   const bankDraft = $('#bank-amount')?.value;
   const bankTierDraft = $('#bank-tier')?.value;
   const focused = document.activeElement;
@@ -226,15 +230,18 @@ function render() {
     .map((attribute) => `[${attribute.name}="${CSS.escape(attribute.value)}"]`).join('') : '';
   // Keep the one live profile outside the area being replaced. On small
   // screens it sits between the garden scene and care, beside its actions.
-  if (compactWorld) companionSidebar.prepend(companionCard);
+  companionSidebar.prepend(companionCard);
   renderProfile();
   document.querySelectorAll('.nav-button').forEach((button) => { button.classList.toggle('active', button.dataset.area === currentArea); button.setAttribute('aria-current', button.dataset.area === currentArea ? 'page' : 'false'); });
-  const headings = { garden:['Good things grow here.','A softer sort of adventure. Take a breath, and stay a while.'], market:['Little treats. Big happy feelings.','Follow the winding path to something lovely.'], glen:['There is magic after sundown.','A glimmer, a little game, and a pocketful of possibility.'], realm:['The next path is yours to choose.','A small map, a growing journal, and room for more friends.'], arena:['Brave hearts grow together.','Friendly challenges, thoughtful turns, and a little more courage.'] };
+  document.body.dataset.place = currentArea;
+  const headings = { garden:['Sunmeadow','Your friend. Your world. Your next adventure.'], market:['Market lane','Take a wander. Find something fun.'], glen:['Starlight glen','Little lights, big adventures.'], realm:['Explore Petrealm','Pick a path or find a quest.'], arena:['Training grove','Learn a move. Meet a friendly rival.'] };
   $('#page-title').textContent = headings[currentArea][0];
   $('#page-subtitle').textContent = headings[currentArea][1];
   $('#area-content').innerHTML = { garden, market, glen, realm, arena }[currentArea]();
   positionCompanion();
   if (growthOpen !== undefined && $('#growth-disclosure')) $('#growth-disclosure').open = growthOpen;
+  if (friendOpen !== undefined && $('#friends')) $('#friends').open = friendOpen;
+  if (wardrobeOpen !== undefined && $('#wardrobe')) $('#wardrobe').open = wardrobeOpen;
   if (bankDraft !== undefined && $('#bank-amount')) $('#bank-amount').value = bankDraft;
   const bankTier = $('#bank-tier');
   if (bankTierDraft && bankTier && Array.from(bankTier.options).some((option) => option.value === bankTierDraft && !option.disabled)) bankTier.value = bankTierDraft;
@@ -245,7 +252,9 @@ function render() {
 }
 function changeArea(area) {
   if (!['garden','market','glen','realm','arena'].includes(area)) return;
+  const movedFromWorld = Boolean(document.activeElement?.closest('#area-content'));
   stopGame(); currentArea = area; render();
+  if (movedFromWorld) $('#area-content').focus({preventScroll:true});
   history.replaceState(null, '', `#${area}`);
 }
 function selectSpecies() {
@@ -269,7 +278,7 @@ function showAdoption() {
   $('#close-adoption').hidden = !readActivePet(state);
   selectSpecies();
   if (!$('#adoption-dialog').open) $('#adoption-dialog').showModal();
-  setTimeout(() => $('#pet-name').focus(), 40);
+  setTimeout(() => $('#species-options [data-species]')?.focus(), 40);
 }
 async function beginGame() {
   if (game || currentArea !== 'glen' || gameMode !== 'firefly') return;
@@ -442,6 +451,7 @@ $('#adoption-form').addEventListener('submit', async (event) => {
     await withSaveLock(() => {
       readCurrentWorld();
       state = adopt(state, name, species, Date.now(), personality);
+      if (adoptionStartedCount === 0) currentArea = 'garden';
       persist(); render(); $('#adoption-dialog').close();
     });
     toast(`Welcome home, ${readActivePet(state).name}. Your adventure starts here.`);
@@ -464,6 +474,12 @@ function openSaves() {
   $('#export-original').disabled = pendingMigrationRaw === null && readLocal(MIGRATION_KEY) === null;
   $('#save-dialog').showModal();
 }
+function openSatchel() {
+  if (game) { stopGame(); render(); toast('Your unfinished round has ended. No reward was claimed.'); }
+  if (!$('#satchel-dialog').open) $('#satchel-dialog').showModal();
+}
+$('#satchel-button').addEventListener('click', openSatchel);
+$('#close-satchel').addEventListener('click', () => $('#satchel-dialog').close());
 $('#save-button').addEventListener('click', openSaves);
 $('#footer-save').addEventListener('click', openSaves);
 $('#close-save').addEventListener('click', () => $('#save-dialog').close());
@@ -517,9 +533,20 @@ $('#start-fresh').addEventListener('click', async () => {
 document.addEventListener('click', (event) => {
   const target = event.target.closest('button');
   if (!target || target.disabled) return;
+  if (target.dataset.openSatchel !== undefined) openSatchel();
   if (target.dataset.area) {
+    if ($('#satchel-dialog').open) $('#satchel-dialog').close();
     changeArea(target.dataset.area);
-    if (target.dataset.scrollBank) $('#bank')?.scrollIntoView({behavior:'smooth',block:'center'});
+    if (target.dataset.scrollBank) { $('#bank')?.scrollIntoView({block:'start'}); $('#bank-amount')?.focus({preventScroll:true}); }
+  }
+  if (target.dataset.scrollTarget) {
+    const destination = document.getElementById(target.dataset.scrollTarget);
+    if (destination) {
+      if (destination.tagName === 'DETAILS') destination.open = true;
+      destination.scrollIntoView({block:'start'});
+      const focusTarget = destination.querySelector('summary, button');
+      focusTarget?.focus({preventScroll:true});
+    }
   }
   if (target.id === 'adopt-another') {
     if (state.pets.length < petCapacity(state) && !battleActive(state)) showAdoption();
@@ -602,6 +629,10 @@ setInterval(async () => {
     });
   } catch (error) { toast(error.message); }
 }, 60000);
+window.addEventListener('hashchange', () => {
+  const destination = location.hash.slice(1);
+  if (['garden','market','glen','realm','arena'].includes(destination) && destination !== currentArea) changeArea(destination);
+});
 currentArea = ['garden','market','glen','realm','arena'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'garden';
 try {
   await withSaveLock(() => {

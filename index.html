@@ -10,45 +10,42 @@
   <link rel="stylesheet" href="styles.css">
   <script type="module" src="src/app.js"></script>
 </head>
-<body>
+<body class="world-game" data-place="garden">
+  <a class="skip-link" href="#area-content">Skip to the world</a>
   <header class="topbar">
     <a class="brand" href="#garden" aria-label="Petrealm home"><span class="brand-leaf" aria-hidden="true">❧</span>petrealm<span class="brand-dot">.</span></a>
-    <nav class="world-nav" aria-label="Explore the realm">
-      <button data-area="garden" class="nav-button active">My garden</button>
-      <button data-area="market" class="nav-button">Market lane</button>
-      <button data-area="glen" class="nav-button">Starlight glen</button><button data-area="realm" class="nav-button">World & quests</button><button data-area="arena" class="nav-button">Training grove</button>
+    <nav class="world-nav" aria-label="Places to explore">
+      <button data-area="garden" class="nav-button active"><span data-hud-icon="home"></span>Meadow</button>
+      <button data-area="market" class="nav-button"><span data-hud-icon="leaf"></span>Market</button>
+      <button data-area="glen" class="nav-button"><span data-hud-icon="moon"></span>Games</button>
+      <button data-area="realm" class="nav-button"><span data-hud-icon="map"></span>Map & quests</button>
+      <button data-area="arena" class="nav-button"><span data-hud-icon="friends"></span>Training</button>
     </nav>
-    <div class="top-actions"><div class="wallet"><span aria-hidden="true">✦</span><strong id="wallet">120</strong><span class="wallet-label">pebbles</span></div><button id="save-button" class="icon-button" aria-label="Manage saved game" title="Manage saved game">↧</button></div>
+    <div class="top-actions"><div class="wallet" aria-label="Pebbles in your pocket"><span aria-hidden="true">✦</span><strong id="wallet">120</strong><span class="wallet-label">pebbles</span></div><button id="satchel-button" class="hud-button" aria-haspopup="dialog"><span data-hud-icon="bag"></span><span>Satchel</span></button><button data-area="garden" data-scroll-target="friends" class="hud-button" id="friends-button"><span data-hud-icon="friends"></span><span>Friends</span></button><button id="save-button" class="hud-button" aria-label="Manage saved game" aria-haspopup="dialog"><span data-hud-icon="save"></span><span>Save</span></button></div>
   </header>
   <main class="page">
-    <div class="page-heading"><div><p class="eyebrow">YOUR LITTLE CORNER OF THE WORLD</p><h1 id="page-title">Good things grow here.</h1><p id="page-subtitle">A softer sort of adventure. Take a breath, and stay a while.</p></div><span class="season-pill"><span aria-hidden="true">☀</span> Always a little golden</span></div>
+    <div class="page-heading"><div><p class="eyebrow">LET’S SEE WHAT’S OUT THERE</p><h1 id="page-title">Sunmeadow</h1><p id="page-subtitle">Your friend. Your world. Your next adventure.</p></div><button data-area="realm" class="map-shortcut"><span data-hud-icon="map"></span>Where shall we go?</button></div>
     <div class="world-layout">
-      <section class="main-column" aria-label="Your world">
-        <div id="area-content"></div>
-        <section class="card milestones"><div class="section-heading"><h2>Little milestones</h2><span id="milestone-count">0 / 5 collected</span></div><div id="achievements" class="achievement-grid"></div></section>
-      </section>
-      <aside class="side-column" aria-label="Companion and supplies">
-        <section class="card companion"><div class="section-heading"><p class="eyebrow">YOUR COMPANION</p><span class="small-badge">ONE OF A KIND</span></div><div id="pet-profile"></div><div id="stats" class="stats"></div><p id="pet-mood" class="pet-mood"></p></section>
-        <section class="card supplies"><div class="section-heading"><h2>In your satchel</h2><button data-area="market" class="text-button">Visit shop ↗</button></div><div id="inventory"></div></section>
-        <section class="daily-card"><span class="gift-mark" aria-hidden="true">✧</span><div><p class="eyebrow">A GIFT FOR SHOWING UP</p><h2>A little daily delight</h2><p>40 pebbles, just for you. A fresh gift arrives at midnight UTC.</p><button id="daily-reward" class="button dark-button">Collect today's gift <span aria-hidden="true">↗</span></button></div></section>
-      </aside>
+      <section class="main-column" aria-label="Your world"><div id="area-content" tabindex="-1"></div></section>
+      <aside class="side-column" aria-label="Companion"><section class="companion"><div id="pet-profile"></div><div id="stats" class="stats"></div><p id="pet-mood" class="pet-mood"></p></section></aside>
     </div>
-    <footer class="footer"><span><span aria-hidden="true">❧</span> A little world of your own.</span><span><span id="save-location">Saved on this device</span> · <button id="footer-save" class="text-button">Take your world with you ↗</button></span></footer>
+    <footer class="footer"><span>Made for wandering, playing and making friends.</span><span><span id="save-location" role="status">Saved on this device</span> · <button id="footer-save" class="text-button">Keep a save file</button></span></footer>
   </main>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <dialog id="satchel-dialog" class="satchel-dialog" aria-labelledby="satchel-title"><div class="dialog-header"><div><p class="eyebrow">YOUR ADVENTURE BAG</p><h2 id="satchel-title">What have we got?</h2></div><button id="close-satchel" class="icon-button" aria-label="Close satchel">×</button></div><section class="supplies"><div class="section-heading"><h3>Snacks & treasures</h3><button data-area="market" class="text-button">Go to the market →</button></div><div id="inventory"></div><button data-area="garden" data-scroll-target="wardrobe" class="button secondary-button full-width">Try on an outfit</button></section><section class="daily-card"><div><p class="eyebrow">A LETTER FROM MALLOW</p><h2>A gift for your adventure</h2><p>40 pebbles to spend however you like. There’s a new gift after midnight UTC.</p><button id="daily-reward" class="button dark-button full-width">Open today’s gift</button></div></section><section class="milestones"><div class="section-heading"><h3>Adventure keepsakes</h3><span id="milestone-count">0 / 5 collected</span></div><div id="achievements" class="achievement-grid"></div></section></dialog>
   <dialog id="adoption-dialog" class="adoption-dialog" aria-labelledby="adoption-title">
     <button type="button" id="close-adoption" class="icon-button close-adoption" aria-label="Close companion adoption" hidden>×</button>
-    <form id="adoption-form">
-      <p class="eyebrow">EVERY ADVENTURE BEGINS WITH A FRIEND</p><h2 id="adoption-title">Who will grow with you?</h2>
-      <p class="dialog-description">Soft paws, velvet wings, wild horns. A different kind of friend for every heart.</p>
+    <form id="adoption-form"><div id="welcome-guide" class="welcome-guide" aria-hidden="true"></div>
+      <p class="eyebrow">HELLO, EXPLORER!</p><h2 id="adoption-title">Your adventure starts with a friend.</h2>
+      <p class="dialog-description">I’m Mallow, the meadow keeper. Pick a friend, give them a name, then let’s explore!</p>
       <div class="adoption-layout">
         <div class="adoption-gallery"><p class="gallery-label">Meet the companions · choose one</p><div id="species-options" class="species-options" role="group" aria-label="Choose your companion species"></div></div>
         <div class="adoption-details"><div id="adoption-preview" class="adoption-preview" aria-live="polite"></div>
           <label class="input-label" for="pet-personality">Their personality</label><select id="pet-personality" aria-describedby="personality-description"></select><p id="personality-description" class="personality-description"></p>
-          <label class="input-label" for="pet-name">Your companion’s name</label><input id="pet-name" name="pet-name" maxlength="48" placeholder="Something lovely, like Pip" required autocomplete="off" aria-describedby="name-hint"><p id="name-hint" class="name-hint">Up to 24 characters. Adoption is free.</p>
-          <p id="adoption-error" class="error-text" role="alert"></p><button type="submit" class="button dark-button full-width" id="adopt-button">Welcome them home <span aria-hidden="true">↗</span></button>
+          <label class="input-label" for="pet-name">Your companion’s name</label><input id="pet-name" name="pet-name" maxlength="48" placeholder="Try Pip, Pebble or your own idea" required autocomplete="off" aria-describedby="name-hint"><p id="name-hint" class="name-hint">Up to 24 characters. Adoption is free.</p>
+          <p id="adoption-error" class="error-text" role="alert"></p><button type="submit" class="button dark-button full-width" id="adopt-button">Let’s go! <span aria-hidden="true">↗</span></button>
         </div>
-      </div><p class="dialog-note">Nine original companions. A growing family. No account needed.</p>
+      </div><p class="dialog-note">Your world saves in this browser. You can keep a save file too.</p>
     </form>
   </dialog>
   <dialog id="save-dialog" aria-labelledby="save-title"><div class="dialog-header"><h2 id="save-title">Take your world with you</h2><button id="close-save" class="icon-button" aria-label="Close save manager">×</button></div><p>Your world stays in this browser. Export a save to move between Linux, Mac and other devices, or keep a backup.</p><button id="export-save" class="button dark-button full-width">Download save file ↧</button><hr><label class="input-label" for="import-save">Restore a Petrealm save</label><input type="file" id="import-save" accept="application/json,.json"><p class="subtle">Import replaces the current world. Your previous save is kept as a recovery backup.</p><button id="restore-backup" class="button secondary-button full-width">Restore previous backup</button><button id="export-backup" class="button secondary-button full-width">Download previous backup</button><button id="export-original" class="button secondary-button full-width">Download original version 1 save</button><p id="save-error" class="error-text" role="alert"></p></dialog>

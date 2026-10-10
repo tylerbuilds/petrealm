@@ -1,6 +1,6 @@
 {
   "name": "petrealm",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "An original, local-first virtual pet world for your browser.",
   "type": "module",

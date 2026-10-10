@@ -26,9 +26,15 @@ try {
   page.on('console', message => {if (message.type() === 'error') errors.push(message.text())});
   const response = await page.goto(`http://127.0.0.1:${port}/`, {waitUntil:'networkidle'});
   expect(response.status()).toBe(200);
+  const click = async selector => {
+    const target = page.locator(selector);
+    const disclosure = await target.evaluate(node => node.closest('details')?.id || null);
+    if (disclosure && !(await page.locator(`#${disclosure}`).evaluate(node => node.open))) await page.locator(`#${disclosure} > summary`).click();
+    await target.click();
+  };
   const download = async (selector, filename) => {
     const pending = page.waitForEvent('download');
-    await page.locator(selector).click();
+    await click(selector);
     const file = await pending;
     expect(await file.failure()).toBeNull();
     const path = resolve(output, filename); await file.saveAs(path); return readFile(path);
@@ -70,18 +76,26 @@ try {
     await page.locator('#adopt-button').click();
     await expect(page.locator('#adoption-dialog')).not.toBeVisible();
     await expect(page.locator('#pet-profile')).toContainText('Aster');
+    await expect(page.locator('.scene-card')).toBeVisible();
+    await expect(page.locator('#care-play')).toBeVisible();
+    await page.locator('#satchel-button').click();
     await page.locator('#daily-reward').click();
     await expect(page.locator('#daily-reward')).toBeDisabled();
+    await page.locator('#close-satchel').click();
     await page.reload();
     await expect(page.locator('#pet-profile')).toContainText('Aster');
+    await page.locator('#satchel-button').click();
     await expect(page.locator('#daily-reward')).toBeDisabled();
-    await page.locator('#adopt-another').click();
+    await page.locator('#close-satchel').click();
+    await click('#adopt-another');
     await page.locator('[data-species="emberkit"]').click();
     await page.locator('#pet-name').fill('Nova');
     await page.locator('#adopt-button').click();
     await expect(page.locator('#adoption-dialog')).not.toBeVisible();
     await expect(page.locator('#pet-profile')).toContainText('Nova');
     await page.locator('.nav-button[data-area="realm"]').click();
+    await expect(page.locator('.world-map')).toBeVisible();
+    await expect(page.locator('.map-node')).toHaveCount(5);
     await expect(page.locator('.quest-journal [data-claim-quest^="daily-"]')).toHaveCount(5);
     await expect(page.locator('#quest-day-complete')).toBeDisabled();
     await page.locator('[data-claim-quest="growing-family"]').click();
@@ -137,7 +151,7 @@ try {
     await expect(page.locator('#quest-day-complete')).toBeDisabled();
     // Exercise the built 0.4 companion UI using the same earned world.
     await page.locator('.nav-button[data-area="garden"]').click();
-    await page.locator('#adopt-another').click();
+    await click('#adopt-another');
     await expect(page.locator('#species-options [data-species]')).toHaveCount(9);
     await page.locator('[data-species="thistlehorn"]').click();
     await expect(page.locator('[data-species="thistlehorn"]')).toHaveAttribute('aria-pressed','true');

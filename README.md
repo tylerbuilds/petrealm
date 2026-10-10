@@ -1,6 +1,6 @@
 # Petrealm
 
-![Original Petrealm garden and grown companion](docs/screenshots/growth-0.4.png)
+![Explore the original Petrealm meadow with your companion](docs/screenshots/world-0.5.png)
 
 [Try the live demo](https://tylerbuilds.github.io/petrealm/) · [Linux/macOS checks](https://github.com/tylerbuilds/petrealm/actions/workflows/verify.yml)
 
@@ -30,15 +30,16 @@ The coordinating workflow records actual platform and browser checks in the rese
 
 ## Play
 
-1. Meet nine original spirits, animals and monsters in the illustrated adoption gallery. Choose a species and personality, then name your friend. Adopt more companions and switch the active friend in the garden.
-2. Keep each friend's fullness, happiness and energy healthy with snacks, play and rest. Care builds experience; every 100 XP raises a level, up to level 20.
-3. Buy food, reusable toys, visible head/neck accessories, battle potions and expansion deeds at Market lane. Deposit spare pebbles in the Pebble Keep, choose an earned savings tier and explicitly collect daily interest. Withdraw when needed; your tier stays yours.
-4. Open **World & quests** for the illustrated map and journal. Five daily objectives cover feeding, play, shopping, games and rest. Claim each reward, then collect a daily completion gift after any five. Seven consecutive claimed days earn an extra weekly gift. Free Explorer Lodge adds a sixth parcel objective. Lasting family, game and battle objectives remain separate.
-5. Collect the 40-pebble daily gift. Explorer Lodge mode is also free: it adds seven companion spaces and a daily parcel. Up to twelve earned expansion deeds can bring the roster to 26.
-6. Play **Firefly flight** by catching the moving light in the golden centre, or **Memory meadow** by matching six shuffled pairs. Scores determine payments; both games share a daily reward cap.
-7. Visit the **Training grove** for paid practice and saved turn-based matches. Practice costs 20 pebbles and builds XP. In the garden, a level 3 friend who has shared a meal, play and rest can mark their first bloom for 60 pebbles: a lasting new portrait and stronger future practice. Attack, guard or use a potion in matches. Win earlier challenges and grow your level to unlock later rivals. A first victory pays once; replay still earns experience.
-8. Dress the active companion in the garden. One purchased accessory copy cannot be worn by two friends at once, and equipment affects newly started arena matches.
-9. Use the save button to export your world, restore a backup or download the exact original version 1 save after migration.
+[Start exploring: a short player guide](docs/explore-petrealm.md)
+
+1. Meet the nine original companions. Pick a species and personality, give your friend a name, then press **Let’s go!** to enter Sunmeadow.
+2. Share a **Berry treat** or **Acorn treat**, try **Ribbon play**, or take a **Cosy nap**. Your friend’s Fullness, Happiness and Energy update beside these actions.
+3. Follow an illustrated meadow sign, or use the five labelled places at the top. **Map & quests** connects the meadow, market, glen, training grove and Pebble Keep. The notebook gives daily and lasting things to try.
+4. Open **Satchel** or **Mail & gifts** for supplies, a daily 40-pebble letter and adventure keepsakes. **Friends** opens your family; **Try on an outfit** opens Dress up in the meadow.
+5. Play two games in **Games** for pebbles, happiness and XP. Visit **Training** to practise or play saved turn-by-turn matches. A level 3 friend who has shared their own meal, ribbon play and nap can mark a first bloom in the meadow: a lasting new portrait and stronger future practice.
+6. Use **Save** to download your world, move it to another device or restore a backup. Coming back to the same browser resumes your saved family.
+
+Care, games, quests and matches all use the established rules. [Meet every companion and see exact personality, favourite-food, training and bloom effects](docs/companions.md). [Game rules](docs/game-rules.md) document prices, caps and rewards.
 
 Your game is saved in this browser, with no account, backend, network calls, telemetry or paid services. Clearing browser storage can remove your game; export a save first. Invalid stored saves open a recovery screen which keeps the original. Imports are strictly validated before replacing the current world; the previous save is retained as a local recovery backup. Storage failures produce a persistent unsaved indicator. Import is refused when a recovery backup cannot be written.
 
@@ -46,7 +47,7 @@ This is a single-player local game. Same-origin tabs serialise world mutations w
 
 ## Delivered scope and parity gaps
 
-A five-location illustrated map connects **Sunmeadow garden**, **Market lane**, **Pebble Keep**, **Starlight glen** and **Training grove**. The release includes multiple independent companions, seven original supplies, visible wardrobes, bank transfers and original savings tiers, explicit daily interest, five/six daily quests with a rolling seven-day bonus, lasting quests, experience, three progressive arena rivals, two interactive games and a free Explorer Lodge mode. Nine original species have individual personalities, food preferences and care milestones, with eighteen young/bloomed portraits. [Meet the companions](docs/companions.md). Original inline SVG illustrations are in [`src/art.js`](src/art.js) and [`src/creatures.js`](src/creatures.js); immutable game rules are in [`src/model.js`](src/model.js).
+A five-location illustrated map connects **Sunmeadow garden**, **Market lane**, **Pebble Keep**, **Starlight glen** and **Training grove**. The release includes multiple independent companions, seven original supplies, visible wardrobes, bank transfers and original savings tiers, explicit daily interest, five/six daily quests with a rolling seven-day bonus, lasting quests, experience, three progressive arena rivals, two interactive games and a free Explorer Lodge mode. Nine original species have individual personalities, food preferences and care milestones, with eighteen young/bloomed portraits. [Meet the companions](docs/companions.md). Original inline SVG illustrations are in [`src/art.js`](src/art.js), [`src/creatures.js`](src/creatures.js) and [`src/world-art.js`](src/world-art.js); immutable game rules are in [`src/model.js`](src/model.js).
 
 Version 2 saves strictly migrate accepted version 1 worlds, retaining the original text before any overwrite. Existing pets, stats, money, supplies, counts, achievements and daily/game histories survive migration. Older version 2 files are also accepted: their original bank balance and already paid daily feast remain intact. New bank, quest-log and per-companion personality/journey fields are validated optional extensions; migration does not invent historical daily completion, weekly progress or individual care milestones. Earlier companions remain Steady and keep every original field. All write paths retain the multi-tab mutex and recovery safeguards.
 
@@ -61,7 +62,7 @@ Game balance, quest/battle rules, migration and storage behaviour are documented
 - `src/model.js`: immutable rules, validation and JSON import/export. Every action returns a new state or throws a helpful error.
 - `src/app.js`: coordinated local persistence, migration, accessible dialogs, navigation and two interactive games.
 - `src/views.js`: connected care, shop, bank, quest, Lodge and arena interfaces.
-- `src/art.js`, `src/creatures.js`: original creature, growth, landscape, wardrobe and shop vectors.
+- `src/art.js`, `src/creatures.js`, `src/world-art.js`: original companions, growth forms, wardrobe, illustrated places, world guides and game controls.
 - `tests/model.test.js`, `tests/parity-model.test.js`, `tests/bank-quest-log.test.js`, `tests/companions.test.js`: meaningful migration, economy, resource, time and reward invariants using Node's built-in test runner.
 - `scripts/serve.mjs`, `scripts/build.mjs`: dependency-free development and static build utilities.
 

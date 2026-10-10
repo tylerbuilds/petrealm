@@ -38,6 +38,9 @@ export async function smokeHedgePlay({browser,expect,output,url}) {
   page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
   page.on('request',request=>{if(/^https?:/.test(request.url()) && new URL(request.url()).origin!==new URL(url).origin)external.push(request.url());});
   await page.clock.install({time:NOW});
+  // Keep time still between automation commands. Only advance() drives frames;
+  // otherwise runner latency moves the marker between observing it and pressing Stop.
+  await page.clock.pauseAt(NOW + 1000);
   await context.addInitScript(()=>{
     const raf=window.requestAnimationFrame.bind(window),cancel=window.cancelAnimationFrame.bind(window);
     window.__hedgeFrameStats={requested:0,fired:0,cancelled:0,active:new Set()};

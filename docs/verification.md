@@ -8,6 +8,8 @@ The new browser checks deliberately stopped outside the target, waited for a tim
 
 Deterministic engine runs used movement, dashing and successful timed stops to earn all eight seeds, a secret and three stars on every course: 33.98s, 24.33s and 21.24s respectively. Existing par times and save validation rules remain unchanged. Ordinary timing windows last roughly 250ms, 200ms and 150ms per pass; gentle mode widens this to 450ms. These values describe rules, not measured age suitability.
 
+The actual private Tailnet HTTP preview also passed movement, compulsory timing, an early-stop miss without rewards, older-save migration and reload. Seven served files matched canonical hashes. [Preview receipt](research/hedge-challenge-preview-verification.json).
+
 [The receipt](research/hedge-challenge-verification.json) includes browser outcomes and source hashes. [Phone timing](screenshots/hedge-timing-mobile.png) shows the actual challenge interface. The browser used controlled animation time with genuine input events. This verifies the rules and controls, not human reaction times or enjoyment. No child playtest or physical device test is claimed.
 
 ## 0.10 playable adventures — Fedora verification, 10 October 2026

@@ -122,7 +122,7 @@ try {
     await page.locator('[data-memory-index="0"]').click();
     await expect(page.locator('[data-memory-index="0"]')).toHaveClass(/face-up/);
     await page.locator('[data-memory-index="1"]').click();
-    await expect(page.locator('#memory-moves')).toHaveText('1 turns');
+    await expect(page.locator('#memory-moves')).toHaveText('1 turn');
     await page.locator('.nav-button[data-area="garden"]').click();
     await page.reload();
     await expect(page.locator('#pet-profile')).toContainText('Nova');
@@ -147,7 +147,7 @@ try {
     await page.locator('#lodge-parcel').click();
     await page.locator('[data-claim-quest="daily-parcel"]').click();
     await expect(page.locator('[data-claim-quest="daily-parcel"]')).toBeDisabled();
-    await expect(page.locator('#quest-day-claimed')).toHaveText('1 claimed · 5 needed');
+    await expect(page.locator('#quest-day-claimed')).toHaveText('1 of 5 gifts collected');
     await expect(page.locator('#quest-day-complete')).toBeDisabled();
     // Exercise the built 0.4 companion UI using the same earned world.
     await page.locator('.nav-button[data-area="garden"]').click();

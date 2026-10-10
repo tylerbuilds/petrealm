@@ -1,14 +1,14 @@
-# Petrealm parity ledger — free and premium
+# Petrealm and Neopets: free and Premium features
 
-## Original 0.6 play additions
+## Original Petrealm play
 
-The little trails are independently designed local gameplay, not a recovered Neopets system or catalogue. Three routes connect actual encounter choices, nine discoveries, individual companion bond/knack and three visible meadow display places. They do not imply online exploration parity, proprietary quest equivalence, a shared economy or Premium entitlements. Existing source observations below retain their original scope; [the trail guide](little-trails.md) and [current verification](verification.md) describe this added loop.
+The little trails are Petrealm’s own design. Three routes connect choices, nine finds, each friend’s bond and knack, and three meadow display spots. They are not a reconstruction of Neopets exploration or quests. [The trail guide](little-trails.md) explains how they work; [checks by release](verification.md) records what was tested.
 
-Research date: 2026-10-10. Scope: the public Neopets browser-game feature catalogue, including Premium. This ledger is a functional comparison, not a claim that Petrealm has recovered the proprietary implementation or reached full service parity.
+Research date: 2026-10-10. This comparison covers the public Neopets browser-game catalogue, including Premium. It does not claim that Petrealm has recovered the original code or reproduced the full service.
 
-Public support articles are readable. The anonymous REA captures of the main and portal entry points were denied access; no authenticated gameplay or backend internals were verified. Petrealm uses original species, vector artwork, world names, currency and numeric game rules. Source service names below identify the comparison, not product branding.
+The research used readable public support articles. Anonymous REA captures of the main and portal pages were denied access. No authenticated gameplay or backend code was checked. Petrealm’s species, art, names, currency and numeric rules are original. Neopets names appear here only to identify the features being compared.
 
-**Delivered** means usable local behaviour exists in the code and meaningful model tests. Browser and cross-platform qualification are recorded separately by the coordinating verification workflow. **Remaining** means it is absent or substantially smaller than the referenced feature. **Unknown** means public documentation/capture cannot establish exact behaviour.
+**Delivered** means the local feature works in code and has model tests. Browser and platform checks are listed separately. **Remaining** means the feature is missing or much smaller than the target’s. **Unknown** means the available pages and captures do not show how it works.
 
 | Feature and target tier | Public source | Delivered in Petrealm | Remaining or unknown |
 | --- | --- | --- | --- |
@@ -25,15 +25,17 @@ Public support articles are readable. The anonymous REA captures of the main and
 | Trading, auctions, player shops; free and enhanced Premium limits | [Trading Post help](https://classic.support.neopets.com/hc/en-us/sections/17733371923341), [Game help catalogue](https://classic.support.neopets.com/hc/en-us/categories/17703409275021) | No online trading or player-owned marketplace is claimed. | Accounts, authenticated offers, escrow, atomic cross-player transfers, instant purchases, auction expiry and tier limits require a real server architecture and runtime qualification. |
 | Social features, account service and remote saves; free and Premium | [Game help catalogue](https://classic.support.neopets.com/hc/en-us/categories/17703409275021), [Official support portal](https://portal.neopets.com/support) | Validated versioned local saves and portable exports; strict v1 migration with retained originals; multi-tab coordination and recovery. | Accounts, NeoPass-equivalent identity, friendships, mail, forums, moderation, guilds, remote sync and subscriptions are absent. Public material cannot verify authentication internals. |
 
-The [bank and daily/weekly Quest Log research](research/bank-quests-analogue.md) records current primary-source facts and every original local rule for this expansion. Existing all-tier comparison snapshots describe the separately qualified previous release until refreshed; this ledger does not claim a new browser or platform qualification.
+[Bank and quest research](research/bank-quests-analogue.md) lists the public sources and Petrealm’s own daily and weekly rules. The earlier comparison snapshots describe the releases they were written for. This table alone does not prove a new browser or platform test passed.
 
-## Evidence and implementation
+## Code and test references
 
-- `src/model.js` defines every price, care action, tier capacity, claim, bank transfer and battle transition. UI commands use those immutable actions inside the shared browser mutex.
-- `tests/model.test.js`, `tests/parity-model.test.js`, `tests/bank-quest-log.test.js` and `tests/companions.test.js` cover strict migration, ownership, resource bounds, reward replay, time, combat and atomic failures.
-- `src/views.js`, `src/art.js`, `src/creatures.js` and `src/app.js` render original content and real interactions; no source-service assets or network endpoints are used in the product.
-- `docs/research/rea-findings.json` and `rea-provenance.md` preserve the actual denied-capture findings and source pin. Denied pages are gaps, not gameplay evidence.
+- `src/model.js` sets prices, care, capacity, claims, bank transfers and battle rules. The app applies them under a shared browser lock so tabs take turns writing saves.
+- `tests/model.test.js`, `tests/parity-model.test.js`, `tests/bank-quest-log.test.js` and `tests/companions.test.js` check migration, ownership, limits, duplicate rewards, dates, combat and failures that must leave the world unchanged.
+- `src/views.js`, `src/art.js`, `src/creatures.js` and `src/app.js` draw the original world and connect the controls. The game uses no Neopets assets or service endpoints.
+- `docs/research/rea-findings.json` and `rea-provenance.md` keep the capture results and source commit. A denied page tells us where research stopped; it does not show gameplay.
 
-## Next gaps
+## What is still missing
 
-The nearest local feature gaps are outfit journals and a broader wardrobe, rotating quest patterns and prize choices, galleries/collections, larger training and game libraries, Premium challenger variants and timed lodging. Online trading, auctions, player shops, accounts and social systems need separate service and authority design; adding a button or editable local counter would not deliver them.
+Local gaps include a larger wardrobe and outfit journal, changing quest patterns and prize choices, broader galleries and collections, more games and training, additional challenger types and timed lodging. The little-trail journal covers only Petrealm’s nine original finds.
+
+Trading, auctions, player shops, accounts and social play would need a server and clear rules about who can change each player’s data. A local button or counter would not provide those services.

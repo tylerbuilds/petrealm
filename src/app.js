@@ -42,15 +42,15 @@ let toastTimer;
 let game = null;
 let animationFrame;
 const milestones = [
-  ['first-friend', 'A new friend', '♡', 'Adopt your first companion'],
-  ['well-fed', 'Kind heart', '❦', 'Feed your companion a snack'],
-  ['playmate', 'Playmates', '∞', 'Play with your companion'],
+  ['first-friend', 'A new friend', '♡', 'Meet your first friend'],
+  ['well-fed', 'Kind heart', '❦', 'Share a snack with your friend'],
+  ['playmate', 'Playmates', '∞', 'Play together'],
   ['shopper', 'Market regular', '⌂', 'Buy an item at the market'],
-  ['game-on', 'Stargazer', '✧', 'Complete a round in Starlight glen'],
+  ['game-on', 'Stargazer', '✧', 'Finish a game in Starlight glen'],
 ];
 
 function toast(message) {
-  $('#toast').textContent = !persistenceAvailable && !/storage|export/i.test(message) ? `${message} Export a save to keep your world.` : message;
+  $('#toast').textContent = !persistenceAvailable && !/storage|export/i.test(message) ? `${message} Download a save file to keep your world.` : message;
   $('#toast').classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 3500);
@@ -64,10 +64,10 @@ function retainMigrationOriginal() {
     // A version-specific original remains available after later imports.
     const retained = readLocal(key);
     if (key === MIGRATION_V2_KEY && retained !== null && retained !== raw) {
-      throw new Error('A different original version 2 world is already protected here. Download your new world and its original from Save. Your saved world has not been overwritten.');
+      throw new Error('An original version 2 save is already kept here. Open Save to download this world’s original, then finish the upgrade. Your saved world hasn’t changed.');
     }
     if (key === MIGRATION_KEY || retained === null) localStorage.setItem(key, raw);
-    if (readLocal(key) !== raw) throw new Error('Could not keep an exact original save. Download it from Save before replacing this world.');
+    if (readLocal(key) !== raw) throw new Error('We couldn’t keep the original save. Download it from Save before replacing this world.');
     if (readLocal(BACKUP_KEY) === null) {
       try { localStorage.setItem(BACKUP_KEY, raw); }
       catch { /* The independent migration original is already retained. */ }
@@ -89,9 +89,9 @@ function persist() {
     return true;
   } catch (error) {
     dirtyMemory = true; persistenceAvailable = false;
-    $('#save-location').textContent = 'Unsaved · export to keep your world';
+    $('#save-location').textContent = 'Not saved: download a copy';
     $('#save-location').classList.add('unsaved');
-    toast(/original.*save|original version 2/i.test(error.message) ? error.message : 'Browser storage is unavailable. Export a save to keep your world.');
+    toast(/original.*save|original version 2/i.test(error.message) ? error.message : 'Your browser’s storage couldn’t keep this save. Download a save file to keep your world.');
     return false;
   }
 }
@@ -114,7 +114,7 @@ function petIdentity(pet) {
 function readCurrentWorld() {
   const raw = readLocal(SAVE_KEY);
   if (dirtyMemory) {
-    if (raw !== durableBaseRaw) throw new Error('Another tab saved a different world while your changes were unsaved. Export your unsaved world, then reload to use the newer saved world.');
+    if (raw !== durableBaseRaw) throw new Error('Another tab saved a different world. Open Save to download your unsaved changes before reloading.');
     return state;
   }
   if (raw !== null) {
@@ -127,7 +127,7 @@ function readCurrentWorld() {
     catch (error) { enterRecovery(raw, error.message); throw error; }
   }
   durableBaseRaw = raw;
-  if (recoveryRaw !== null) throw new Error('Resolve the saved-world recovery screen before changing your world.');
+  if (recoveryRaw !== null) throw new Error('Choose what to do on the save recovery screen first.');
   return state;
 }
 function renderCurrentWorld() {
@@ -150,7 +150,7 @@ function updateObservedPet(action, message) {
   return update((fresh) => {
     if (observed !== petIdentity(readActivePet(fresh)) || generation !== readLocal(WORLD_KEY)) {
       renderCurrentWorld();
-      throw new Error('Your world or active companion changed in another tab. Choose your friend again before practising or marking a bloom.');
+      throw new Error('Another tab changed your world or friend. Choose your friend again before practising or blooming.');
     }
     return action(fresh);
   }, message);
@@ -164,7 +164,7 @@ function updateTrailAction(action, focusId, message) {
     if (observed !== petIdentity(readActivePet(fresh)) || generation !== readLocal(WORLD_KEY)
         || viewGeneration !== trailViewGeneration || currentArea !== 'trails' || document.querySelector('dialog[open]')) {
       renderCurrentWorld();
-      throw new Error('Your friend, world or trail view changed. Open the trail and choose again.');
+      throw new Error('Your friend, world or trail changed. Open the trail and choose again.');
     }
     const next = action(fresh);
     applied = true;
@@ -202,7 +202,7 @@ function replaceWorld(next, previousRaw) {
     localStorage.setItem(WORLD_KEY, crypto.randomUUID());
     generationWritten = true;
     state = next; recoveryRaw = null;
-    if (!persist()) throw new Error('Could not save the replacement world. The current saved world has not been replaced.');
+    if (!persist()) throw new Error('We couldn’t save this world. Your previous saved world is still here.');
   } catch (error) {
     state = oldState; recoveryRaw = oldRecovery;
     dirtyMemory = oldDirty; durableBaseRaw = oldBase;
@@ -211,28 +211,28 @@ function replaceWorld(next, previousRaw) {
       if (generationWritten) restoreRaw(WORLD_KEY, oldGeneration);
     } catch {
       if (oldBackup !== null) download(oldBackup, 'petrealm-backup-recovery.json');
-      throw new Error('Browser recovery writes failed. Your current saved world was not replaced; the previous backup has been downloaded when present.');
+      throw new Error('We couldn’t finish restoring this world. Your saved world hasn’t changed. If there was a previous backup, it has been downloaded.');
     }
-    const reason = !backupWritten ? 'Cannot keep a recovery backup in this browser. Your current saved world has not been replaced.' : error.message;
-    throw new Error(`${reason} Export your world or free browser storage and try again.`);
+    const reason = !backupWritten ? 'We couldn’t keep a backup, so your saved world hasn’t changed.' : error.message;
+    throw new Error(`${reason} Download your world, or free some browser storage and try again.`);
   }
   stopGame(); render();
 }
 function mood() {
   if (!readActivePet(state)) return 'A friend is waiting to meet you.';
   const { satiety, happiness, energy } = readActivePet(state).stats;
-  if (satiety < 30) return 'A little hungry. A snack would be lovely.';
-  if (energy < 25) return 'Ready for a quiet moment and a cosy nap.';
-  if (happiness < 35) return 'Some company would brighten their day.';
-  return 'Feeling loved. Life is pretty lovely here.';
+  if (satiety < 30) return 'Ready for a snack.';
+  if (energy < 25) return 'Sleepy. Time for a cosy nap?';
+  if (happiness < 35) return 'Ready to play together.';
+  return 'Happy to be here with you.';
 }
 function renderProfile() {
   const pet = readActivePet(state);
   $('#wallet').textContent = state.wallet;
-  $('#pet-profile').innerHTML = pet ? `<div class="profile-line"><div class="pet-avatar">${creature(pet.species, `${SPECIES[pet.species].name}, ${pet.journey.growth ? 'first bloom' : 'young companion'}`, pet.wearing, Boolean(pet.journey.growth))}</div><div><h2 id="companion-name">${escape(pet.name)}</h2><p>${escape(SPECIES[pet.species].name)} · ${PERSONALITIES[pet.personality].name}${pet.journey.growth ? ' · First bloom' : ''}</p><div class="level-line"><span class="level-badge" id="pet-level">Level ${pet.level}</span><span class="experience-track"><span style="width:${pet.level >= 20 ? 100 : pet.xp % 100}%"></span></span><span id="pet-xp">${pet.xp} XP</span></div></div></div>` : `<div class="profile-line"><div class="pet-avatar">${creature('mossling')}</div><div><h2>A friend awaits</h2><p>A little companion to call your own</p></div></div>`;
+  $('#pet-profile').innerHTML = pet ? `<div class="profile-line"><div class="pet-avatar">${creature(pet.species, `${SPECIES[pet.species].name}, ${pet.journey.growth ? 'first bloom' : 'young companion'}`, pet.wearing, Boolean(pet.journey.growth))}</div><div><h2 id="companion-name">${escape(pet.name)}</h2><p>${escape(SPECIES[pet.species].name)} · ${PERSONALITIES[pet.personality].name}${pet.journey.growth ? ' · First bloom' : ''}</p><div class="level-line"><span class="level-badge" id="pet-level">Level ${pet.level}</span><span class="experience-track"><span style="width:${pet.level >= 20 ? 100 : pet.xp % 100}%"></span></span><span id="pet-xp">${pet.xp} XP</span></div></div></div>` : `<div class="profile-line"><div class="pet-avatar">${creature('mossling')}</div><div><h2>Who shall we meet?</h2><p>Choose a friend to explore with</p></div></div>`;
   $('#stats').innerHTML = ['satiety', 'happiness', 'energy'].map((stat) => {
     const value = pet ? Math.round(pet.stats[stat]) : 0;
-    return `<div class="stat ${stat}"><div class="stat-label"><span>${{satiety:'Fullness',happiness:'Happiness',energy:'Energy'}[stat]}</span><span id="stat-${stat}">${value} / 100</span></div><div class="stat-track" role="progressbar" aria-label="${stat}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${value}"><div class="stat-fill" style="width:${value}%"></div></div></div>`;
+    return `<div class="stat ${stat}"><div class="stat-label"><span>${{satiety:'Fullness',happiness:'Happiness',energy:'Energy'}[stat]}</span><span id="stat-${stat}">${value} / 100</span></div><div class="stat-track" role="progressbar" aria-label="${{satiety:'Fullness',happiness:'Happiness',energy:'Energy'}[stat]}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${value}"><div class="stat-fill" style="width:${value}%"></div></div></div>`;
   }).join('');
   $('#pet-mood').textContent = mood();
   $('#inventory').innerHTML = Object.entries(ITEMS).map(([id, item]) => `<div class="inventory-item"><span class="item-symbol ${id}" aria-hidden="true">${itemSymbols[id]}</span><span>${escape(item.name)}</span><span id="inventory-${id}" class="inventory-count">${state.inventory[id]}</span></div>`).join('');
@@ -279,7 +279,7 @@ function render() {
   renderProfile();
   document.querySelectorAll('.nav-button').forEach((button) => { button.classList.toggle('active', button.dataset.area === currentArea); button.setAttribute('aria-current', button.dataset.area === currentArea ? 'page' : 'false'); });
   document.body.dataset.place = currentArea;
-  const headings = { garden:['Sunmeadow','Your friend. Your world. Your next adventure.'], market:['Market lane','Take a wander. Find something fun.'], glen:['Starlight glen','Little lights, big adventures.'], realm:['Explore Petrealm','Pick a path or find a quest.'], arena:['Training grove','Learn a move. Meet a friendly rival.'], trails:['The little trails','Choose a way. Find a wonder. Bring it home.'] };
+  const headings = { garden:['Sunmeadow','Share a snack, play together or follow a trail.'], market:['Market lane','Choose a snack or an outfit for your friend.'], glen:['Starlight glen','Catch a firefly or find the matching flowers.'], realm:['Explore Petrealm','Choose somewhere to go or something to try.'], arena:['Training grove','Practise with your friend or try a match.'], trails:['The little trails','Explore with your friend and bring a treasure home.'] };
   $('#page-title').textContent = headings[currentArea][0];
   $('#page-subtitle').textContent = headings[currentArea][1];
   $('#area-content').innerHTML = currentArea === 'trails' ? renderTrails(state, selectedTreasure, trailJournalOpen) : { garden, market, glen, realm, arena }[currentArea]();
@@ -336,7 +336,7 @@ async function beginGame() {
         generation:readLocal(WORLD_KEY), pet:petIdentity(readActivePet(state)) };
       $('#game-start').hidden = true; $('#game-catch').hidden = false;
       $('#game-catch').focus();
-      $('#game-feedback').textContent = 'Watch the light. Catch it in the golden centre.';
+      $('#game-feedback').textContent = 'Press Catch when the firefly reaches the golden patch.';
       animateGame();
     });
   } catch (error) { toast(error.message); }
@@ -360,7 +360,7 @@ function catchLight() {
   game.score += points; game.attempts += 1;
   $('#game-score').textContent = `Score ${game.score} / 100`;
   $('#game-attempt').textContent = `${10 - game.attempts} catches left`;
-  $('#game-feedback').textContent = points >= 8 ? `A lovely catch! +${points} points` : points > 0 ? `A little spark! +${points} points` : 'Just missed. Breathe, and try the next one.';
+  $('#game-feedback').textContent = points >= 8 ? `Great catch! +${points} points` : points > 0 ? `Caught it! +${points} points` : 'Missed it. Try the next one!';
   game.speed += .06;
   if (game.attempts >= 10) endGame();
 }
@@ -373,7 +373,7 @@ async function endGame() {
     await withSaveLock(() => {
       readCurrentWorld();
       if (completed.generation !== readLocal(WORLD_KEY) || completed.pet !== petIdentity(readActivePet(state))) {
-        throw new Error('Your saved world was replaced in another tab. This old round has ended without a reward.');
+        throw new Error('Another tab changed your world or friend. This round ended without a reward.');
       }
       const oldWallet = state.wallet;
       state = claimGameReward(state, completed.score, Date.now(), completed.kind);
@@ -383,12 +383,12 @@ async function endGame() {
     if (currentArea === 'glen' && gameMode === 'firefly' && completed.kind === 'firefly') {
       $('#game-score').textContent = `Score ${completed.score} / 100`;
       $('#game-attempt').textContent = 'Round complete';
-      $('#game-feedback').textContent = `${completed.score} points · ${earned} pebbles earned. ${earned === 0 && completed.score > 0 ? 'Daily reward limit reached. ' : ''}A little brighter already.`;
+      $('#game-feedback').textContent = `${completed.score} points · ${earned} pebbles earned. ${earned === 0 && completed.score > 0 ? 'You’ve earned today’s game pebbles. ' : ''}You can play again for Happiness and XP.`;
     }
     if (currentArea === 'glen' && gameMode === 'memory' && completed.kind === 'memory') {
       $('#memory-feedback').textContent = `${completed.matches} pairs in ${completed.moves} turns · score ${completed.score} / 100 · ${earned} pebbles earned.`;
     }
-    toast(`Round complete! ${earned} pebbles found in the glen.`);
+    toast(`Round finished! ${earned} pebbles earned.`);
   } catch (error) { render(); toast(error.message); }
 }
 
@@ -411,7 +411,7 @@ async function beginMemory() {
         generation:readLocal(WORLD_KEY),pet:petIdentity(readActivePet(state))};
       $('#memory-start').disabled = true;
       updateMemoryBoard();
-      $('#memory-feedback').textContent = 'Find two little wonders that bloom together.';
+      $('#memory-feedback').textContent = 'Find the matching flowers.';
       memoryTimer = setInterval(() => {
         if (!game || game.kind !== 'memory') return;
         const remaining = Math.max(0,75-Math.floor((performance.now()-game.started)/1000));
@@ -433,7 +433,7 @@ function updateMemoryBoard() {
     tile.textContent = visible ? memorySymbols[game.cards[index]] : '❀';
     tile.setAttribute('aria-label', visible ? `${memoryLabels[game.cards[index]]}${matched ? ', matched' : ''}` : `Hidden card ${index+1}`);
   });
-  $('#memory-moves').textContent = `${game.moves} turns`;
+  $('#memory-moves').textContent = `${game.moves} ${game.moves === 1 ? 'turn' : 'turns'}`;
   $('#memory-matches').textContent = `${game.matches} / 6 pairs`;
 }
 function flipMemory(index) {
@@ -446,10 +446,10 @@ function flipMemory(index) {
     const [first,second] = game.flipped;
     if (game.cards[first] === game.cards[second]) {
       game.matched.push(first,second); game.flipped = []; game.matches += 1;
-      $('#memory-feedback').textContent = 'A lovely pair! Keep those little places in mind.';
+      $('#memory-feedback').textContent = 'A match! Can you find the next pair?';
       if (game.matches === 6) { game.score = Math.max(0,100-2*(game.moves-6)); endGame(); return; }
     } else {
-      $('#memory-feedback').textContent = 'Different little wonders. Remember where they grow.';
+      $('#memory-feedback').textContent = 'Not a match. Remember where they are and try again.';
       memoryFlipTimer = setTimeout(() => {
         if (!game || game.kind !== 'memory') return;
         game.flipped = []; updateMemoryBoard();
@@ -472,7 +472,7 @@ function enterRecovery(raw, message) {
 async function importFile(file, errorSelector) {
   if (!file) return;
   try {
-    if (file.size > 32768) throw new Error('This save is too large. Petrealm saves must be no larger than 32 KiB.');
+    if (file.size > 32768) throw new Error('This save file is too big. Choose a Petrealm save of 32 KiB or less.');
   const raw = await file.text();
     const restored = parseSave(raw);
     await withSaveLock(() => {
@@ -484,7 +484,7 @@ async function importFile(file, errorSelector) {
       $('#recovery-dialog').close(); $('#save-dialog').close();
       if (!readActivePet(state)) showAdoption();
     });
-    toast('Your world is home. Save imported successfully.');
+    toast('Your world is back. Carry on exploring!');
   } catch (error) { $(errorSelector).textContent = error.message; }
 }
 
@@ -500,7 +500,7 @@ $('#adoption-form').addEventListener('submit', async (event) => {
       if (adoptionStartedCount === 0) currentArea = 'garden';
       persist(); render(); $('#adoption-dialog').close();
     });
-    toast(`Welcome home, ${readActivePet(state).name}. Your adventure starts here.`);
+    toast(`Welcome home, ${readActivePet(state).name}. Let’s explore!`);
   } catch (error) { $('#adoption-error').textContent = error.message; }
 });
 $('#pet-personality').addEventListener('change', () => {
@@ -510,10 +510,10 @@ $('#pet-personality').addEventListener('change', () => {
 $('#close-adoption').addEventListener('click', () => { if (readActivePet(state)) $('#adoption-dialog').close(); });
 $('#adoption-dialog').addEventListener('cancel', (event) => { if (!readActivePet(state)) event.preventDefault(); });
 $('#recovery-dialog').addEventListener('cancel', (event) => event.preventDefault());
-$('#daily-reward').addEventListener('click', () => update((s) => claimDaily(s, Date.now()), 'A little daily delight! 40 pebbles added to your satchel.'));
+$('#daily-reward').addEventListener('click', () => update((s) => claimDaily(s, Date.now()), 'Mallow sent you 40 pebbles. What will you spend them on?'));
 function openSaves() {
   trailViewGeneration += 1;
-  if (game) { stopGame(); render(); toast('Your unfinished round has ended. No reward was claimed.'); }
+  if (game) { stopGame(); render(); toast('This round ended before you finished, so it earned no reward.'); }
   $('#save-error').textContent = '';
   const hasBackup = readLocal(BACKUP_KEY) !== null;
   $('#restore-backup').disabled = !hasBackup;
@@ -527,7 +527,7 @@ function openSaves() {
 }
 function openSatchel() {
   trailViewGeneration += 1;
-  if (game) { stopGame(); render(); toast('Your unfinished round has ended. No reward was claimed.'); }
+  if (game) { stopGame(); render(); toast('This round ended before you finished, so it earned no reward.'); }
   if (!$('#satchel-dialog').open) $('#satchel-dialog').showModal();
 }
 $('#satchel-button').addEventListener('click', openSatchel);
@@ -543,19 +543,19 @@ $('#export-save').addEventListener('click', async () => {
       // newer world. Export never discards it or overwrites that newer world.
       download(serialiseSave(state), `petrealm-${day()}.json`);
     });
-    toast('A little world, safely packed.');
+    toast('Your save file is ready. Keep it somewhere you can find it.');
   } catch (error) { $('#save-error').textContent = error.message; }
 });
 $('#import-save').addEventListener('change', (event) => { importFile(event.target.files[0], '#save-error'); event.target.value = ''; });
 $('#recovery-import').addEventListener('change', (event) => { importFile(event.target.files[0], '#recovery-error'); event.target.value = ''; });
 $('#export-original').addEventListener('click', () => {
   const raw = pendingMigrationRaw ?? readLocal(MIGRATION_KEY);
-  if (raw === null) { $('#save-error').textContent = 'No original version 1 migration save is available in this browser.'; return; }
+  if (raw === null) { $('#save-error').textContent = 'There’s no original version 1 save in this browser.'; return; }
   download(raw,'petrealm-original-version-1.json');
 });
 $('#export-original-v2').addEventListener('click', () => {
   const raw = pendingV2MigrationRaw ?? readLocal(MIGRATION_V2_KEY);
-  if (raw === null) { $('#save-error').textContent = 'No original version 2 save is available in this browser.'; return; }
+  if (raw === null) { $('#save-error').textContent = 'There’s no original version 2 save in this browser.'; return; }
   download(raw, 'petrealm-original-version-2.json');
   if (raw === pendingV2MigrationRaw) {
     exportedV2OriginalRaw = raw;
@@ -573,19 +573,19 @@ $('#finish-v2-upgrade').addEventListener('click', async () => {
     await withSaveLock(() => {
       readCurrentWorld();
       if (original === null || pendingV2MigrationRaw !== original || readLocal(SAVE_KEY) !== original
-          || generation !== readLocal(WORLD_KEY)) throw new Error('Your saved world changed. Download its current original before finishing the upgrade.');
+          || generation !== readLocal(WORLD_KEY)) throw new Error('Your saved world changed. Download its new original before finishing the upgrade.');
       // This explicit action follows the original's native download. Keep the
       // first protected original and occupied recovery backup unchanged.
       pendingV2MigrationRaw = null;
       if (!persist()) {
         pendingV2MigrationRaw = original;
-        throw new Error('This world is still unsaved. Its original and earlier backups are unchanged; export your world or free storage before trying again.');
+        throw new Error('This world still couldn’t be saved. Your original and backups are unchanged. Download your world, or free some browser storage and try again.');
       }
       exportedV2OriginalRaw = null;
       render();
       $('#finish-upgrade-section').hidden = true;
       $('#export-earlier-v2').hidden = true;
-      $('#save-error').textContent = 'Upgrade finished. Your downloaded original, earlier protected original and previous backup are kept.';
+      $('#save-error').textContent = 'Your world is ready to play. Your original save files and previous backup have been kept.';
     });
   } catch (error) { $('#save-error').textContent = error.message; }
 });
@@ -604,7 +604,7 @@ $('#restore-backup').addEventListener('click', async () => {
       replaceWorld(restored, readLocal(SAVE_KEY) ?? serialiseSave(state));
       $('#save-dialog').close(); if (!readActivePet(state)) showAdoption();
     });
-    toast('Previous save restored. Your other world is now the backup.');
+    toast('Your previous world is back. The world you left is now your backup.');
   } catch (error) { $('#save-error').textContent = error.message; }
 });
 $('#download-recovery').addEventListener('click', () => download(recoveryRaw || '', 'petrealm-recovery-original.json'));
@@ -612,7 +612,7 @@ $('#start-fresh').addEventListener('click', async () => {
   try {
     await withSaveLock(() => {
       const latestRaw = readLocal(SAVE_KEY);
-      if (latestRaw !== recoveryRaw) throw new Error('This world changed in another tab. Reopen it before choosing to start fresh.');
+      if (latestRaw !== recoveryRaw) throw new Error('Another tab changed this world. Reopen it before starting a new one.');
       replaceWorld(createState(Date.now()), latestRaw ?? recoveryRaw ?? '');
       $('#recovery-dialog').close(); showAdoption();
     });
@@ -657,56 +657,56 @@ document.addEventListener('click', (event) => {
     const run = Number(target.dataset.trailRun);
     const step = Number(target.dataset.trailStep);
     updateTrailAction((s) => {
-      if (s.trails.active?.step !== step) throw new Error('Your outing moved on in another tab. Read the current part before heading home.');
+      if (s.trails.active?.step !== step) throw new Error('Another tab continued your trail. Read the next part before heading home.');
       return leaveTrail(s, run, Date.now());
-    }, 'trail-map-title', 'Home again. Your bond and finds are safe; this unfinished outing earned no reward.');
+    }, 'trail-map-title', 'Back home. This outing earned no reward, but you’ve kept your earlier finds and bond.');
   }
   if (target.dataset.displaySlot !== undefined) {
     const slot = Number(target.dataset.displaySlot);
     const treasure = target.dataset.clearTreasure !== undefined ? null : target.dataset.displayTreasure;
     const display = JSON.stringify(state.trails.display);
     updateTrailAction((s) => {
-      if (JSON.stringify(s.trails.display) !== display) throw new Error('Your meadow display changed in another tab. Choose a spot again.');
+      if (JSON.stringify(s.trails.display) !== display) throw new Error('Another tab moved your meadow treasures. Choose a spot again.');
       return displayTreasure(s, treasure, slot, Date.now());
-    }, treasure ? `treasure-slot-${slot}` : 'trail-journal-summary', treasure ? 'A little wonder, brought home. Go see it in your meadow!' : 'Back in your journal. The treasure is still yours.');
+    }, treasure ? `treasure-slot-${slot}` : 'trail-journal-summary', treasure ? 'Your treasure is in the meadow. Go and see!' : 'Back in your journal. The treasure is still yours.');
   }
   if (target.id === 'adopt-another') {
     if (state.pets.length < petCapacity(state) && !battleActive(state)) showAdoption();
   }
-  if (target.dataset.petId) update((s) => selectPet(s,target.dataset.petId,Date.now()), 'A different little friend, the same lovely home.');
-  if (target.dataset.equip) update((s) => equipAccessory(s,target.dataset.equip === 'none' ? null : target.dataset.equip,target.dataset.slot,Date.now()), target.dataset.equip === 'none' ? 'A little outfit change. Accessory returned to the wardrobe.' : 'Looking lovely! Accessory equipped.');
+  if (target.dataset.petId) update((s) => selectPet(s,target.dataset.petId,Date.now()), 'Your chosen friend is ready to play.');
+  if (target.dataset.equip) update((s) => equipAccessory(s,target.dataset.equip === 'none' ? null : target.dataset.equip,target.dataset.slot,Date.now()), target.dataset.equip === 'none' ? 'Outfit taken off. Another friend can wear it now.' : 'Your friend is wearing their new outfit.');
   if (target.dataset.shopFilter) { marketFilter = target.dataset.shopFilter; render(); }
   if (target.id === 'bank-deposit' || target.id === 'bank-withdraw') {
     const amount = Number($('#bank-amount').value);
     const operation = target.id === 'bank-deposit' ? deposit : withdraw;
     update((s) => operation(s,amount,Date.now()), target.id === 'bank-deposit' ? `${amount} pebbles tucked safely away.` : `${amount} pebbles returned to your pocket.`);
   }
-  if (target.id === 'bank-interest') update((s) => claimBankInterest(s,Date.now()), 'A little growth. Today’s interest is saved in the Pebble Keep.');
+  if (target.id === 'bank-interest') update((s) => claimBankInterest(s,Date.now()), 'Today’s interest is in your savings.');
   if (target.id === 'bank-upgrade') {
     const tier = $('#bank-tier').value;
-    update((s) => upgradeBankTier(s,tier,Date.now()), 'Your savings have a new home. This tier stays yours after withdrawals.');
+    update((s) => upgradeBankTier(s,tier,Date.now()), 'Your savings account is upgraded. You keep this rate when you take pebbles out.');
   }
-  if (target.dataset.claimQuest) update((s) => claimQuest(s,target.dataset.claimQuest,Date.now()), 'A little quest, completed. Gift and experience collected!');
-  if (target.id === 'quest-day-complete') update((s) => claimQuestDay(s,Date.now()), 'Today’s quest gift is collected. Seven days in a row earn an extra weekly gift.');
-  if (target.dataset.battleStart) update((s) => startBattle(s,target.dataset.battleStart,Date.now()), 'A friendly challenge begins. Choose your first move.');
+  if (target.dataset.claimQuest) update((s) => claimQuest(s,target.dataset.claimQuest,Date.now()), 'Quest gift collected! Your pebbles and XP have been added.');
+  if (target.id === 'quest-day-complete') update((s) => claimQuestDay(s,Date.now()), 'You’ve collected today’s quest gift. Seven days in a row earn a bonus.');
+  if (target.dataset.battleStart) update((s) => startBattle(s,target.dataset.battleStart,Date.now()), 'Your match has started. Choose your first move.');
   if (target.dataset.battleAction) update((s) => battleAction(s,target.dataset.battleAction,Date.now()));
   if (target.dataset.gameMode) { stopGame(); gameMode = target.dataset.gameMode; render(); }
   if (target.id === 'memory-start') beginMemory();
   if (target.dataset.memoryIndex !== undefined) flipMemory(Number(target.dataset.memoryIndex));
   if (target.id === 'lodge-membership') {
     const tier = state.membership.tier === 'explorer' ? 'free' : 'explorer';
-    update((s) => setMembership(s,tier,Date.now()), tier === 'explorer' ? 'Welcome to the Explorer Lodge. Seven extra companion spaces are yours.' : 'Standard mode restored. Your family and progress are kept.');
+    update((s) => setMembership(s,tier,Date.now()), tier === 'explorer' ? 'Welcome to the Explorer Lodge. There’s room for seven more friends.' : 'You’ve left the Lodge. Your friends and progress stay with you.');
   }
-  if (target.id === 'lodge-parcel') update((s) => claimLodgeParcel(s,Date.now()), 'A Lodge parcel! 20 pebbles and a sunberry added to your satchel.');
-  if (target.id === 'use-expansion') update((s) => useExpansion(s,Date.now()), 'A little more room for wonder. One permanent companion space added.');
+  if (target.id === 'lodge-parcel') update((s) => claimLodgeParcel(s,Date.now()), 'Your Lodge parcel has arrived: 20 pebbles and a sunberry.');
+  if (target.id === 'use-expansion') update((s) => useExpansion(s,Date.now()), 'There’s room for one more friend in your meadow.');
   if (target.dataset.species) { selectedSpecies = target.dataset.species; selectedPersonality = SPECIES[selectedSpecies].personality; selectSpecies(); }
-  if (target.id === 'pet-train') updateObservedPet((s) => trainPet(s, Date.now()), 'A good practice, safely learned. Your companion’s experience has grown.');
-  if (target.id === 'pet-grow') updateObservedPet((s) => growPet(s, Date.now()), 'Their first bloom! A new look, and a little more wisdom for future practice.');
+  if (target.id === 'pet-train') updateObservedPet((s) => trainPet(s, Date.now()), 'Practice finished. Your friend earned XP.');
+  if (target.id === 'pet-grow') updateObservedPet((s) => growPet(s, Date.now()), 'Your friend has bloomed! They have a new look and earn more XP from practice.');
   if (target.dataset.buy) update((s) => purchase(s, target.dataset.buy, Date.now()), `${ITEMS[target.dataset.buy].name} tucked into your satchel.`);
-  if (target.id === 'feed-berry') update((s) => care(s, 'feed', 'berry', Date.now()), 'A sweet snack shared. Their fullness and happiness are brighter.');
-  if (target.id === 'feed-acorn') update((s) => care(s, 'feed', 'acorn', Date.now()), 'A hearty snack shared. A little more fullness, energy and happiness.');
-  if (target.id === 'care-play') update((s) => care(s, 'play', 'ribbon', Date.now()), 'A very good wiggle. Happier, and ready for a little rest.');
-  if (target.id === 'care-rest') update((s) => care(s, 'rest', undefined, Date.now()), 'A cosy nap. Rested, happy, and ready for the next little adventure.');
+  if (target.id === 'feed-berry') update((s) => care(s, 'feed', 'berry', Date.now()), 'Berry eaten! Your friend feels fuller and happier.');
+  if (target.id === 'feed-acorn') update((s) => care(s, 'feed', 'acorn', Date.now()), 'Acorn eaten! Your friend feels fuller, happier and more energetic.');
+  if (target.id === 'care-play') update((s) => care(s, 'play', 'ribbon', Date.now()), 'That was fun! Ribbon play brought Happiness and used some Energy.');
+  if (target.id === 'care-rest') update((s) => care(s, 'rest', undefined, Date.now()), 'Nap finished. Your friend has more Energy and Happiness.');
   if (target.id === 'game-start') beginGame();
   if (target.id === 'game-catch') catchLight();
 });
@@ -723,7 +723,7 @@ window.addEventListener('storage', async (event) => {
       if (dirtyMemory) {
         if (raw !== durableBaseRaw) {
           stopGame(); render();
-          toast('Another tab saved a newer world. Your unsaved world is preserved here: export it before reloading.');
+          toast('Another tab saved a newer world. Download your unsaved world from Save before reloading.');
         }
         return;
       }
@@ -776,4 +776,4 @@ try {
   render(); toast(error.message);
   if (!readActivePet(state)) showAdoption();
 }
-if (!persistenceAvailable) setTimeout(() => toast('Storage is unavailable. Export a save to keep your world.'), 200);
+if (!persistenceAvailable) setTimeout(() => toast('Your browser’s storage couldn’t keep this save. Download a save file to keep your world.'), 200);

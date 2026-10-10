@@ -1,6 +1,6 @@
-# Public-surface feature map
+# Initial feature research
 
-Research date: 2026-10-09. This file records the initial v1 investigation. Current free and Premium feature delivery is tracked in [the version 2 parity ledger](../parity-ledger.md). This document separates observations of official public pages from implementation decisions. No authenticated account access, private API access, source recovery or original asset copying was performed.
+Research date: 2026-10-09. This is the initial version 1 investigation, not a list of today’s features. See [the feature comparison](../parity-ledger.md) for later work. The table separates what official public pages showed from Petrealm’s own design choices. The research used no authenticated accounts or private APIs and recovered no source code or original assets.
 
 ## Sources and observations
 
@@ -11,7 +11,7 @@ Research date: 2026-10-09. This file records the initial v1 investigation. Curre
 | [Help Centre](https://portal.neopets.com/support) | The official portal links separate help centres for the classic browser game and other services. | Public page fetched successfully. It does not establish in-game care or economy mechanics. |
 | [Market bazaar](https://www.neopets.com/market_bazaar.phtml) | No direct observation was obtained through the text browser. | Fetch returned HTTP 403. Shop prices, inventory flows and authenticated behaviour remain unverified. |
 
-## Independently implemented behaviour
+## What the first version built
 
 | Publicly described category | Petrealm implementation | Evidence classification |
 | --- | --- | --- |
@@ -26,6 +26,6 @@ Research date: 2026-10-09. This file records the initial v1 investigation. Curre
 
 ## REA workflow and limits
 
-The coordinating task retrieved the user's [REA](https://github.com/morluto/rea) tool repository, pinned initially at `6ce3288`, to investigate anonymous public surfaces. This implementation is grounded in the public categories above and independently written behaviour. The coordinating agent owns REA runtime captures and their actual receipts; this feature map does not claim a capture succeeded unless its separate receipt says so.
+The project retrieved [morluto’s REA toolkit](https://github.com/morluto/rea), initially pinned at `6ce3288`, to inspect anonymous public pages. Petrealm used the categories above to design its own game. The coordinator kept the REA captures and receipts separately. This feature map does not count a capture as successful unless its receipt confirms it.
 
-A useful next research pass would observe anonymous pet-creation, shop, inventory and game pages wherever they are openly accessible, recording screenshots and transition descriptions. Account-only flows remain gaps until the operator expressly authorises account use. Exact parity, backend behaviour, network APIs, player shops, wardrobe, combat, quests and multiplayer are outside this initial build.
+The next research step proposed for this initial build was to inspect openly accessible creation, shop, inventory and game pages, with screenshots and notes about each action. Account-only flows needed the operator’s explicit permission. Exact feature parity, backend behaviour, network APIs, player shops, outfits, combat, quests and multiplayer were outside that first build.

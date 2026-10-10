@@ -139,7 +139,7 @@ test('strict imports reject partial or impossible companion metadata and leave t
   for (const change of [(p) => { delete p.journey; }, (p) => { delete p.personality; }, (p) => { p.personality = '__proto__'; }, (p) => { p.journey.extra = 1; }, (p) => { p.journey.feeds = 0.5; }, (p) => { p.journey.growth = 2; }, (p) => { p.journey.growth = 1; }, (p) => { p.journey.feeds = 1; }]) {
     const invalid = structuredClone(original); change(invalid.pets[0]); assert.throws(() => parseSave(JSON.stringify(invalid)));
   }
-  assert.throws(() => adopt(original, 'Oops', 'briarhare', NOW, 'constructor'), /personality/);
+  assert.throws(() => adopt(original, 'Oops', 'briarhare', NOW, 'constructor'), /available personalities/);
   assert.equal(bytes(original), before);
 });
 

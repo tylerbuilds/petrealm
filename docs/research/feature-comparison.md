@@ -1,6 +1,6 @@
-# Petrealm / Neopets next-wave comparison
+# Bank and quest feature comparison: 0.3 snapshot
 
-Final frozen local comparison All **121** original reference rows remain present. The final classification is **10 implemented local equivalents, 20 partial and 91 missing**, compared with the sealed 0.2 snapshot's 8/19/94. Authenticated Neopets behaviour was not exercised; original algorithms are not established. Only the seven bank/quest rows were reassessed.
+This is the comparison recorded for Petrealm 0.3. All **121** reference rows were kept. The result was **10 working local equivalents, 20 partial features and 91 missing features**, compared with 8/19/94 in the saved 0.2 snapshot. Only the seven bank and quest rows were reassessed. No authenticated Neopets play or original algorithms were verified.
 
 | Requirement | 0.2 | Next-wave mapping | Delivered local behaviour and limits |
 |---|---|---|---|
@@ -12,18 +12,18 @@ Final frozen local comparison All **121** original reference rows remain present
 | Premium extra quest | Missing | Partial | Free local Explorer Lodge adds one original parcel objective. Paid active eligibility, subscription renewal/expiry, same-type source task catalogue and authenticated account allocation remain absent. |
 | Premium five-of-six qualification | Missing | Partial | Any five distinct local claims qualify, including the sixth parcel task; four cannot qualify and the sixth cannot replay completion. Paid Premium eligibility, source catalogue and authenticated server settlement remain absent. |
 
-The four savings names, balance thresholds, rates, integer ceiling and reward amounts are independently chosen Petrealm rules. Interest is `ceil(balance × annual basis points / 3,650,000)` with a positive balance, explicit UTC claim and no missed-day accrual. These are not recovered Neopets algorithms. The existing source inventory and official links are preserved unchanged; additional official source metadata is provided separately without raw response bodies.
+Petrealm’s four savings names, thresholds, rates, rounding and rewards were chosen independently. Interest is `ceil(balance × annual basis points / 3,650,000)`, collected explicitly once per UTC day with a positive balance. Missed days do not add interest. This is not a recovered Neopets formula. The earlier inventory and official links were kept unchanged; extra source metadata was recorded separately without raw response bodies.
 
-## Current evidence
+## Checks recorded for this snapshot
 
-Recorded execution reports **44/44 Node tests**, **10 matching model assertions** and **21 matching transaction VM assertions**. The unit receipt matches all seven runtime files and all four test files; its package/version metadata drift is recorded separately. VM checks use queued WebLocks/localStorage stubs and do not qualify browser layout or macOS.
+The recorded runs passed **44/44 Node tests**, **10 model assertions** and **21 app transaction assertions**. The unit-test receipt matched all seven runtime files and four test files; a separate note records its package/version metadata drift. The transaction tests used queued WebLocks and localStorage stubs. They did not test browser layout or macOS.
 
-Stored Linux browser receipts report **18 core checks** and **12 bank/quest checks**. Core proof matches this source snapshot; bank/quest proof matches this source snapshot. Bank/quest QA performs real UI actions and firefly completions across a **synthetic seven-day UTC clock**; it does not prove seven elapsed real days or the original server clock. The coordinator freeze matches those hashes. Current macOS proof is pending; sealed 0.2 proof is historical.
+Linux browser receipts passed **18 core checks** and **12 bank/quest checks**, both matching this snapshot’s files. The bank/quest tests used real interface actions and firefly rounds over a controlled seven-day UTC clock. They did not prove seven elapsed days or the target’s server clock. The coordinator’s frozen files matched those receipts. macOS proof was still pending at the time; 0.2 results described the earlier release.
 
-Normal-use UI proof records **10 checks** and matches this source snapshot. New-panel layout proof records **8 checks** and matches this source snapshot. Core, bank/quests, UI and panels are all required for final sealing; a passing stale-CSS receipt cannot satisfy that gate.
+Layout receipts passed **10 general UI checks** and **8 bank/quest panel checks**, using the same files. Core play, bank/quests, UI and panels were all required before final approval. A passing receipt from an older CSS file could not replace a current check.
 
-Additional source-matching receipts record **5 map-geometry checks**, **5 legacy-file checks**, **5 unadopted-save migration checks**, **5 storage-quota checks** and **3 built-application smoke checks**. Each receipt's own hash, source-match flag and scope remain separate from the feature classifications.
+Other matching receipts passed **5 map-geometry checks**, **5 older-file checks**, **5 unadopted-save migration checks**, **5 storage-quota checks** and **3 production-build smoke checks**. Each receipt records its own hash, scope and file match; those check counts are separate from the feature classifications.
 
-The other 114 classifications are retained. Their delivered code/test anchors are refreshed to this worktree, and old receipts are explicitly labelled historical. Accounts, player shops, trades, auctions, social services, NC funding/commerce, paid subscriptions, original catalogues and exact authenticated behaviour remain outside the local implementation.
+The other 114 classifications were kept. Their code and test references were updated, while older receipts were labelled as history. Accounts, player shops, trades, auctions, social features, Neocash purchases, paid subscriptions, original catalogues and exact authenticated behaviour remained outside the local game.
 
-No application, tests, browsers, services or providers were launched by this research comparison. Preserved historical files and artefact validation are evidence of the mapping; publishing, deployment and platform qualification require their own receipts.
+This comparison itself launched no app, tests, browser, service or provider. It checked the recorded mapping and files. Publication, deployment and platform runs needed separate receipts. [Checks by release](../verification.md) records later work.

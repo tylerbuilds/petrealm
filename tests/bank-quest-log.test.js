@@ -111,7 +111,7 @@ test('interest is eligible at the exact UTC year boundary and rejects the combin
   capped.wallet = 999999990;
   const before = serialiseSave(capped);
   assert.equal(bankInterest(capped, NOW).ready, false);
-  assert.throws(() => claimBankInterest(capped, NOW), /combined wallet and bank limit/);
+  assert.throws(() => claimBankInterest(capped, NOW), /wallet and bank over their shared 1,000,000,000-pebble limit/);
   assert.equal(serialiseSave(capped), before);
   const spent = purchase(capped, 'berry', NOW);
   assert.equal(claimBankInterest(spent, NOW).bank.balance, 11);
@@ -120,17 +120,17 @@ test('interest is eligible at the exact UTC year boundary and rejects the combin
 test('five distinct daily objectives require real actions and explicit individual claims', () => {
   const original = companion();
   assert.deepEqual(dailyQuestIds(original), dailyIds);
-  assert.throws(() => claimQuestDay(original, NOW), /five distinct/);
+  assert.throws(() => claimQuestDay(original, NOW), /five different/);
   let state = objectives(original, NOW);
   for (const id of dailyIds) {
     assert.equal(questProgress(state, id, NOW).ready, true);
     assert.equal(questProgress(state, id, NOW).claimed, false);
   }
   assert.equal(questDayProgress(state, NOW).claimedQuests, 0);
-  assert.throws(() => claimQuestDay(state, NOW), /five distinct/);
+  assert.throws(() => claimQuestDay(state, NOW), /five different/);
   for (const id of dailyIds.slice(0, 4)) state = claimQuest(state, id, NOW);
   assert.equal(questDayProgress(state, NOW).ready, false);
-  assert.throws(() => claimQuestDay(state, NOW), /five distinct/);
+  assert.throws(() => claimQuestDay(state, NOW), /five different/);
   state = claimQuest(state, 'daily-rest', NOW);
   const wallet = state.wallet;
   state = claimQuestDay(state, NOW);
@@ -216,7 +216,7 @@ test('a missed daily-completion claim breaks the rolling streak without erasing 
   assert.equal(state.questLog.streak, 0);
   assert.equal(state.questLog.claimed.length, 0);
   assert.equal(state.questLog.completedDays, 1);
-  assert.throws(() => claimQuestDay(state, NOW + DAY), /five distinct/);
+  assert.throws(() => claimQuestDay(state, NOW + DAY), /five different/);
   state = completedDay(state, NOW + 2 * DAY);
   assert.equal(state.questLog.streak, 1);
   assert.equal(state.questLog.completedDays, 2);
@@ -297,7 +297,7 @@ test('daily and seventh-day bonuses fail atomically at the combined resource lim
   state.wallet = 999999961;
   const before = serialiseSave(state);
   assert.equal(questDayProgress(state, NOW).ready, false);
-  assert.throws(() => claimQuestDay(state, NOW), /combined wallet and bank limit/);
+  assert.throws(() => claimQuestDay(state, NOW), /wallet and bank over their shared 1,000,000,000-pebble limit/);
   assert.equal(serialiseSave(state), before);
   state = companion();
   for (let index = 0; index < 6; index += 1) state = completedDay(state, NOW + index * DAY);
@@ -305,7 +305,7 @@ test('daily and seventh-day bonuses fail atomically at the combined resource lim
   for (const id of dailyIds) state = claimQuest(state, id, NOW + 6 * DAY);
   state.wallet = 999999811;
   const weekBefore = serialiseSave(state);
-  assert.throws(() => claimQuestDay(state, NOW + 6 * DAY), /combined wallet and bank limit/);
+  assert.throws(() => claimQuestDay(state, NOW + 6 * DAY), /wallet and bank over their shared 1,000,000,000-pebble limit/);
   assert.equal(serialiseSave(state), weekBefore);
   state.wallet -= 1;
   state = claimQuestDay(state, NOW + 6 * DAY);

@@ -38,7 +38,7 @@ test('saved encounter choices retain their exact run/step and chosen reaction th
   assert.ok(html.includes(first.outcome));
   assert.match(html, /Bramble likes to try something bold/);
   assert.match(html, /Head home early · no find or reward/);
-  assert.match(html, /6 Energy and 2 Fullness used to set out stay spent/);
+  assert.match(html, /won’t get back the 6 Energy and 2 Fullness used to start/);
 });
 
 test('the final chosen outcome precedes its discovery and actual capped experience is truthful', () => {
@@ -56,7 +56,7 @@ test('the final chosen outcome precedes its discovery and actual capped experien
   state = startTrail(state, 'whisperwood', now);
   state = leaveTrail(state, state.trails.active.id, now);
   assert.deepEqual(state.trails.last, last);
-  assert.match(renderTrails(state), /Last completed outing · A NEW DISCOVERY!/);
+  assert.match(renderTrails(state), /Your last finished trail · A NEW DISCOVERY!/);
 });
 
 test('discovered objects actually enter the saved meadow while unfound objects stay hinted in journal', () => {
@@ -67,7 +67,7 @@ test('discovered objects actually enter the saved meadow while unfound objects s
   const restored = parseSave(serialiseSave(state));
   assert.match(renderGarden(restored), /class="meadow-treasures"/);
   assert.ok(renderGarden(restored).includes(`data-treasure-select="${id}"`));
-  assert.match(renderTrails(restored, id, true), /Replaced treasures stay in your journal/);
+  assert.match(renderTrails(restored, id, true), /If you swap treasures, you keep both in your journal/);
   assert.match(renderTrails(restored), /Something to discover/);
   state = displayTreasure(restored, null, 0, now);
   assert.deepEqual(state.trails.collection, [id]);
@@ -91,7 +91,7 @@ test('new scenery and treasure drawings have distinct original geometries', () =
   assert.equal(new Set(['whisperwood','glowpool','windridge'].flatMap((id) => [0,1,2].map((variant) => trailScenery(id, variant)))).size, 9);
   for (const id of ids) assert.match(treasureArt(id), /focusable="false"/);
   for (const id of ['button-mushroom', 'glass-pebble', 'wind-chime']) {
-    assert.match(TRAIL_TREASURES[id].hint, /knack at the final/);
+    assert.match(TRAIL_TREASURES[id].hint, /knack at the last stop/);
     assert.match(TRAIL_TREASURES[id].hint, /different outings/);
   }
 });

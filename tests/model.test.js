@@ -174,19 +174,19 @@ test('strict imports reject unknown fields, versions, invalid stats and inventor
   const original = pet();
   const before = serialiseSave(original);
   const cases = [
-    [(state) => { state.version = 4; }, /Unsupported save version/],
-    [(state) => { state.surprise = true; }, /unknown fields/],
+    [(state) => { state.version = 4; }, /can’t open this save version/],
+    [(state) => { state.surprise = true; }, /missing or aren’t recognised/],
     [(state) => { delete state.wallet; }, /missing/],
     [(state) => { state.inventory.berry = -1; }, /quantity/],
-    [(state) => { state.inventory.unknown = 1; }, /unknown fields/],
+    [(state) => { state.inventory.unknown = 1; }, /missing or aren’t recognised/],
     [(state) => { state.pets[0].stats.satiety = 101; }, /satiety/],
     [(state) => { state.pets[0].stats.energy = null; }, /energy/],
     [(state) => { state.pets[0].species = 'neopet'; }, /species/],
-    [(state) => { state.achievements.push('first-friend'); }, /duplicates/],
-    [(state) => { state.counts.adoptions = 2; }, /Adoption count/],
-    [(state) => { state.daily.lastClaimDay = '2026-02-30'; }, /valid UTC date/],
+    [(state) => { state.achievements.push('first-friend'); }, /each achievement only once/],
+    [(state) => { state.counts.adoptions = 2; }, /adoption total/],
+    [(state) => { state.daily.lastClaimDay = '2026-02-30'; }, /real UTC date/],
     [(state) => { state.game.earned = 121; }, /Daily game rewards/],
-    [(state) => { state.pets[0].adoptedAt = START + 1; }, /after the saved time/],
+    [(state) => { state.pets[0].adoptedAt = START + 1; }, /later than the save date/],
   ];
   for (const [change, pattern] of cases) {
     const invalid = structuredClone(original);
@@ -200,15 +200,15 @@ test('strict imports reject unknown fields, versions, invalid stats and inventor
 
 test('imports reject duplicate keys, escaped duplicate keys, invalid JSON and oversized files', () => {
   const text = serialiseSave(pet());
-  assert.throws(() => parseSave(text.replace('"wallet": 120', '"wallet": 120, "wallet": 50')), /duplicate field/);
-  assert.throws(() => parseSave(text.replace('"wallet": 120', '"wallet": 120, "wall\\u0065t": 50')), /duplicate field/);
-  assert.throws(() => parseSave(text.replace('"satiety": 85', '"satiety": 85, "satiety": 20')), /duplicate field/);
-  assert.throws(() => parseSave('{broken'), /not valid JSON/);
+  assert.throws(() => parseSave(text.replace('"wallet": 120', '"wallet": 120, "wallet": 50')), /lists.*twice/);
+  assert.throws(() => parseSave(text.replace('"wallet": 120', '"wallet": 120, "wall\\u0065t": 50')), /lists.*twice/);
+  assert.throws(() => parseSave(text.replace('"satiety": 85', '"satiety": 85, "satiety": 20')), /lists.*twice/);
+  assert.throws(() => parseSave('{broken'), /can’t read this file as a save/);
   assert.throws(() => parseSave(' '.repeat(32_769)), /too large/);
   assert.throws(() => parseSave('🌿'.repeat(9000)), /too large/);
-  assert.throws(() => parseSave('null'), /must be an object/);
-  assert.throws(() => parseSave('[]'), /must be an object/);
-  assert.throws(() => parseSave(`${'['.repeat(10_000)}0${']'.repeat(10_000)}`), /must be an object/);
+  assert.throws(() => parseSave('null'), /can’t read this save/);
+  assert.throws(() => parseSave('[]'), /can’t read this save/);
+  assert.throws(() => parseSave(`${'['.repeat(10_000)}0${']'.repeat(10_000)}`), /can’t read this save/);
 });
 
 test('save parser handles quotes, backslashes and punctuation in valid names', () => {
@@ -222,9 +222,9 @@ test('duplicate-key scanner bounds hidden nesting before the call stack can over
   const text = serialiseSave(pet());
   const hiddenWallet = (depth) => text.replace('"wallet": 120', `"wallet": ${'['.repeat(depth)}0${']'.repeat(depth)}, "wallet": 120`);
   // Root object is level 0; fifteen wallet arrays leave their scalar at level 16.
-  assert.throws(() => parseSave(hiddenWallet(15)), /duplicate field/);
-  assert.throws(() => parseSave(hiddenWallet(16)), /nested too deeply.*16 levels/);
+  assert.throws(() => parseSave(hiddenWallet(15)), /lists.*twice/);
+  assert.throws(() => parseSave(hiddenWallet(16)), /too many layers.*16 levels/);
   const malicious = hiddenWallet(10_000);
   assert.ok(new TextEncoder().encode(malicious).length < 32_768);
-  assert.throws(() => parseSave(malicious), /nested too deeply/);
+  assert.throws(() => parseSave(malicious), /too many layers/);
 });

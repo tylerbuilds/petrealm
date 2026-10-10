@@ -5,14 +5,14 @@ const LOCK_NAME = 'petrealm:world-save-v1';
 let databasePromise;
 
 function openMutexDatabase() {
-  if (!globalThis.indexedDB) throw new Error('This browser cannot safely coordinate saved worlds. Use a current browser or export your world.');
+  if (!globalThis.indexedDB) throw new Error('This browser can’t save your world safely. Use a newer browser, or download your save file.');
   if (!databasePromise) {
     databasePromise = new Promise((resolve, reject) => {
       const request = indexedDB.open('petrealm-save-mutex', 1);
       request.onupgradeneeded = () => request.result.createObjectStore('gate');
       request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(new Error('Browser save coordination is unavailable. Your saved world has not been changed.'));
-      request.onblocked = () => reject(new Error('Another tab is blocking save coordination. Close older Petrealm tabs and try again.'));
+      request.onerror = () => reject(new Error('Your browser couldn’t save right now. Your saved world hasn’t changed.'));
+      request.onblocked = () => reject(new Error('Another Petrealm tab is blocking the save. Close older tabs and try again.'));
     });
     databasePromise.catch(() => { databasePromise = undefined; });
   }
@@ -33,14 +33,14 @@ export async function withSaveLock(operation) {
     request.onsuccess = () => {
       try {
         result = operation();
-        if (result && typeof result.then === 'function') throw new Error('Save operations must finish inside the browser transaction.');
+        if (result && typeof result.then === 'function') throw new Error('The save couldn’t finish. Try again.');
         // The read/write transaction holds the object-store mutex even when
         // no IndexedDB record is written. Avoid a quota-sensitive bookkeeping
         // write after the operation has already committed local storage.
       } catch (error) { operationError = error; transaction.abort(); }
     };
     transaction.oncomplete = () => resolve(result);
-    transaction.onabort = () => reject(operationError || new Error('Save coordination failed. Your current world has not been changed.'));
+    transaction.onabort = () => reject(operationError || new Error('The save didn’t finish. Your saved world hasn’t changed.'));
     transaction.onerror = () => { /* onabort reports the failure once. */ };
   });
 }

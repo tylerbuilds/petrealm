@@ -65,7 +65,7 @@ test('exact v1 saves migrate without changing their economy, activity, clock or 
   assert.deepEqual(parseSave(JSON.stringify(empty)).pets, []);
   const invalid = legacySave();
   invalid.inventory.leafcap = 1;
-  assert.throws(() => parseSave(JSON.stringify(invalid)), /unknown fields/);
+  assert.throws(() => parseSave(JSON.stringify(invalid)), /missing or aren’t recognised/);
 });
 
 test('the roster follows free/explorer capacities, has stable IDs and independent active care', () => {
@@ -86,7 +86,7 @@ test('the roster follows free/explorer capacities, has stable IDs and independen
   for (let index = 8; index <= 14; index += 1) state = adopt(state, `Friend ${index}`, 'mossling', NOW);
   assert.equal(petCapacity(state), 14);
   assert.throws(() => adopt(state, 'Too many', 'mossling', NOW), /lodge is full/);
-  assert.throws(() => setMembership(state, 'free', NOW), /current lodge capacity/);
+  assert.throws(() => setMembership(state, 'free', NOW), /needs enough room/);
   const decayed = advanceTime(state, NOW + 3_600_000);
   for (let index = 0; index < state.pets.length; index += 1) {
     assert.equal(decayed.pets[index].stats.energy, state.pets[index].stats.energy - 1);
@@ -143,8 +143,8 @@ test('accessory ownership and slots are enforced across companions without consu
   state = equipAccessory(state, 'leafcap', 'head', NOW);
   assert.equal(readActivePet(state).wearing.head, 'leafcap');
   assert.equal(state.inventory.leafcap, 1);
-  assert.throws(() => equipAccessory(state, 'leafcap', 'neck', NOW), /neck slot/);
-  assert.throws(() => equipAccessory(state, 'ribbon', 'head', NOW), /head slot/);
+  assert.throws(() => equipAccessory(state, 'leafcap', 'neck', NOW), /companion’s neck/);
+  assert.throws(() => equipAccessory(state, 'ribbon', 'head', NOW), /companion’s head/);
   state = adopt(state, 'Cinder', 'emberkit', NOW);
   const before = serialiseSave(state);
   assert.throws(() => equipAccessory(state, 'leafcap', 'head', NOW), /another copy/);
@@ -336,18 +336,18 @@ test('active battles block pet changes and terminal snapshots reject inconsisten
     change(bad);
     assert.throws(() => parseSave(JSON.stringify(bad)), pattern);
   };
-  corrupt((bad) => { bad.battle.status = 'active'; }, /Active battle/);
+  corrupt((bad) => { bad.battle.status = 'active'; }, /ongoing arena match/);
   corrupt((bad) => { bad.battle.petHp = 1000; }, /Companion HP/);
-  corrupt((bad) => { bad.battle.petMaxHp = 1000; }, /maximum HP/);
-  corrupt((bad) => { bad.battleWins.ashgrub = false; }, /victory/);
-  corrupt((bad) => { bad.counts.battleWins = 0; }, /victory count/);
+  corrupt((bad) => { bad.battle.petMaxHp = 1000; }, /starting HP/);
+  corrupt((bad) => { bad.battleWins.ashgrub = false; }, /arena win/);
+  corrupt((bad) => { bad.counts.battleWins = 0; }, /arena win total/);
   corrupt((bad) => { bad.battle.opponentId = 'fake'; }, /opponent/);
   corrupt((bad) => { bad.battle.opponentId = ['ashgrub']; }, /opponent/);
-  corrupt((bad) => { bad.battle.turn = 1; }, /number of turns/);
-  corrupt((bad) => { bad.pets[0].level = 10; }, /level does not match/);
-  corrupt((bad) => { bad.pets[0].wearing.head = ['leafcap']; }, /head slot/);
-  corrupt((bad) => { bad.pets[0].id = 'pet-2'; }, /unique and ordered/);
-  corrupt((bad) => { bad.game.rounds.firefly = 1; }, /round counts/);
+  corrupt((bad) => { bad.battle.turn = 1; }, /turns played/);
+  corrupt((bad) => { bad.pets[0].level = 10; }, /level doesn’t match/);
+  corrupt((bad) => { bad.pets[0].wearing.head = ['leafcap']; }, /companion’s head/);
+  corrupt((bad) => { bad.pets[0].id = 'pet-2'; }, /separate numbers in adoption order/);
+  corrupt((bad) => { bad.game.rounds.firefly = 1; }, /mini-game totals/);
 });
 
 test('a failed arena settlement leaves the original battle and balance intact', () => {

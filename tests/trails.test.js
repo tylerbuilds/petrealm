@@ -188,7 +188,7 @@ test('display places move only discovered treasures, persist and never create du
   const before = bytes(state);
   assert.equal(bytes(displayTreasure(state, id, 2, NOW)), before);
   assert.deepEqual(parseSave(serialiseSave(state)), state);
-  rejectedWithoutChange(state, (current) => displayTreasure(current, 'wind-chime', 1, NOW), /discovered/);
+  rejectedWithoutChange(state, (current) => displayTreasure(current, 'wind-chime', 1, NOW), /found on an outing/);
   rejectedWithoutChange(state, (current) => displayTreasure(current, id, 3, NOW), /whole number/);
   rejectedWithoutChange(state, (current) => displayTreasure(current, id, 0.5, NOW), /whole number/);
   const cleared = displayTreasure(state, null, 2, NOW);
@@ -217,7 +217,7 @@ test('v2 migration keeps every old value and adds zero outing history without mu
   assert.equal(`${JSON.stringify(old, null, 4)}\n`, raw);
   assert.deepEqual(migrateState(next), next);
   const disguised = structuredClone(next); disguised.version = 2;
-  assert.throws(() => validateState(disguised), /unknown fields/);
+  assert.throws(() => validateState(disguised), /missing or aren’t recognised/);
 });
 
 test('strict v3 imports reject missing, invented, partial, unavailable and inconsistent outing history', () => {
@@ -263,7 +263,7 @@ test('resource, integer and counter boundaries reject before any cost, while cap
   assert.equal(readActivePet(started).stats.energy, 4);
   assert.equal(readActivePet(started).stats.satiety, 0);
   const fullSequence = friend(); fullSequence.trails.sequence = 1_000_000_000;
-  rejectedWithoutChange(fullSequence, (current) => startTrail(current, 'whisperwood', NOW), /reached its limit/);
+  rejectedWithoutChange(fullSequence, (current) => startTrail(current, 'whisperwood', NOW), /journal is full/);
   const saturated = complete(friend());
   saturated.pets[0].trail = { trips: 999_999_999, bond: 999_999_999 };
   saturated.trails.sequence = 1_000_000_000;
@@ -274,7 +274,7 @@ test('resource, integer and counter boundaries reject before any cost, while cap
   saturated.trails.last.bondGain = 2;
   saturated.trails.collection = ['seed-lantern'];
   assert.equal(validateState(saturated), true);
-  rejectedWithoutChange(saturated, (current) => startTrail(current, 'whisperwood', NOW), /reached its limit/);
+  rejectedWithoutChange(saturated, (current) => startTrail(current, 'whisperwood', NOW), /journal is full/);
   const nearXp = friend(); nearXp.pets[0].xp = MAX_XP - 3; nearXp.pets[0].level = 20;
   let completed = complete(nearXp);
   assert.equal(readActivePet(completed).xp, MAX_XP);

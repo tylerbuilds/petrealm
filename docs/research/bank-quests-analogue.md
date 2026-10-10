@@ -1,8 +1,8 @@
-# Bank interest and daily Quest Log analogue
+# Bank and quest rules: 0.3 research
 
-Reference documentation checked on 10 October 2026. This records the agreed Petrealm 0.3 rules and the public Neopets facts that informed them. The Neopets account flows were not exercised. Implementation and browser qualification are separate checks; this document alone is not a runtime parity receipt.
+Public documentation was checked on 10 October 2026. This page records the Petrealm 0.3 rules and the Neopets articles used while designing them. No Neopets account flows were tested. The sources explain the design; they do not prove the local app passed a browser test.
 
-## Documented Neopets behaviour
+## What the public Neopets articles say
 
 | Target fact | Official source and publication date | Boundary of this observation |
 | --- | --- | --- |
@@ -17,9 +17,9 @@ Reference documentation checked on 10 October 2026. This records the agreed Petr
 
 The National Neopian Bank has daily interest. An [official staff response in Neopian Times issue 1029](https://www.neopets.com/ntimes/index.phtml?issue=1029&section=editorial) addresses an incorrect interest-log message in March 2025. The reported message refers to depositing or withdrawing before collection; the current exact transaction-order restriction was not exercised. A [historical staff explanation in issue 291](https://www.neopets.com/ntimes/index.phtml?issue=291&section=editorial) calculates daily interest from an annual rate over 365 days and uses a 12.5% Ultimate Riches example. That historical example does not establish the current tier catalogue, thresholds, rounding, balance caps or eligibility rules. The current [bank page](https://www.neopets.com/bank.phtml) returned HTTP 403 during anonymous research; no access bypass was attempted.
 
-## Original Petrealm bank rules
+## Petrealm’s bank rules
 
-All names, thresholds and the four-tier arrangement below are Petrealm design choices. They are not a reconstruction of the target's present bank configuration. Rates are annual; interest is a daily whole-pebble amount.
+The names, thresholds and four account tiers below are Petrealm’s own design. They do not reproduce the target’s current bank setup. Rates are yearly game rates; daily interest is a whole number of pebbles.
 
 | Account | Minimum bank balance for an explicit upgrade | Annual rate | Basis points |
 | --- | ---: | ---: | ---: |
@@ -28,15 +28,15 @@ All names, thresholds and the four-tier arrangement below are Petrealm design ch
 | Canopy keeper | 10,000 | 10% | 1,000 |
 | Old grove trust | 100,000 | 12.5% | 1,250 |
 
-The player must explicitly choose a higher account while the current bank balance meets its threshold. An attained tier remains after withdrawal. No automatic upgrade or downgrade occurs.
+Choose a higher account when the bank holds enough pebbles. Once opened, that tier stays available even if you withdraw money. The account does not upgrade or downgrade itself.
 
-Daily interest is `ceil(bank balance × annual basis points / 3,650,000)`. A positive bank balance is required. For example, 1,000 pebbles at Sapling keeper produces 1 pebble; 100,000 at Old grove trust produces 35. The player explicitly collects it once per UTC day, and the award goes into the bank. Missed days do not accrue interest. Deposits, withdrawals and account upgrades cannot reopen an already collected day; unlike the unverified target ordering restriction, a transfer before an otherwise eligible collection does not prohibit it.
+Daily interest is `ceil(bank balance × annual basis points / 3,650,000)`. The bank must hold at least one pebble. For example, 1,000 pebbles at Sapling keeper earns 1; 100,000 at Old grove trust earns 35. Collect interest once per UTC day to add it to savings. Missed days do not build up interest. Depositing, withdrawing or upgrading cannot claim the same day again. You can transfer before collecting that day’s interest; the target’s exact transfer-order rule was not verified.
 
-A collection that would take the combined wallet and bank balance above one billion pebbles is rejected atomically. Rejection must preserve both balances and the collection marker, allowing a later eligible retry after spending. Successful collection updates the balance and same-day claim marker together.
+If collection would take the wallet and bank above one billion pebbles in total, it stops without changing either balance or marking the day as claimed. The player can spend some pebbles and try again. A successful claim saves the new balance and claim date together.
 
-## Original Petrealm daily and weekly rules
+## Petrealm’s daily and weekly quests
 
-Each UTC day has five distinct local objectives:
+Each UTC day has five different tasks:
 
 | Objective | Required successful actions |
 | --- | ---: |
@@ -46,18 +46,18 @@ Each UTC day has five distinct local objectives:
 | Complete a mini-game | 1 |
 | Rest a companion | 1 |
 
-Explorer Lodge adds a sixth objective: collect that day's Lodge parcel once. Its reward is an original local perk. A parcel already collected that day cannot be replayed by leaving and rejoining the Lodge.
+Explorer Lodge adds a sixth task: collect that day’s parcel. The parcel is an original local reward. Leaving and rejoining the Lodge cannot collect it again that day.
 
-Every quest requires its own explicit reward claim after meeting the objective. Any five distinct claimed daily quests unlock a separate **Collect daily reward** action worth 40 pebbles. Four claimed quests do not qualify. With Explorer Lodge, the parcel quest can replace any one of the other five; claiming all six does not produce another daily completion reward.
+Finish a task, then collect its quest gift. Collecting any five different daily quest gifts opens a separate **Collect daily reward** action worth 40 pebbles. Four gifts are not enough. Lodge members can use the parcel quest in place of one other task. Collecting all six does not earn the daily bonus twice.
 
-Seven consecutive UTC days with a successful explicit daily-completion claim add a 150-pebble weekly bonus. The seventh day's 40-pebble reward and 150-pebble bonus are one atomic award. A successful seventh claim completes that cycle; the next eligible day begins the next seven-day cycle. Repeating a claim, refreshing, switching companions or toggling Lodge membership cannot award either bonus again for the same day.
+Collect the daily bonus on seven UTC days in a row to earn another 150 pebbles. On day seven, the 40-pebble daily gift and 150-pebble bonus are saved together. That finishes the cycle; the next eligible day starts a new one. Repeating a click, refreshing, switching friends or changing Lodge membership cannot claim either bonus twice that day.
 
-At rollover, unclaimed daily progress and rewards expire. A missed daily-completion claim breaks the consecutive cycle, even if the player performed the objectives. There is no catch-up for past dates. The world keeps its saved time monotonic so moving the device clock backwards cannot reopen a day already passed in that world.
+At midnight UTC, unfinished daily progress and uncollected gifts expire. Missing the daily bonus starts the seven-day count over, even if the tasks were done. Past days cannot be collected later. Saved world time never moves backwards, so turning back the device clock cannot reopen a day that world has already passed.
 
-The device clock and save files remain under the player's control. These rules are a local single-player ledger, not a trusted server economy or an anti-cheat guarantee against editing or replacing local files. State transitions must use Petrealm's existing shared write lock so concurrent tabs do not independently claim the same stored reward.
+Players control their device clock and save files. This is a local single-player game, so it does not promise to prevent edited or replaced saves. Writes use Petrealm’s shared lock: tabs take turns updating the same world instead of each paying the same reward.
 
-## Qualification and remaining gaps
+## Checks and missing features
 
-Useful checks cover explicit claims versus objectives, every qualifying five-of-six combination, four-of-six rejection, same-day replay, concurrent tabs, midnight rollover, a missed day, seven consecutive days, the next cycle, clock rollback, capacity rejection and a retry without partial rewards. Bank checks additionally cover threshold upgrades, retained tiers after withdrawal, positive-balance rounding, zero balance, first-day collection, transfer-before/after collection and maximum combined balance. Existing saved worlds must retain their money, companions and previously recorded reward markers during migration.
+Quest tests need to distinguish doing a task from collecting its gift. They cover every five-of-six combination, rejection at four, duplicate clicks, other tabs, midnight, missed days, seven-day completion, the next cycle, clock rollback, limits and a retry that leaves no partial reward. Bank tests also cover upgrade thresholds, tiers after withdrawal, rounding, zero balance, first collection, transfers before and after collection, and the combined money limit. Older saves must keep their money, friends and claimed rewards.
 
-This wave addresses local daily interest, five/six daily objectives and an explicit seven-day cycle. NST timing, separate NeoPass quests, rotating quest/prize pools, rerolls, streak-save tickets, the full bank account catalogue and current target transaction ordering remain different or unverified. Neopets subscription verification, account-backed balances and authenticated runtime parity remain outside this local implementation.
+Petrealm 0.3 added local daily interest, five or six daily quests and a seven-day bonus. NST timing, separate NeoPass quests, changing task and prize pools, rerolls, streak-save tickets, the full bank catalogue and the target’s current transfer-order rule were missing or unverified. The local game does not provide Neopets subscription checks or server-held account balances.

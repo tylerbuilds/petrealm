@@ -1,6 +1,6 @@
-# A friend for every heart
+# Meet the companions
 
-Adoption is free. Open **Adopt a friend** in the garden, meet the illustrated companions, choose a personality and give your friend a name. The preview shows the exact species you will welcome home. A chosen marker and pressed state identify your selection; the gallery scrolls within the adoption window on smaller screens.
+Adoption is free. Open **Adopt a friend** in the meadow, choose a companion and personality, then give them a name. The preview shows your chosen friend. On a phone, scroll inside the gallery to meet everyone.
 
 | Companion | Family | Character | Favourite snack |
 | --- | --- | --- | --- |
@@ -14,16 +14,16 @@ Adoption is free. Open **Adopt a friend** in the garden, meet the illustrated co
 | Gloomdrop | Monster | Finds shy little lights in the deepest shade | Sunberry |
 | Thistlehorn | Monster | Small in stature, enormous in courage | Sunberry |
 
-Every friend has their own care, wardrobe, experience, personality and milestones. Select their family portrait to care for that friend. Favourite snacks bring three extra happiness; stats still stop at 100. Older companions keep their original snack behaviour.
+Every friend keeps their own care, outfit, XP, personality and bond. Choose their portrait in **Friends** to play with them. A favourite snack gives 3 extra Happiness, up to 100. Mossling, Emberkit and Moonfin enjoy either snack equally.
 
-The four personalities are **Steady** (usual care), **Gentle** (naps bring three extra happiness), **Curious** (a species' favourite snack brings two further happiness) and **Spirited** (ribbon play brings three extra happiness). You choose the personality during adoption; it stays with that friend. A species with no favourite snack receives no Curious food bonus.
+The four personalities are **Steady** (usual care), **Gentle** (naps give 3 extra Happiness), **Curious** (a favourite snack gives 2 further Happiness) and **Spirited** (ribbon play gives 3 extra Happiness). Choose one when you adopt your friend. It stays with them. Friends without a favourite snack don’t get the Curious food bonus.
 
-Visit the **Training grove** to practise together. Each practice costs 20 earned pebbles, 12 energy and four fullness, and awards up to 18 XP. Games, quests and the daily gift supply pebbles; care and victories also build experience. Every 100 XP raises a level. Practice pauses during an arena match and stops at level 20.
+Visit **Training** to practise together. Each practice costs 20 pebbles, 12 Energy and 4 Fullness, and gives up to 18 XP. Earn pebbles from games, quests and Mallow’s gift. Every 100 XP raises a level. Finish a match before practising. At the maximum of 1,999 XP, practice stops.
 
-In the garden, open **Their first bloom**. Once that friend reaches level 3 and you have shared a meal, ribbon play and a nap, you can mark their bloom for 60 pebbles. This happens once per friend and gives a lasting original portrait, up to 40 XP, ten happiness and ten energy. Future practice gives up to 24 XP instead of 18. Existing level, stat and experience caps still apply. Each species has its own visible bloom detail, from a flowering crest or velvet wing markings to new horns or a bright clay sigil.
+In the meadow, open **Their first bloom**. Once that friend reaches level 3 and you’ve shared a meal, ribbon play and a nap, they can bloom for 60 pebbles. This happens once per friend and gives a new look, up to 40 XP, 10 Happiness and 10 Energy. Future practice gives up to 24 XP instead of 18. Happiness and Energy stop at 100, and XP stops at 1,999. Each companion blooms differently, with flowers, wing markings, new horns or a bright clay pattern.
 
-Your exact chosen companion appears in the garden, family, care profile and arena. Leaf caps and moon scarves fit each original silhouette, including after a bloom. Both games and every arena rival remain available under the same experience, energy and progression rules.
+Your chosen friend comes with you through the meadow, games and matches. Leaf caps and moon scarves fit every companion, including after blooming.
 
-Save, reload, export and restore retain the chosen personality and bloom. Earlier worlds keep all existing friends, money, care stats, outfits, XP and reward history. Their personality starts as Steady and their newly tracked milestones start empty; old shared care counts are not assigned to an individual friend. Share fresh care to start their bloom journey. A stale practice or bloom click after another tab changes the active friend or replaces the world is refused without charging pebbles.
+Saving and restoring keep your friend’s personality and bloom. Older worlds keep their friends, pebbles, care, outfits, XP and collected gifts. If an older save has no personality, that friend starts as Steady. If it has no individual care history, share a new meal, play and nap to begin their bloom journey. If another tab changes your friend or world, an old Practice or Bloom click won’t charge pebbles.
 
-All nine companions, their eighteen young/bloomed illustrations and the landscape and accessories were written for Petrealm. They are released under this repository's MIT licence, with no third-party sprites, proprietary species, generated remote resources or asset service. The game is local and single-player; this catalogue is original Petrealm content, not a reproduction of another game's creatures or online economy.
+All nine companions, their young and bloomed illustrations, outfits and landscapes are original Petrealm artwork, shared under the [MIT licence](../LICENSE). Your world lives in your browser and is single-player.

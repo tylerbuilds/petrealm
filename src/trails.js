@@ -6,13 +6,13 @@ const scene = (title, text, first, second) => Object.freeze({ title, text, choic
 
 export const TRAIL_TREASURES = Object.freeze({
   'fern-flute': Object.freeze({ id: 'fern-flute', routeId: 'whisperwood', name: 'Fern flute', description: 'A curled fern that whistles when the breeze passes.', hint: 'Listen for the quiet notes in Whisperwood.' }),
-  'button-mushroom': Object.freeze({ id: 'button-mushroom', routeId: 'whisperwood', name: 'Button mushroom', description: 'A tiny spotted mushroom with a perfectly round cap.', hint: 'Use your friend’s knack at the final Whisperwood encounter. Try different outings.' }),
+  'button-mushroom': Object.freeze({ id: 'button-mushroom', routeId: 'whisperwood', name: 'Button mushroom', description: 'A tiny spotted mushroom with a perfectly round cap.', hint: 'Use your friend’s knack at the last stop in Whisperwood. Try it on different outings.' }),
   'seed-lantern': Object.freeze({ id: 'seed-lantern', routeId: 'whisperwood', name: 'Seed lantern', description: 'A hollow seedpod holding a soft, friendly glow.', hint: 'Try a new path through the trees.' }),
   'ripple-shell': Object.freeze({ id: 'ripple-shell', routeId: 'glowpool', name: 'Ripple shell', description: 'A shell whose rings look like a whole pond in miniature.', hint: 'Look closely at the edges of Glowpool.' }),
-  'glass-pebble': Object.freeze({ id: 'glass-pebble', routeId: 'glowpool', name: 'Glass pebble', description: 'A smooth blue stone that catches the underwater light.', hint: 'Use your friend’s knack at the final Glowpool encounter. Try different outings.' }),
+  'glass-pebble': Object.freeze({ id: 'glass-pebble', routeId: 'glowpool', name: 'Glass pebble', description: 'A smooth blue stone that catches the underwater light.', hint: 'Use your friend’s knack at the last stop in Glowpool. Try it on different outings.' }),
   'pond-crown': Object.freeze({ id: 'pond-crown', routeId: 'glowpool', name: 'Pond crown', description: 'A little crown woven from reeds and floating flowers.', hint: 'Follow the lights beyond the familiar bank.' }),
   'cloud-kite': Object.freeze({ id: 'cloud-kite', routeId: 'windridge', name: 'Cloud kite', description: 'A leaf-and-thread kite shaped like a sleepy cloud.', hint: 'Watch how the wind changes on the ridge.' }),
-  'wind-chime': Object.freeze({ id: 'wind-chime', routeId: 'windridge', name: 'Wind chime', description: 'Three hollow twigs that sing a clear little tune.', hint: 'Use your friend’s knack at the final Windridge encounter. Try different outings.' }),
+  'wind-chime': Object.freeze({ id: 'wind-chime', routeId: 'windridge', name: 'Wind chime', description: 'Three hollow twigs that sing a clear little tune.', hint: 'Use your friend’s knack at the last stop in Windridge. Try it on different outings.' }),
   sunwheel: Object.freeze({ id: 'sunwheel', routeId: 'windridge', name: 'Sunwheel', description: 'A golden flower-wheel that turns without a sound.', hint: 'There is more than one way to reach a high place.' }),
 });
 
@@ -86,7 +86,7 @@ export function knackChoice(personality) {
     observe: ['Let your friend notice a small detail', 'Your companion spots a detail you had missed. You follow their quiet lead and discover a different way through.'],
     help: ['Let your friend lend a gentle paw', 'Your companion notices who needs a little help. Together you make the path kinder and find a new way through.'],
     explore: ['Let your friend follow a hunch', 'Your companion follows an intriguing little clue. You trust their curiosity and discover a different way through.'],
-    brave: ['Let your friend lead a bold little try', 'Your companion takes a careful first step. You follow their courage and discover a different way through.'],
+    brave: ['Let your friend try something bold', 'Your companion takes a careful first step. You follow their courage and discover a different way through.'],
   }[kind];
   return { id: 'knack', kind, label: wording[0], outcome: wording[1] };
 }

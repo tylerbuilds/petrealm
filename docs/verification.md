@@ -8,6 +8,8 @@ Actual browser journeys completed the opening and seven timed outings, visited a
 
 Sound playback began only after its toggle and paused when toggled off. There were zero browser runtime/console errors and zero external requests. Desktop and 390px/320px captures were reviewed, including the welcome and all four pages. A maximum-length name fitted all four pages at 320px. Keyboard opening activation worked. Name and appearance edits preserved history through reload; a stale customisation dialogue could not overwrite a newly imported world. Find placement changes the corresponding object in the home scene.
 
+The canonical Fedora preview was also opened through its actual Tailnet HTTP address. With secure-context Web Locks unavailable, its IndexedDB fallback serialised two queued return claims into one recorded return. Reload retained the state, and five served application files matched canonical source hashes. This verifies the served origin from Fedora; a physical Mac or phone was not tested. [Preview receipt](research/hedge-preview-verification.json).
+
 The [machine-readable receipt](research/hedge-verification.json) includes final source hashes and the case results. [Desktop](screenshots/hedge-home.png) and [phone](screenshots/hedge-mobile.png) images are browser captures. Full local evidence is in `test-results/hedge-final/`; earlier whole-app evidence is in `test-results/browser-smoke/`. These are synthetic test worlds on Fedora, Node.js 25.6.1 and Chromium 156.0.8078.4. No physical phone test, new macOS CI run, public deployment, retention study or audio listening/seam certification is claimed.
 
 ## 0.8 companion experience — Fedora verification, 10 October 2026

@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "url": "Private Fedora Tailnet HTTP origin",
+  "platform": {
+    "secure": false,
+    "nativeLocks": false,
+    "indexedDB": true
+  },
+  "indexedDBClaimOnce": true,
+  "reloadPersisted": true,
+  "sourceHashes": {
+    "index.html": "a93a9fbf695eeec53acf0b0985c803ad27320a96aa15c3342c2b14a16bd67c39",
+    "hedge.css": "07a9c584744ff118b4f445761265ad23419c91931b0ec1c8255676b77bfc120b",
+    "src/hedge-app.js": "5be0ecf2c34e39deaaae12797f9651eb4a0a00ba8fedf9d685df13913e744b09",
+    "src/hedge-model.js": "e2e472f922265fcce99ab1dfb8c35039bfbcc6d9e17f2f1fb098c28f7ab59ea5",
+    "src/hedge-storage.js": "37eab426bd9311c4068795899313f6063e3fb1acd63da606e76d9c6d1a7ac90c"
+  },
+  "errors": [],
+  "physicalDeviceTest": false,
+  "codeCommit": "b6576a9",
+  "date": "2026-10-10"
+}
